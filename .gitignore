@@ -1,0 +1,46 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+out/
+build/
+release/
+*.exe
+*.msi
+*.nsis
+*.asar
+
+# 宿主进程（C# / Rust）中间产物
+bin/
+obj/
+target/
+*.pdb
+
+# 配置与密钥 —— 绝不提交
+config.json
+config.bak
+*.key
+*.pem
+.env
+.env.*
+!/.env.example
+
+# 本地数据
+*.db
+*.db-journal
+*.corrupt.db
+logs/
+vocab.db
+
+# 系统
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 编辑器
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
