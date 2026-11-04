@@ -2,9 +2,9 @@
 
 > 划词即译的 Windows 桌面工具。选中英文 → 点一下 → 译文出现在屏幕上，不切窗口、不打断阅读。
 
-**当前状态：设计阶段（Design）+ UIA 技术验证（D-1 通过）。尚无产品代码。**
+**当前状态：设计阶段（Design）+ UIA 技术验证（D-1 通过）+ 契约层完成。尚无产品代码。**
 
-本仓库目前只有产品与交互设计文档，以及 UIA 验证报告。三窗口交互基线（圆点 / 翻译卡片 / 主窗口）的 v2.0 决策已确认；D-1 已在 Chrome/Edge 156 上通过（30/30，P95 16.2/24.2ms，Q-6 93.3%，同源 iframe 10/10）。全屏应用下卡片置顶（Q-2）与 Chrome <138 兼容性（Q-7）仍待实测；产品代码尚未开始。
+本仓库目前只有产品与交互设计文档、4 份技术契约，以及 UIA 验证报告。三窗口交互基线（圆点 / 翻译卡片 / 主窗口）的 v2.0 决策已确认；D-1 已在 Chrome/Edge 156 上通过（30/30，P95 16.2/24.2ms，Q-6 93.3%，同源 iframe 10/10）。Q-2 全屏置顶、Q-7 Chrome <138、多显示器第二屏、跨域 iframe、canvas/PDF 等**暂不支持，不再验证**；产品代码尚未开始。
 
 ---
 
@@ -30,10 +30,11 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | 已完成 | 未开始 |
 |---|---|
 | 产品需求文档（PRD v1.1.1，53 条编号需求） | 任何产品代码 |
-| 三窗口交互需求（PRD v2.0：圆点 / 卡片 / 主窗口） | Q-2 全屏置顶实测 |
-| 三窗口交互规格（时序预算 / 状态机 / 边界清单） | Q-7 Chrome <138 / 企业策略验证 |
-| 沉浸式翻译本地版交互调研（1.34.4） | 视觉设计、图标 |
-| 关键决策与取舍记录 | 安装包、发布流程 |
+| 三窗口交互需求（PRD v2.0：圆点 / 卡片 / 主窗口） | 工程骨架、主链路开发 |
+| 三窗口交互规格（时序预算 / 状态机 / 边界清单） | 视觉设计、图标 |
+| 4 份阻塞契约（架构 / IPC / DB / 提示词） | 安装包、发布流程 |
+| 沉浸式翻译本地版交互调研（1.34.4） | B-05~B-12 质量/发布文档 |
+| 关键决策与取舍记录 | — |
 | 已知限制清单 | — |
 | UIA 验证报告（Q-1、D-1、Q-6、iframe 完成） | — |
 
@@ -42,11 +43,16 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | 文档 | 内容 |
 |---|---|
 | [docs/PRD-v2.md](docs/PRD-v2.md) | **当前交互基线**：三窗口模型（圆点 / 翻译卡片 / 主窗口）、主窗口信息架构、跨窗口联动、验收标准 |
-| [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md) | **当前交互规格**：逐帧时序、位置算法、卡片状态机、边界三问、36 条验收用例、参数表 |
+| [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md) | **当前交互规格**：逐帧时序、位置算法、卡片状态机、边界三问、41 条验收用例（+ v1.1 同步 6 条）、参数表 |
+| [docs/architecture.md](docs/architecture.md) | **B-01 技术架构**：进程拓扑、Native Addon 拆分、线程模型、启动/退出、崩溃恢复、窗口与数据所有权 |
+| [docs/ipc-contract.md](docs/ipc-contract.md) | **B-02 IPC 契约**：消息目录、字段/单位/DIP 坐标系、错误码、超时/背压 |
+| [docs/data-model.md](docs/data-model.md) | **B-03 数据库 schema v2.0**：Drizzle schema-as-code、软删除/撤销、同步预留、索引、迁移/损坏恢复 |
+| [docs/adr/](docs/adr/) | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite |
+| [docs/prompt-contract.md](docs/prompt-contract.md) | **B-04 提示词契约**：两条提示词全文、JSON schema、占位符、重试、模型参数 |
 | [docs/PRD.md](docs/PRD.md) | 历史基线 v1.1.1：背景、范围、取词方案、53 条功能需求、异常、风险、AI 能力契约 |
 | [docs/interaction-spec.md](docs/interaction-spec.md) | 历史基线 v1.0：气泡 + 侧边栏的逐帧时序（已被 v2 取代） |
 | [docs/research/immersive-translate-interaction-2026-11.md](docs/research/immersive-translate-interaction-2026-11.md) | 本机沉浸式翻译 1.34.4 的三窗口交互调研：圆点尺寸、卡片布局、拖拽/保持打开、参考交互取舍 |
-| [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md) | UIA 验证报告：Q-1 段落颗粒度、D-1 部分进展、Chrome/Edge 156 实测数据 |
+| [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md) | UIA 验证报告：Q-1、D-1（30/30）、Q-6（93.3%）、同源 iframe、坐标空间发现 |
 
 ## 关键设计决策
 
@@ -64,6 +70,8 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | 单词结果 | 全部交给 LLM，但**必须结合所在句子** | 用户真正的问题是"这词在这句话里什么意思"，不是"这词有几个意思" |
 | 生词本 | 只记主动收藏，不做复习 | 翻译工具不该长成背单词软件 |
 | 历史记录 | 仅内存，退出清空 | 不在磁盘留下用户的阅读痕迹 |
+| 数据层 | SQLite + **Drizzle ORM** + Node 内置 `node:sqlite` | schema-as-code 单一事实源、迁移可 review、少一个原生依赖；P4 验证不可用则回退 better-sqlite3 |
+| 删除与同步 | 软删除 + 墓碑，5 秒撤销；同步用每设备快照 + 按记录 LWW（v1.1） | 撤销真实可恢复；不把 DB 文件放进云盘；无服务器、无账号 |
 | 协议 | MIT | 传播最广、企业可用、条款最短 |
 
 ## 已知限制
@@ -71,11 +79,27 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | 限制 | 说明 |
 |---|---|
 | 仅 Windows | macOS 的取词实现完全不同，暂不支持 |
-| 仅 Chrome / Edge **138+** | 依赖 Chromium 138 起默认启用的原生 UIA provider |
+| 仅 Chrome / Edge **138+** | 依赖 Chromium 138 起默认启用的原生 UIA provider；旧版与企业策略回退不做 |
+| 全屏应用卡片置顶暂不支持 | 圆点不显示；热键仍可用，但卡片不保证可见；失败时托盘提示并打开主窗口（Q-2 不再验证） |
+| 多显示器第二屏暂不支持 | 仅保证主显示器；第二屏不承诺取词/卡片位置 |
+| 跨域 iframe 暂不支持 | 仅同源 iframe 已验证 |
+| 管理员权限窗口暂不支持 | UIA 跨完整性级别访问未验证 |
 | 仅英文 → 简体中文 | 其他语种不支持 |
 | 不支持 canvas 渲染的页面 | 在线文档、部分在线表格的文本无法通过 UIA 读取，这是硬限制 |
 | 不支持 IDE / 终端 / Office / PDF 阅读器 | 不承诺可用，也不作为缺陷处理 |
 | 无代码签名 | 首次安装会有 SmartScreen 提示，属正常现象 |
+
+## 数据与隐私
+
+| 文件/数据 | 位置 | 说明 |
+|---|---|---|
+| 生词本 / 术语表 / 可同步设置 | `%APPDATA%\Snapword\vocab.db` | 明文 SQLite；软删除墓碑用于 5 秒撤销与同步 |
+| 配置 | `%APPDATA%\Snapword\config.json` | API Key 为 `safeStorage` 密文；设备本地项 |
+| 备份 | `%APPDATA%\Snapword\vocab.db.bak-*` | 迁移前 / 清空全部数据前自动生成；保留最近 3 份 |
+| 日志 | `%APPDATA%\Snapword\logs\` | 脱敏，保留 7 天 |
+| 云盘同步（v1.1） | 用户选择的云盘文件夹 | 每设备一份快照 JSON；明文；**不**把 `vocab.db` 放进云盘 |
+
+数据库不存完整原文段落、API Key、Base URL 或日志正文；导出与同步文件同样不包含这些内容。同步默认不同步语境片段，可在设置中开启。
 
 ## 第一条任务
 
@@ -83,7 +107,7 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 
 D-1 已在 Chrome/Edge 156 上通过：3 类页面 × 10 次共 30 次取词，成功率 100%，P95 16.2/24.2ms，零剪贴板写入；Q-6 `RangeFromPoint` 93.3%；同源 iframe 10/10。Q-1 也已确认 Paragraph 不退化成整页。详见 [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md)。
 
-剩下的验证项是 Q-2（全屏应用下卡片置顶）与 Q-7（Chrome <138 / 企业策略）。之后是 4 份阻塞契约：架构、IPC、DB schema、提示词。界面交互基线已经升级为三窗口 v2.0，但开发顺序不变：**先补齐验证与契约，再按 v2.0 落地界面**。
+Q-2、Q-7、多显示器第二屏、跨域 iframe、canvas/PDF 等已决定**暂不支持、不再验证**。4 份阻塞契约已完成：技术架构、IPC、DB schema、提示词。下一步是**工程骨架**（Electron main + utilityProcess + Native Addon 空链路），再按 v2.0 落地界面。
 
 ## License
 

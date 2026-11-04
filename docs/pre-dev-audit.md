@@ -2,6 +2,8 @@
 
 > **版本说明（2026-11-02）**：本审计基于 v1.1.1 的“气泡 + 侧边栏”交互。该交互已被 [PRD-v2.md](PRD-v2.md) 与 [interaction-spec-v2.md](interaction-spec-v2.md) 的三窗口模型取代；本文件保留为历史审计记录，其中与界面交互相关的条目不再作为当前决策依据。
 >
+> **2026-11-03 更新**：本审计列出的 4 份阻塞契约已完成：[architecture.md](architecture.md)、[ipc-contract.md](ipc-contract.md)、[data-model.md](data-model.md)、[prompt-contract.md](prompt-contract.md)。
+>
 > 审计对象：`docs/PRD.md`（v1.1）、`docs/interaction-spec.md`（v1.0）、`README.md`
 > 审计日期：2026-10-19
 > 审计视角：如果把这三份文档交给一个没参与讨论的开发（或三个月后的你自己），能不能直接开工而不需要再问任何问题？
@@ -128,7 +130,7 @@ PRD 说清了「做什么、为什么、什么不做」，交互规格说清了�
 | **视觉规范** | 非功能要求「对比度 ≥ 4.5:1」，但全文没有一个色值。**这条要求目前不可验收** |
 | **i18n 布局规则** | S-14/FR-49 要求双语，但交互 2.5 的文案规范只有中文示例。英文字符串普遍比中文长 30~50%，96px 气泡、320px 侧边栏下限、按钮文字都会溢出。**需要一条「文案长度上限」规则** |
 | **代理与网络** | FR-44 配置项里没有代理设置，非功能只说「除 Base URL 外无外连」。国内直连官方 API 大概率失败，E-04 只给「检查代理」，但产品不提供配置入口——只能靠系统代理。这个取向要写明，否则是高频 issue |
-| **待实测项（D-1/2/6/7）** | Q-1 已于 2026-11-02 完成（见 [research/uia-validation-2026-11.md](research/uia-validation-2026-11.md)）；剩余 D-1 成功率统计、Q-6、Q-2（全屏置顶，建议开发第 2 周前验完，决定 FR-09）、Q-7 |
+| **待实测项（D-1/2/6/7）** | 历史条目：Q-1 已完成；D-1/Q-6 已完成，Q-2/Q-7 已决定暂不支持、不再验证。当前状态见 [progress-checklist.md](progress-checklist.md) 与 [research/uia-validation-2026-11.md](research/uia-validation-2026-11.md) |
 
 ---
 
