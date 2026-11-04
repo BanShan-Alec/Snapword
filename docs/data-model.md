@@ -28,7 +28,7 @@
 |---|---|---|---|
 | `drizzle-orm` | `1.0.0-rc.5`，精确锁版本 | schema 定义、查询构建、迁移执行 | 0.x/RC 期间 API 会变；升级必须单独 PR |
 | `drizzle-kit` | `1.0.0-rc.5`，**仅 devDependency** | 从 `schema.ts` 生成迁移 SQL | 禁止在生产/Electron 运行时运行；禁止对用户库 `push` |
-| `node:sqlite` | Node 内置 `DatabaseSync` | 同步 SQLite 驱动 | P4 验证 Electron 是否暴露；不可用则回退 `better-sqlite3` |
+| `node:sqlite` | Node 内置 `DatabaseSync` | 同步 SQLite 驱动 | 已在 Electron 42/45 实测可用；项目内复现失败则回退 `better-sqlite3` |
 | `schema.ts` | `src/main/db/schema.ts` | 表、列、索引、CHECK 的唯一定义 | 所有 schema 变更从这里开始 |
 | `drizzle/` | 生成物，提交入库 | 迁移 SQL + snapshot | append-only；已应用的迁移文件禁止修改 |
 
@@ -52,31 +52,42 @@
 
 ## 3. 连接与 PRAGMA
 
-主进程打开数据库后立即执行：
+主进程使用**两个连接**：迁移连接（外键关闭）与运行时连接（外键开启）。这不是洁癖，是 rc.5 的必需规避，见下。
 
 ```ts
 import { DatabaseSync } from 'node:sqlite';
 import { drizzle } from 'drizzle-orm/node-sqlite';
+import { migrate } from 'drizzle-orm/node-sqlite/migrator';
 import * as schema from './schema';
 
-const client = new DatabaseSync(dbPath);
+// 1) 迁移连接：外键关闭
+const migrationClient = new DatabaseSync(dbPath, {
+  enableForeignKeyConstraints: false,
+  timeout: 5000,
+});
+migrationClient.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
+// §10.3 的版本守卫先在同一连接上执行，再调用 migrate()
+migrate(drizzle({ client: migrationClient, schema }), { migrationsFolder });
+migrationClient.close();
 
+// 2) 运行时连接：外键开启
+const client = new DatabaseSync(dbPath, { timeout: 5000 });
 client.exec(`
-  PRAGMA journal_mode = WAL;
-  PRAGMA synchronous = NORMAL;
   PRAGMA foreign_keys = ON;
+  PRAGMA synchronous = NORMAL;
   PRAGMA busy_timeout = 5000;
 `);
 
 export const db = drizzle({ client, schema });
 ```
 
-- `node:sqlite` 没有 `better-sqlite3` 的 `pragma()` 辅助方法，统一走 `exec`；需要读取结果时用 `prepare('PRAGMA ...').all()`。
+- **迁移连接必须关外键**：rc.5 的 `migrate()` 把整批迁移放在一个 deferred `BEGIN` 里；SQLite 的 `PRAGMA foreign_keys=OFF` 在事务内是 no-op。drizzle-kit 生成的表重建会 `DROP TABLE`，若外键是开的，`ON DELETE CASCADE` 会静默删掉子表（#5782/#6621）。必须在**打开连接时**用 `enableForeignKeyConstraints: false`，迁移结束后用新的运行时连接开启外键。
+- `node:sqlite` 没有 `pragma()` / `transaction()` 辅助方法：PRAGMA 写用 `exec`，读结果用 `prepare('PRAGMA ...').get()`；事务用 Drizzle 的 `db.transaction(fn, { behavior: 'immediate' })`，**回调必须是同步函数**（async 回调在 JS 下不会报错，会立即提交）。
 - `db.$client` 是底层 `DatabaseSync`，用于 PRAGMA、`wal_checkpoint`、备份等。
-- `WAL`：读写并发；退出前 `PRAGMA wal_checkpoint(TRUNCATE)`。
+- `WAL`：读写并发；退出前 `PRAGMA wal_checkpoint(TRUNCATE)`。WAL 只在数据库创建时设置一次；多个连接并发设置 `journal_mode=WAL` 可能抛 `SQLITE_BUSY`。
 - `synchronous=NORMAL`：WAL 下的推荐值；崩溃最多丢最后一个事务，不损坏数据库。
-- `foreign_keys=ON`：当前没有外键，v1.1 加 `sense` 表时行为从一开始一致。
-- `busy_timeout=5000`：避免短暂写锁直接失败。
+- `busy_timeout=5000` / 构造选项 `timeout: 5000`：避免短暂写锁直接失败。`node:sqlite` 默认 `timeout=0`，第二个连接会立刻 `database is locked`。
+- `foreign_keys=ON` 只在运行时连接设置；当前没有外键，v1.1 加 `sense` 表时行为从一开始一致。
 - **不再设置 `PRAGMA user_version`**：版本守卫改用迁移名集合（见 §10）。
 - 所有时间字段由应用层生成 ISO 字符串；不使用 SQLite 的 `strftime`。
 
@@ -173,7 +184,7 @@ export const term = sqliteTable('term', {
 ]);
 
 export const setting = sqliteTable('setting', {
-  key: text('key').primaryKey(),
+  key: text('key').primaryKey().notNull(),
   valueJson: text('value_json', { mode: 'json' }).$type<JsonValue>().notNull(),
   updatedAt: text('updated_at').notNull(),
   rev: integer('rev').notNull().default(0),
@@ -192,6 +203,8 @@ export const setting = sqliteTable('setting', {
 - `origin_device` 是同步预留字段：记录当前版本由哪台设备产生，用于 LWW 的确定性平局判定；本地写入时填当前 `deviceId`，应用远端记录时保留远端值。
 - `rev` 是同步预留字段：同一行每次本地变更 +1，远端记录保留原值；`(updated_at, rev, origin_device)` 构成全序，解决同一毫秒内的平局。
 - `deleted_batch` 只用于本地撤销，不进入同步文件。
+- **`setting.key` 的 rc.5 已知缺陷**：#6165 会让 TEXT 主键丢掉 `NOT NULL`，SQLite 因此允许插入多行 `NULL`。初始迁移必须手工补 `NOT NULL`（§10.1 唯一允许的生成 SQL 补丁），CI 用 `PRAGMA table_info(setting)` 断言 `notnull=1`。
+- 不使用 `onConflictDoNothing({ target, where })`：rc.5 在部分唯一索引上会生成非法 SQL（#6531）。我们的冲突目标是全量唯一索引，不受影响。
 
 ### 4.2 生成 DDL 参考
 
@@ -763,24 +776,30 @@ word,phonetic_us,phonetic_uk,context_sense,context_snippet,senses_json,source_ti
 ### 10.1 事实源与生成
 
 - `schema.ts` → `drizzle-kit generate` → `drizzle/<timestamp>_<name>/migration.sql` + `snapshot.json`。
-- v1 RC 的目录格式：**一迁移一目录、无 `_journal.json`**；`migrate()` 按目录名排序并匹配已应用记录。
+- v1 RC 的目录格式：**一迁移一目录、无 `_journal.json`**；`migrate()` 按目录名排序并匹配已应用记录。已实测确认。
 - 生成物提交入库；迁移是用户数据的契约，必须 code review。
 - 运行时绝不生成迁移；`drizzle-kit` 只作 devDependency。
-- `drizzle/` 随安装包分发（建议 `extraResources`）；开发期用 `app.getAppPath()` 定位，打包后用 `process.resourcesPath`。`migrate()` 用 `fs` 读盘，目录缺失会直接失败。
+- `drizzle/` 随安装包分发（建议 `extraResources`）；开发期用 `app.getAppPath()` 定位，打包后用 `process.resourcesPath`。`migrate()` 用 `fs` 读盘，目录缺失会直接失败；asar 内也能读，但必须确保目录真的被拷进包。
+- **唯一允许手改生成 SQL 的场景**：rc.5 的 #6165 会让 `setting.key` 这种 TEXT 主键丢掉 `NOT NULL`。初始迁移生成后手工补 `NOT NULL`，并在迁移目录注释里记录原因；snapshot 会把两边归一化，不会产生漂移；CI 用 `PRAGMA table_info(setting)` 断言 `notnull=1`。除此之外禁止手改。
 
 ### 10.2 运行时
 
 ```ts
 import { migrate } from 'drizzle-orm/node-sqlite/migrator';
 
-await migrate(db, { migrationsFolder });
+migrate(db, { migrationsFolder });   // 同步；不要放进 async 回调
 ```
 
-- node:sqlite 是同步驱动；`migrate()` 可能是同步或返回 Promise，统一 `await`（对非 Promise 也安全）。
+- node:sqlite 是同步驱动，`migrate()` **同步执行**；`await` 也能跑，但没有必要。
+- 实测：整批 pending 迁移在**一个 deferred `BEGIN`** 里执行，任一失败全部回滚（不是每个迁移一个事务）。
+- 迁移选择按**目录名**匹配 `__drizzle_migrations.name`；**不校验 hash**；数据库里有本地不存在的已应用迁移时，`migrate()` 会**忽略**而不是报错——所以必须在调用前用 §10.3 的守卫自己检测。
 - 迁移记录表：`__drizzle_migrations`（由 migrator 创建，v1 列为 `id`、`hash`、`created_at`、`name`、`applied_at`）。
 - 把该表当半黑盒：只读 `name` 做版本守卫，不按 `id`/`hash` 查询。
+- 旧 v0 三列表会被自动升级；本项目从 v1 RC 新库开始，不依赖这条路径。
 
 ### 10.3 版本守卫（替代 `user_version`）
+
+> 以下 `client` 指迁移连接（`enableForeignKeyConstraints: false`），守卫必须在 `migrate()` 之前执行。
 
 ```ts
 const local = localMigrationNames(migrationsFolder);   // 目录名，升序
@@ -794,7 +813,7 @@ if (unknown.length > 0) {
 const pending = local.filter((n) => !applied.includes(n));
 if (pending.length > 0) backupDatabase();
 
-await migrate(db, { migrationsFolder });
+migrate(db, { migrationsFolder });   // 同步
 
 const after = appliedMigrationNames(client);
 const missing = local.filter((n) => !after.includes(n));
@@ -803,9 +822,10 @@ if (missing.length > 0) {
 }
 ```
 
-- **库比代码新**：拒绝写入，提示「数据库来自更新版本」，只读/退出。
+- **库比代码新**：拒绝写入，提示「数据库来自更新版本」，只读/退出。`migrate()` 自己不会报错，守卫必须在调用前做。
 - **迁移没真正应用**：报错并恢复迁移前备份，不带着半迁移的库继续运行。
 - `localMigrationNames` 只统计 `^\d{14}_` 的目录，忽略其他文件/目录；`appliedMigrationNames` 在 `__drizzle_migrations` 不存在时返回空数组（首次启动）。
+- 本项目从 v1 RC 新库开始，不兼容 v0 三列迁移表；若检测到 `name` 列不存在，按旧版本/损坏处理，不做自动升级。
 - 这比 `user_version` 更直接：v1 的迁移表自带 `name`，不需要再维护一个整数版本号。
 - 若未来升级 Drizzle 大版本改变了该表结构，必须复核守卫并更新本契约。
 
@@ -821,18 +841,21 @@ if (missing.length > 0) {
 
 - 迁移失败：`ROLLBACK`；用备份覆盖 `vocab.db`；保留损坏副本；提示。
 - 迁移只向前，不写 down migration：SQLite 的 down 在有损场景（删列/改类型）无法真正还原；文件备份才是可靠降级。
-- 已应用的迁移文件**禁止修改**：Drizzle 不校验 hash，改了不会重跑也不会报错。
-- 生成 SQL 出现 `__new_` 表重建时，必须人工 review；v1.1 加外键时**不用 `ON DELETE CASCADE`**（Drizzle SQLite 表重建 + CASCADE 有丢子表数据的已知问题），改为显式删除。
+- 已应用的迁移文件**禁止修改**：Drizzle 不校验 hash，改了不会重跑也不会报错；**禁止重命名**迁移目录（会按新名字重跑）。
+- **迁移连接必须关外键**：rc.5 的 `migrate()` 整批在一个事务里；`PRAGMA foreign_keys=OFF` 在事务内是 no-op，drizzle-kit 生成的表重建会 `DROP TABLE`，若外键开着，`ON DELETE CASCADE` 会静默删子表（#5782/#6621）。用 `new DatabaseSync(path, { enableForeignKeyConstraints: false })` 打开迁移连接，迁移完关闭，再用运行时连接开启外键。
+- 生成 SQL 出现 `__new_` 表重建时，必须人工 review；v1.1 加外键时**不用 `ON DELETE CASCADE`**，改为显式删除；即使如此，迁移连接仍保持外键关闭。
 
 ### 10.6 CI 检查
 
 - `drizzle-kit generate` 后 `git diff --exit-code drizzle`：schema 改了但迁移没提交 → 失败。
 - 每个迁移目录必须有非空 `migration.sql`；禁止空文件（Drizzle 会向驱动传空语句导致崩溃）。
-- 禁止尾部 `--> statement-breakpoint` 或空白语句。
+- 禁止尾部 `--> statement-breakpoint` 或空白语句；手写/自定义迁移的每条语句之间必须有 `--> statement-breakpoint`，否则 `prepare()` 只执行第一条，后面的静默丢失。
 - 迁移目录名严格递增；禁止删除/重命名已提交的迁移目录。
-- 已有迁移文件只允许新增，不允许修改/删除（`git diff --name-status` 检查 `M`/`D`）。
+- 已有迁移文件只允许新增，不允许修改/删除（`git diff --name-status` 检查 `M`/`D`）；唯一例外是 #6165 的 `setting.key` NOT NULL 补丁，需在迁移目录注释中记录。
+- 迁移后跑 `PRAGMA table_info(setting)`，断言 `key` 的 `notnull=1`。
 - `*.sql` 强制 LF（`.gitattributes`），避免 CRLF 改变 hash。
-- `drizzle-kit` 在 Node 环境/CI 运行，不在 Electron 运行时运行（ABI 不匹配）。
+- `drizzle-kit` 在 Node 环境/CI 运行，不在 Electron 运行时运行：它是 CLI + esbuild，不是应用依赖；node:sqlite 下不存在 better-sqlite3 的 ABI 问题，但把 kit 打进运行时仍然会引入不必要的体积与攻击面。
+- 打包冒烟：确认 `node:sqlite` 被当作内置模块 external；若用 rspack/webpack，给 `drizzle-orm` 标记 side-effectful 或关闭 scope hoisting（#5387 的 `entityKind` 问题）。
 
 ---
 
@@ -856,12 +879,15 @@ if (missing.length > 0) {
 ## 12. 并发与事务
 
 - 单写者：只有主进程写；worker 只读。
+- 迁移连接与运行时连接分开：迁移连接 `enableForeignKeyConstraints: false`，运行时连接 `foreign_keys=ON`；迁移完关闭迁移连接。
 - 收藏/术语保存：单条 `BEGIN IMMEDIATE` 事务；批量删除单事务（可分 500 条/批，但共享一个 batch）。
+- 事务回调必须同步；`db.transaction(async (tx) => ...)` 在 JS 下不会报错，会立即提交并留下未处理的 Promise rejection。
 - 导出：只读事务/快照，避免长事务阻塞写。
 - 同步合并：主进程单事务应用；文件读取可在事务外。
-- `SQLITE_BUSY` 最多重试 2 次，间隔 50ms/150ms。
+- `SQLITE_BUSY` 最多重试 2 次，间隔 50ms/150ms；每个连接都要设置 `timeout`/`busy_timeout`（默认 0 会立刻失败）。
+- `WAL` 只在数据库创建时设置一次；多连接并发设置 `journal_mode=WAL` 可能抛 `SQLITE_BUSY`。
 - 退出前 `wal_checkpoint(TRUNCATE)`；异常退出由 SQLite 恢复。
-- `node:sqlite` 的 `DatabaseSync` 连接不跨线程共享；worker 自己打开只读连接（`new DatabaseSync(path, { readOnly: true })`，P4 验证该选项）。
+- `node:sqlite` 的 `DatabaseSync` 连接不跨线程共享；worker 自己打开只读连接（`new DatabaseSync(path, { readOnly: true, timeout: 5000 })`，已实测只读连接能看到已提交的 WAL 数据）。
 
 ---
 
@@ -889,9 +915,12 @@ if (missing.length > 0) {
 | 测试 | 内容 |
 |---|---|
 | 迁移测试 | 内存库跑真实 `migrate()`；断言表/索引/约束；不用 `push` 建测试库 |
+| 迁移安全测试 | 迁移连接外键关闭；构造带 `ON DELETE CASCADE` 的表重建迁移，断言子表数据仍在（#5782/#6621） |
+| 主键测试 | `PRAGMA table_info(setting)` 断言 `key` 的 `notnull=1`（#6165 补丁生效） |
 | 仓储测试 | 收藏 upsert、复活、标签合并、搜索、标签筛选、术语 CHECK |
-| 撤销测试 | 删除 → 5 秒内撤销；超时 → 内容清空；保留期 → 硬删除；重复收藏 → toast 失效 |
+| 撤销测试 | 删除 → 5 秒内撤销；超时 → 内容清空；保留期 → 硬删除；重复收藏 → 撤销条失效 |
 | 同步测试 | 双/三设备快照、LWW、墓碑、缺席不删除、冲突副本、schemaVersion、时钟偏差 |
+| 打包冒烟 | Electron 主进程 `require('node:sqlite')`；`migrate()` 从 asar/extraResources 读迁移；`node:sqlite` 被 external |
 | DDL 快照 | 迁移后的 `sqlite_master` 规范化快照；schema 变更必须显式更新 |
 | 恢复测试 | 损坏文件、迁移失败、库比代码新、磁盘满 |
 | 性能 | 单条查询 <5ms；搜索 <50ms（<10k 行）；导出 1000 条 ≤2s |
@@ -962,22 +991,33 @@ SELECT name FROM __drizzle_migrations ORDER BY name;
 | `source_title` / `source_domain` | 生词本详情来源 | 不由模型生成 |
 | `tags_json` | 生词本标签 | 不由模型生成 |
 | `created_at` / `updated_at` | 列表时间 | 不由模型生成 |
-| `deleted_at` / `deleted_batch` | 删除 toast / 撤销 | 不由模型生成 |
+| `deleted_at` / `deleted_batch` | 删除撤销条 / 撤销 | 不由模型生成 |
 | `setting.*` | 设置页（可同步项） | 不由模型生成 |
 
 > 提示词返回的 `context_snippet` ≤50 字符；保存时优先使用本地语境片段（≤300），缺失时回退到模型返回的 ≤50 片段。
 
 ---
 
-## 17. 待验证与待回填
+## 17. 已核对与待回填
 
-### 17.1 P4 验证门（影响驱动，不影响 schema）
+### 17.1 已核对（2026-11-04）
 
-1. Electron 主进程 `require('node:sqlite')` 是否可用；不可用则回退 `better-sqlite3`。
-2. `migrate()` 在 node:sqlite 下是同步还是异步；整批还是逐迁移事务；数据库存在未知迁移时的行为。
-3. `db.$client` 是否为 `DatabaseSync`；PRAGMA 是否只能走 `exec`；`readOnly` 连接是否可用。
-4. `RETURNING`、`json_type`、部分索引在目标 SQLite 版本上是否可用。
-5. `drizzle-kit generate` 的输出与 §4.2 参考 DDL 是否一致。
+以下在 Windows 上用 Electron 38.8.6 / 39.8.10 / 40.10.6 / 41.10.7 / 42.11.18 / 45.2.2，配合 `drizzle-orm@1.0.0-rc.5` + `drizzle-kit@1.0.0-rc.5` 实测通过：
+
+- **Electron 版本**：推荐 **42.11.18 或 45.2.2**（Node 24.19/24.22，SQLite 3.53.3/3.53.4，`node:sqlite` 无 `ExperimentalWarning`）。38/39 可用但 Node 22 会打 experimental warning；**37.2.0–37.2.2 不可用**（`No such binding: sqlite`，37.2.3 修复）；34 及更早没有 `node:sqlite`。
+- **可用位置**：主进程与 `utilityProcess.fork()` 都能 `require('node:sqlite')`；renderer/preload 不可用，DB 操作必须留在主进程。
+- **`DatabaseSync`**：支持 `readOnly`、`enableForeignKeyConstraints`、`timeout`；没有 `pragma()` / `transaction()` 辅助方法；`exec` 执行多语句并丢弃结果；读 PRAGMA 结果用 `prepare().get()`；`.run()` 返回 `{ changes, lastInsertRowid }`；`.all()` / `.get()` 正常；worker 线程各自打开连接，不能共享对象。
+- **Drizzle rc.5**：`drizzle-orm/node-sqlite`；`drizzle({ client })` 后 `db.$client === client`；`migrate()` **同步**；事务同步，支持 `behavior: 'immediate'`；`.returning()` 正常。
+- **`migrate()` 行为**：整批 pending 迁移在一个 deferred 事务里；按目录名匹配 `__drizzle_migrations.name`；不校验 hash；数据库有本地不存在的已应用迁移时**忽略**（所以 §10.3 的守卫必须自己检测）；v0 三列表会自动升级。
+- **SQLite 能力**：`RETURNING`、JSON1、`json_type`、部分索引、生成列、WAL、只读连接（能看到已提交 WAL 数据）均可用；Electron 42/45 的 SQLite 3.53.x 满足全部要求。
+- **打包**：CJS/ESM 都可；asar 内可以读迁移；esbuild 会把 `node:sqlite` 当内置模块 external。
+
+**本项目 P4 仍需复现的 4 件事**：
+
+1. 锁 Electron 42.11.18 或 45.2.2。
+2. 用真实 `schema.ts` 跑 `drizzle-kit generate` + `migrate()`，确认 DDL 与 §4.2 一致，并补上 `setting.key` 的 `NOT NULL` 补丁。
+3. 选 bundler（electron-vite/esbuild），确认 `node:sqlite` external；若用 rspack/webpack，处理 #5387。
+4. 确认 rc.5 的缺陷可接受；不可接受则回退 `drizzle-orm@0.45.4` + `better-sqlite3`（或同 RC + better-sqlite3）。
 
 ### 17.2 文档回填
 
@@ -992,3 +1032,17 @@ SELECT name FROM __drizzle_migrations ORDER BY name;
 
 - `docs/PRD.md`（历史基线）不回溯；如需保留旧口径，以 PRD-v2 为准。
 - B-05 测试用例集需要新增撤销与同步用例（同步用例可标 v1.1）。
+
+### 17.3 rc.5 已知缺陷与规避
+
+| 缺陷 | 影响 | 规避 |
+|---|---|---|
+| #5782 / #6621：SQLite 表重建 + `ON DELETE CASCADE` | 静默删除子表数据，迁移仍报告成功 | 迁移连接 `enableForeignKeyConstraints: false`；review `__new_` 重建；v1.1 不用 CASCADE |
+| #6165：TEXT / 非整数主键丢掉 `NOT NULL` | SQLite 允许多行 `NULL` 主键 | `setting.key` 初始迁移手工补 `NOT NULL`；CI 断言 `PRAGMA table_info` |
+| #6531：`onConflictDoNothing({ target, where })` + 部分唯一索引 | 生成非法 SQL | 不用部分索引作为冲突目标；我们的 upsert 用全量唯一索引 |
+| #5387：`sideEffects: false` + `entityKind` | rspack/webpack 生产包 `ReferenceError` | 用 esbuild/Rollup，或标记 `drizzle-orm` side-effectful / 关闭 scope hoisting |
+| 不校验 hash、按名字选择 | 改已应用迁移被静默忽略；重命名目录会重跑 | 迁移 append-only；禁止改名 |
+| 整批一个事务 | 任一迁移失败回滚整批 | 迁移保持小步；迁移前备份 |
+| 默认 `busy_timeout=0` | 并发时立刻 `SQLITE_BUSY` | 每个连接设 `timeout` / `PRAGMA busy_timeout` |
+| `prepare()` 只执行第一条语句 | 手写迁移静默丢语句 | 每条语句之间加 `--> statement-breakpoint` |
+| Node 26 类名 `DatabaseSync` → `Database` | 未来 Electron 版本可能出 deprecation 提示 | 关注 Electron 的 Node 版本；rc.5 仍用 `DatabaseSync` |

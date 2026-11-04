@@ -12,7 +12,7 @@
 
 **交互规则与契约已收敛，工程准备尚未开始。**
 
-三窗口交互（v2.0）已按确认决策形成基线；4 份阻塞契约（架构 / IPC / DB / 提示词）已完成；产品代码 0 行。2026-11-04 数据库契约升 v2.0：Drizzle ORM + `node:sqlite`、软删除 5 秒撤销、同步（v1.1）预留。UIA 技术验证已完成 Q-1（Paragraph 颗粒度）与 D-1（3 类页面 × 10 次、Q-6、同源 iframe）；Q-2 全屏置顶、Q-7 Chrome <138、多显示器第二屏、跨域 iframe 等**暂不支持，不再验证**。当前卡点为 **工程骨架与主链路开发**，P4 第一项是验证 Electron 的 `node:sqlite` 可用性。
+三窗口交互（v2.0）已按确认决策形成基线；4 份阻塞契约（架构 / IPC / DB / 提示词）已完成；产品代码 0 行。2026-11-04 数据库契约升 v2.0：Drizzle ORM + `node:sqlite`、软删除 5 秒撤销、同步（v1.1）预留；Electron 42/45 + node:sqlite 已实测可用。UIA 技术验证已完成 Q-1（Paragraph 颗粒度）与 D-1（3 类页面 × 10 次、Q-6、同源 iframe）；Q-2 全屏置顶、Q-7 Chrome <138、多显示器第二屏、跨域 iframe 等**暂不支持，不再验证**。当前卡点为 **工程骨架与主链路开发**。
 
 ---
 
@@ -113,7 +113,7 @@
 | 编号 | 问题 | 决策 | 影响 |
 |---|---|---|---|
 | DB-1 | 是否引入 ORM | 是：`drizzle-orm@1.0.0-rc.5` + `drizzle-kit@1.0.0-rc.5`，精确锁版本 | schema-as-code 单一事实源；迁移生成物提交 |
-| DB-2 | 驱动 | Node 内置 `node:sqlite`；P4 验证不可用则回退 `better-sqlite3` | 少一个原生依赖；验证门见 §8 |
+| DB-2 | 驱动 | Node 内置 `node:sqlite`；已实测可用；项目内复现后锁 Electron 42/45 | 少一个原生依赖；rc.5 缺陷规避见 B-03 §17.3 |
 | DB-3 | 删除撤销 | 软删除 + 墓碑；5 秒 toast；清空全部数据不撤销 | 查询/导出排除墓碑；墓碑两阶段清理 |
 | DB-4 | 云盘同步 | 每设备快照 JSON + 自然键 + 按记录 LWW；v1.1 实现 | 不把 DB 放云盘；schema 已预留 |
 | DB-5 | 设置存储 | 可同步设置进 `setting` 表；`config.json` 留密钥/设备本地 | 生词本、术语、设置共用合并路径 |
@@ -212,14 +212,16 @@ flowchart TD
 
 **门槛**：这 4 份契约没做完，不写界面。理由：它们都会反向修改界面（`context_snippet` 有没有，直接决定语境义块长什么样）。
 
-**P4 第一验证门（写任何 DB 代码前）**：
+**P4 验证门（2026-11-04 已核对，剩项目内复现）**：
 
-1. Electron 主进程 `require('node:sqlite')` 是否可用；不可用则回退 `better-sqlite3`。
-2. `migrate()` 在 node:sqlite 下是同步还是异步、整批还是逐迁移事务、数据库存在未知迁移时的行为。
-3. `db.$client` 是否为 `DatabaseSync`；PRAGMA 是否只能走 `exec`；`readOnly` 连接是否可用。
-4. `RETURNING`、`json_type`、部分索引在目标 SQLite 版本上是否可用。
+已实测：Electron 42.11.18 / 45.2.2 可用（Node 24.19/24.22，SQLite 3.53.3/3.53.4，无 experimental warning）；`node:sqlite` 在主进程与 utilityProcess 可用；`migrate()` 同步、整批一个事务、按目录名匹配、不校验 hash、未知迁移被忽略；`db.$client === client`；`RETURNING`/`json_type`/部分索引/WAL/只读连接均通过。详见 `docs/data-model.md` §17.1。
 
-验证结果回填 `docs/data-model.md` §17.1 与 `docs/adr/0003-use-drizzle-orm.md`。
+P4 仍需在本项目做：
+
+1. 锁 Electron 42.11.18 或 45.2.2；禁止 37.2.0–37.2.2。
+2. 用真实 `schema.ts` 跑 generate + migrate，确认 DDL；补 `setting.key` 的 `NOT NULL`（rc.5 #6165）。
+3. 迁移连接 `enableForeignKeyConstraints: false`，规避 rc.5 表重建 + CASCADE 静默删子表（#5782/#6621）。
+4. 选 bundler，确认 `node:sqlite` external；rspack/webpack 需处理 #5387。
 
 ### 第二批：第 6~10 天
 

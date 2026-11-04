@@ -23,13 +23,14 @@ B-03 v1.0 的结论是 `better-sqlite3` + 手写 SQL + 纯 SQL 迁移，并明�
 ## 决策
 
 1. 使用 `drizzle-orm@1.0.0-rc.5` + `drizzle-kit@1.0.0-rc.5`，**精确锁版本**；`schema.ts` 是唯一事实源，迁移 SQL 由 `drizzle-kit generate` 生成并提交。
-2. 驱动使用 Node 内置 `node:sqlite`（`DatabaseSync`），通过 `drizzle-orm/node-sqlite`。若 P4 验证发现 Electron 未暴露 `node:sqlite`，回退 `better-sqlite3`；schema、迁移、同步设计不变。
+2. 驱动使用 Node 内置 `node:sqlite`（`DatabaseSync`），通过 `drizzle-orm/node-sqlite`。已在 Electron 42.11.18 / 45.2.2 实测可用；若项目内复现失败，回退 `better-sqlite3`，schema、迁移、同步设计不变。
 3. 启动时由 `drizzle-orm/node-sqlite/migrator` 执行迁移；删除自研 `schema_version` 表与 `PRAGMA user_version`，改用“本地迁移名集合 vs `__drizzle_migrations.name`”做版本守卫。
 4. 生产禁止 `drizzle-kit push`；`drizzle-kit` 只作 devDependency，只在 Node 环境/CI 运行，不在 Electron 运行时运行。
 5. 仓储层对外返回领域类型；Drizzle 的 `$inferSelect` / `$inferInsert` 不出 `repositories/`。
 6. 删除采用软删除 + 墓碑：`deleted_at`、`deleted_batch`；保留全量唯一索引，upsert 时复活墓碑。
 7. 同步（v1.1）采用“每设备一份快照 JSON + 自然键 + 按记录 LWW”，不把 `vocab.db` 放进云盘。
 8. 可同步设置迁到 SQLite `setting` 表；`config.json` 只保留密钥、设备本地项与启动所需配置。
+9. 迁移连接与运行时连接分离：迁移连接以 `enableForeignKeyConstraints: false` 打开，迁移/守卫完成后关闭；运行时连接再开启 `foreign_keys=ON`。规避 rc.5 的表重建 + CASCADE 静默删子表。
 
 ## 理由
 
@@ -44,6 +45,8 @@ B-03 v1.0 的结论是 `better-sqlite3` + 手写 SQL + 纯 SQL 迁移，并明�
 ## 后果
 
 - B-03 升 v2.0；字段字典、DDL、迁移、备份、并发、隐私全部重写。
+- Electron 锁 **42.11.18 或 45.2.2**；37.2.0–37.2.2 禁用；38/39 可用但会打 Node 22 的 experimental warning。
+- 迁移连接与运行时连接分离：迁移连接关外键，规避 rc.5 表重建 + CASCADE 静默删子表。
 - 所有查询必须过滤 `deleted_at IS NULL`；导出排除墓碑。
 - 墓碑分两阶段：5 秒内保留完整内容供撤销；之后清空内容字段，只留 key + 时间戳供同步；保留期后硬删除。
 - 同步是 v1.1；v2 schema 先落 `deleted_at` / `deleted_batch` / `setting` 表，避免二次迁移。
@@ -65,11 +68,21 @@ B-03 v1.0 的结论是 `better-sqlite3` + 手写 SQL + 纯 SQL 迁移，并明�
 
 ## 风险与验证
 
-P4 骨架第一项必须验证，验证结果回填 B-03 §15：
+**2026-11-04 已实测**（Windows，Electron 38/39/40/41/42/45，`drizzle-orm@1.0.0-rc.5` + `drizzle-kit@1.0.0-rc.5`）：
 
-1. Electron 主进程 `require('node:sqlite')` 是否可用；不可用则回退 `better-sqlite3`。
-2. `migrate()` 在 node:sqlite 下是同步还是异步、整批还是逐迁移事务、数据库存在未知迁移时的行为。
-3. `db.$client` 是否为 `DatabaseSync`、PRAGMA 是否只能走 `exec`、只读连接是否可用。
-4. `RETURNING`、`json_type`、部分索引在目标 SQLite 版本上是否可用。
+- 方案可行。推荐 **Electron 42.11.18 或 45.2.2**（Node 24.19/24.22，SQLite 3.53.3/3.53.4，`node:sqlite` 无 experimental warning）。38/39 可用但 Node 22 会打 warning；**37.2.0–37.2.2 不可用**；34 及更早没有 `node:sqlite`。
+- `node:sqlite` 在主进程与 `utilityProcess` 可用；renderer/preload 不可用，DB 操作留在主进程。
+- `migrate()` 同步；整批一个 deferred 事务；按目录名匹配；不校验 hash；库里有本地未知迁移时**忽略**——所以 B-03 §10.3 的守卫是必需的，不能省。
+- `db.$client === client`；事务 `behavior: 'immediate'` 可用；`.returning()`、`json_type`、部分索引、WAL、只读连接均验证通过。
+- CJS/ESM 都可；asar 内可读迁移；esbuild 会把 `node:sqlite` external。
 
-若 RC 在正式版前再改迁移目录格式，按 `drizzle-kit up` 升级并重跑迁移测试。
+**rc.5 的两个数据安全缺陷必须先规避**：
+
+1. **#5782/#6621**：表重建 + `ON DELETE CASCADE` 会静默删子表。规避：迁移连接用 `enableForeignKeyConstraints: false` 打开，迁移后关闭，再用运行时连接开外键；v1.1 也不用 CASCADE。
+2. **#6165**：TEXT 主键丢掉 `NOT NULL`，SQLite 允许重复 `NULL` 主键。规避：`setting.key` 初始迁移手工补 `NOT NULL`，CI 断言 `PRAGMA table_info(setting)`。
+
+其他已知项：#6531（部分索引冲突目标生成非法 SQL，不使用）、#5387（rspack/webpack 的 `entityKind`，用 esbuild/Rollup 或标记 side-effectful）。
+
+**本项目 P4 仍需复现**：锁 Electron 版本；用真实 schema 跑 generate + migrate；确认 `setting.key` 补丁；选 bundler 并确认 `node:sqlite` external。
+
+**回退方案**：若 rc.5 的迁移缺陷不可接受，回退 `drizzle-orm@0.45.4` + `better-sqlite3`（stable 线，无 node:sqlite），schema/迁移/同步设计不变；或保持 rc.5、换回 better-sqlite3。若 RC 在正式版前再改迁移目录格式，按 `drizzle-kit up` 升级并重跑迁移测试。

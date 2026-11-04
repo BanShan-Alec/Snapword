@@ -185,7 +185,11 @@ native/
 
 数据库使用 **Drizzle ORM**（`drizzle-orm@1.0.0-rc.5`）+ Node 内置 **`node:sqlite`**（`DatabaseSync`）同步 API；`src/main/db/schema.ts` 是 schema 唯一事实源，迁移 SQL 由 `drizzle-kit generate` 生成并提交。单条查询必须在 5ms 内完成。批量操作/导出走 worker，避免阻塞 UI。
 
-若 P4 验证发现 Electron 未暴露 `node:sqlite`，回退 `better-sqlite3`；schema、迁移、软删除与同步设计不变，只换驱动。
+**Electron 版本**：MVP 锁 **42.11.18 或 45.2.2**（Node 24.19/24.22，SQLite 3.53.3/3.53.4，`node:sqlite` 无 experimental warning）。38/39 可用但会打 Node 22 的 experimental warning；**禁止 37.2.0–37.2.2**（`node:sqlite` 缺失）；34 及更早没有 `node:sqlite`。
+
+**迁移连接与运行时连接分离**：迁移连接以 `enableForeignKeyConstraints: false` 打开，`migrate()` + 版本守卫后关闭；运行时连接再开 `foreign_keys=ON`。原因：rc.5 的整批迁移在一个事务里，`PRAGMA foreign_keys=OFF` 在事务内是 no-op，表重建 + `ON DELETE CASCADE` 会静默删子表（#5782/#6621）。
+
+若 P4 复现发现不可用，回退 `better-sqlite3`；schema、迁移、软删除与同步设计不变，只换驱动。
 
 ### 5.3 渲染进程
 
@@ -423,7 +427,8 @@ sequenceDiagram
 | Addon 拆分 | 一个 `.node`，两个 Rust crate | 同进程拆分无隔离收益；crate 层已能分离职责 |
 | 窗口技术 | Electron BrowserWindow + 原生圆点 | 卡片/主窗口复用 Web 技术；圆点需要 Win32 无激活置顶 |
 | 通信 | Electron MessagePort | 无需自建管道/帧格式；structured clone；主进程可直接守护 utility |
-| 数据库 | SQLite（Drizzle ORM + node:sqlite） | schema-as-code 单一事实源；迁移可 review；内置驱动少一个原生依赖；P4 验证不可用则回退 better-sqlite3 |
+| 数据库 | SQLite（Drizzle ORM + node:sqlite） | schema-as-code 单一事实源；迁移可 review；内置驱动少一个原生依赖；已实测可用，rc.5 缺陷有规避；回退 better-sqlite3 |
+| Electron 版本 | 42.11.18 / 45.2.2 | Node 24.19+，`node:sqlite` 无 experimental warning；37.2.0–37.2.2 禁用；38/39 可用但会告警 |
 | 删除 | 软删除 + 墓碑 | 5 秒真实撤销；同步可传播删除；硬删除无法跨设备 |
 | 同步（v1.1） | 每设备快照 JSON + 按记录 LWW | 无服务器/账号/云盘 API；不把 DB 文件放进云盘 |
 | 配置 | config.json + safeStorage + setting 表 | 密钥加密；可同步设置共用 DB 合并路径；损坏可恢复 |
