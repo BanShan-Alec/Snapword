@@ -1,0 +1,30 @@
+{
+  "name": "@app/main",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "main": "./dist/index.cjs",
+  "files": [
+    "dist/**",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@app/preload": "workspace:*",
+    "@app/renderer": "workspace:*",
+    "@app/shared": "workspace:*",
+    "@app/tsconfig": "workspace:*",
+    "electron-log": "^5.4.4",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

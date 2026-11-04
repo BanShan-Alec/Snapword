@@ -1,0 +1,12 @@
+{
+  "extends": "@app/tsconfig/base.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "noEmit": true
+  },
+  "include": ["**/*.ts"]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@app/shared",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./constants/*": "./src/constants/*.ts",
+    "./schemas/*": "./src/schemas/*.ts",
+    "./types/*": "./src/types/*.ts",
+    "./utils/*": "./src/utils/*.ts"
+  },
+  "devDependencies": {
+    "@app/tsconfig": "workspace:*",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

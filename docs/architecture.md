@@ -180,7 +180,7 @@ native/
 |---|---|
 | Electron main event loop | 窗口、托盘、热键、IPC、配置、请求编排、utility 守护 |
 | `worker_threads`（导出/批量删除） | 超过 50ms 的 DB 批量操作、CSV/JSON 导出 |
-| 异步 `fetch` | 翻译请求与流式读取；不阻塞主线程 |
+| Electron `net.fetch`（跟随系统代理） | 翻译请求与流式读取；不阻塞主线程 |
 | `safeStorage` | API Key 加解密（Windows DPAPI） |
 
 数据库使用 **Drizzle ORM**（`drizzle-orm@1.0.0-rc.5`）+ Node 内置 **`node:sqlite`**（`DatabaseSync`）同步 API；`src/main/db/schema.ts` 是 schema 唯一事实源，迁移 SQL 由 `drizzle-kit generate` 生成并提交。单条查询必须在 5ms 内完成。批量操作/导出走 worker，避免阻塞 UI。
@@ -433,7 +433,8 @@ sequenceDiagram
 | 同步（v1.1） | 每设备快照 JSON + 按记录 LWW | 无服务器/账号/云盘 API；不把 DB 文件放进云盘 |
 | 配置 | config.json + safeStorage + setting 表 | 密钥加密；可同步设置共用 DB 合并路径；损坏可恢复 |
 | 历史 | 内存 20 条 | 隐私；退出清空；两入口共用 |
-| 翻译 | 主进程异步 fetch | Key 只在主进程；流式转发给渲染 |
+| 翻译 | 主进程异步 fetch（Electron net.fetch，见「网络」行） | Key 只在主进程；流式转发给渲染 |
+| 网络 | Electron net.fetch | Chromium 网络栈自动跟随系统代理；不提供应用内代理设置，中转用户改 Base URL |
 | 渲染安全 | sandbox + contextIsolation | 最小权限；不暴露 Node |
 
 ---

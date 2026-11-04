@@ -11,6 +11,15 @@ release/
 *.msi
 *.nsis
 *.asar
+# 例外：build/ 是 electron-builder 配置与品牌图标目录，随仓提交
+!/build/
+!/build/**
+
+# 测试与工具产物
+playwright-report/
+test-results/
+*.tsbuildinfo
+.husky/_/
 
 # 宿主进程（C# / Rust）中间产物
 bin/

@@ -1,0 +1,82 @@
+import path from 'node:path';
+import { lingui } from '@lingui/vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { APP_IDENTITY } from '../../build/lib/app-identity.ts';
+import { findRepoRoot } from '../../build/lib/repo-paths.ts';
+import { appTitlePlugin } from './plugins/app-title.ts';
+import { startupShellInlinePlugin } from './plugins/startup-shell.ts';
+
+const currentDir = import.meta.dirname;
+const rootDir = findRepoRoot(currentDir);
+
+// https://vite.dev/config/
+export default defineConfig({
+  // 环境变量单一事实源：Monorepo 全局统一定义在根目录 .env，子包不设独立 .env
+  envDir: rootDir,
+  base: './',
+  plugins: [
+    tailwindcss(),
+    // React Compiler 走 OXC 移植版（oxc-transform-react），不引 Babel
+    react({ compiler: true }),
+    lingui({
+      configPath: path.resolve(currentDir, 'lingui.config.ts'),
+      cwd: currentDir,
+      macroTransform: true,
+    }),
+    // 开发态根路径自动重定向至 home 窗口入口，便于浏览器直接访问 dev server
+    {
+      name: 'html-entry-redirect',
+      configureServer(server) {
+        server.middlewares.use((req, _res, next) => {
+          if (req.url === '/' || req.url === '/index.html') {
+            req.url = '/src/entries/home/index.html';
+          }
+          next();
+        });
+      },
+    },
+    // 窗口标题占位符注入（dev/build 同一形态）：<title> 统一取根 productName
+    appTitlePlugin({ root: currentDir, appName: APP_IDENTITY.productName }),
+    // 启动壳占位符内联（dev/build 同一形态）
+    startupShellInlinePlugin({ root: currentDir }),
+  ],
+  // 路径别名单一事实源：根 tsconfig.json + Vite 官方原生 tsconfigPaths（零插件）
+  tsconfig: '../../tsconfig.json',
+  resolve: {
+    tsconfigPaths: true,
+  },
+  server: {
+    // port 从 scripts/dev.ts 的 config.rendererPort 注入
+    strictPort: true,
+    host: true,
+    hmr: {
+      overlay: false,
+    },
+  },
+  build: {
+    // 'hidden' 模式：.map 不进 asar（electron-builder '!**/*.map' 排除），杜绝源码泄露
+    sourcemap: 'hidden',
+    rollupOptions: {
+      input: {
+        home: path.resolve(currentDir, 'src/entries/home/index.html'),
+      },
+      output: {
+        chunkFileNames: 'assets/[name]-[hash].js',
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // 1. 最稳定核心运行时：React 核心包
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
+              return 'vendor-react';
+            }
+            // 2. UI 框架：Ant Design 及其样式/图标/底层 RC 库
+            if (/[\\/]node_modules[\\/](antd|@ant-design|rc-[a-z0-9-]+)[\\/]/.test(id)) {
+              return 'vendor-antd';
+            }
+          }
+        },
+      },
+    },
+  },
+});

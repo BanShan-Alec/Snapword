@@ -1,0 +1,95 @@
+/*
+ * 样式入口（home / updater 双入口共用）。
+ * 首行层序声明是 antd v6 + Tailwind v4 组合的秩序基石（paseo-antd-themes README
+ * 「Tailwind v4 + antd v6」同款配比）：theme < base < antd < components < utilities，
+ * 此后覆盖关系只看层、不看特异性与注入顺序。
+ * 配套：AppProviders 的 <StyleProvider layer> 把 cssinjs 注入的 antd 样式收进 @layer antd。
+ */
+@layer theme, base, antd, components, utilities;
+
+/* Tailwind v4：官方 Vite 插件驱动；source(none)+@source "../" 把扫描精确圈定为 src/ */
+@import "tailwindcss" source(none);
+/*
+ * 语义色桥接（C-05）：paseo-antd-themes 的 @theme inline 把 --color-* 映射到
+ * var(--paseo-*)；变量实体是包发布产物 —— :root 浅色（Claude Light），
+ * @media (prefers-color-scheme: dark) 与 .dark 深色（Paseo Dark），与 antd
+ * ConfigProvider 里两套 ThemeConfig 同一条 token 管线（单测校验一致）。
+ */
+@import "paseo-antd-themes/tailwind.css";
+@import "./tokens.css";
+@import "./base.css";
+
+@source "../";
+
+/*
+ * 暗色变体保持 v3 darkMode: 'class' 的 class 机制：useTheme 在 documentElement 上
+ * 同步 .dark 与 data-theme，深色下同一批 --paseo-* 变量随 .dark 切换（类命中时
+ * 胜过 media 查询），手动选深色不再依赖 OS 偏好。
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * 项目自留别名 → --paseo-* 变量（存量组件词汇表，新代码优先用包的规范名：
+ * bg-surface-1 / text-text-secondary / border-border 等，见 docs/design-tokens.md）。
+ * inline 必须带：映射值是 var() 引用，工具类需内联引用本体而非再包一层主题变量。
+ * 不写 fallback：颜色链路断了应当显形（透明），而不是退回另一套品牌色。
+ */
+@theme inline {
+  --color-background: var(--paseo-bg-layout);
+  --color-background-container: var(--paseo-bg-container);
+  --color-background-elevated: var(--paseo-bg-elevated);
+  --color-foreground: var(--paseo-text);
+  --color-foreground-secondary: var(--paseo-text-secondary);
+  --color-foreground-muted: var(--paseo-text-tertiary);
+  --color-on-primary: var(--paseo-text-light-solid);
+  /* 旧名 --color-danger 的延续；包的规范名是 --color-error */
+  --color-danger: var(--paseo-error);
+}
+
+@layer components {
+  /* 项目卡片：只补 antd Card 没有的投影；描边与底色交给主题令牌 */
+  .app-card {
+    background: var(--paseo-bg-container);
+    box-shadow: var(--paseo-shadow-raised);
+    transition: box-shadow 200ms ease;
+  }
+
+  .app-card-hover:hover {
+    box-shadow: var(--paseo-shadow-overlay);
+  }
+
+  .usb-scroll-fade {
+    position: absolute;
+    inset-inline: 0;
+    height: 1.25rem;
+    pointer-events: none;
+    transition: opacity 120ms linear;
+  }
+
+  .usb-scroll-fade-top {
+    top: 0;
+    background: linear-gradient(to bottom, var(--paseo-bg-container), transparent);
+  }
+
+  .usb-scroll-fade-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, var(--paseo-bg-container), transparent);
+  }
+
+  /*
+   * 主窗口页面切换（interaction-spec-v2 §6.2）：不做整页位移动画，
+   * 120ms 交叉淡入；一次性动画，RC-16 禁止的持续动画不涉及。
+   */
+  .app-page {
+    animation: app-page-fade 120ms ease-out;
+  }
+
+  @keyframes app-page-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
