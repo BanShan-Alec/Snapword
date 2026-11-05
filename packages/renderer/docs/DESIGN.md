@@ -1,4 +1,4 @@
-# 设计令牌（C-05 视觉规范）
+# DESIGN.md — 设计令牌与视觉规范（C-05）
 
 > 状态：已落地（P4 骨架）。本文件替代视觉稿，作为颜色 / 字号 / 间距的单一事实源清单。
 > 关联：docs/PRD-v2.md RC-16、RM-13；docs/interaction-spec-v2.md §3.6、§6.2；docs/progress-checklist.md §6 C-05。

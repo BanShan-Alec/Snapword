@@ -1,5 +1,6 @@
 # Snapword 发版流水线：本地 changelogen 提升版本并推送 v* tag 后自动触发，Windows-only 构建并发布 GitHub Release。
 # CI 内不提升版本号——package.json 的版本由 changelogen 的发版提交保证与 tag 一致。
+# Release 标题 = package.json 的 productName + tag；正文首行给 CHANGELOG 导航，其余由 GitHub 按本版合并的 PR 自动生成。
 # 手动 dispatch 仅构建不发布，用于验证构建管线。
 # Sentry：SENTRY_DSN 注入运行时 DSN（空则生产 Sentry 关闭）；SENTRY_AUTH_TOKEN 存在时
 #          Vite 插件才上传 SourceMap，无 token 自动跳过，不影响构建。
@@ -51,6 +52,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Resolve release identity
+        id: identity
+        run: |
+          echo "product_name=$(node -p "require('./package.json').productName")" >> "$GITHUB_OUTPUT"
+
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -60,8 +72,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          # 中文标题；正文首行给 CHANGELOG 导航（锚定 tag 版本），generate_release_notes 会把 PR 列表追加在其后
-          name: ${{ github.ref_name }} 版本发布
+          # 标题 = productName + tag；正文首行给 CHANGELOG 导航，其余交给 GitHub 按合并的 PR 生成
+          name: ${{ steps.identity.outputs.product_name }} ${{ github.ref_name }}
           body: |
             📖 完整变更日志见 [CHANGELOG.md](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md)
           files: release-artifacts/*

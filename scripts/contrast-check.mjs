@@ -6,7 +6,7 @@
  * 与 ConfigProvider 里两套 ThemeConfig 同一条 token 管线（renderer 单测校验同源）。
  *
  * 运行：node scripts/contrast-check.mjs
- * 输出：Markdown 表（粘贴进 docs/design-tokens.md）；正文/次要档低于 4.5:1 时退出码 1。
+ * 输出：Markdown 表（粘贴进 packages/renderer/docs/DESIGN.md）；正文/次要档低于 4.5:1 时退出码 1。
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -20,7 +20,7 @@ const cssPath = path.join(
 
 // 私有常量：档位 → WCAG 门槛（RC-16 文字 4.5 / 图形 3；三级在侧栏等浮层面对应包规则 4.0）。
 // gate=false 的组合是「按规则禁用」的知情记录：深色下 primary 本体是填充色，
-// 前景/图形必须用 primary-text 族（与 link 同值），否则低于 3:1（见 docs/design-tokens.md）。
+// 前景/图形必须用 primary-text 族（与 link 同值），否则低于 3:1（见 packages/renderer/docs/DESIGN.md）。
 const COMBOS = [
   { role: '正文', fg: 'text', bg: 'bg-layout', surface: '页面底', min: 4.5, gate: true },
   { role: '正文', fg: 'text', bg: 'bg-container', surface: '容器', min: 4.5, gate: true },

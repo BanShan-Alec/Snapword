@@ -2,8 +2,8 @@ import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { PagePlaceholder } from '@/components/layout/PagePlaceholder';
 
-/** 帮助与诊断页占位（RM-08 最小形态）：自检 / 日志 / 故障排查后续接入。 */
-export const HelpPage = () => {
+/** 帮助与诊断域占位（RM-08 最小形态）：自检 / 日志 / 故障排查后续接入。 */
+export const HelpFeature = () => {
   useLingui();
   return (
     <PagePlaceholder

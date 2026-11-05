@@ -2,9 +2,13 @@
 
 > 划词即译的 Windows 桌面工具。选中英文 → 点一下 → 译文出现在屏幕上，不切窗口、不打断阅读。
 
-**当前状态：设计阶段（Design）+ UIA 技术验证（D-1 通过）+ 契约层完成。尚无产品代码。**
+[![CI](https://github.com/BanShan-Alec/Snapword/actions/workflows/ci.yml/badge.svg)](https://github.com/BanShan-Alec/Snapword/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24.0.0-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 
-本仓库目前只有产品与交互设计文档、4 份技术契约，以及 UIA 验证报告。三窗口交互基线（圆点 / 翻译卡片 / 主窗口）的 v2.0 决策已确认；D-1 已在 Chrome/Edge 156 上通过（30/30，P95 16.2/24.2ms，Q-6 93.3%，同源 iframe 10/10）。Q-2 全屏置顶、Q-7 Chrome <138、多显示器第二屏、跨域 iframe、canvas/PDF 等**暂不支持，不再验证**；产品代码尚未开始。
+**当前状态：P4 工程骨架完成，进入 P5 主链路开发。**
+
+产品与交互设计、4 份阻塞契约（架构 / IPC / DB / 提示词）与 UIA 技术验证（D-1 30/30，P95 16.2/24.2ms，Q-6 93.3%，同源 iframe 10/10）均已完成；P4 已落地 temp5 基座、antd v6 双主题、双语 i18n、取词链路与 DB 第一片。下一步按 v2.0 交互基线开发主链路。
 
 ---
 
@@ -25,18 +29,67 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | 朗读       | 系统 TTS 兜底，可选配云 TTS                                                                                          |
 | 隐私       | 无服务器、无账号；默认无统计上报，生产构建可选 Sentry 崩溃上报（需显式配置 DSN）；选中内容只发往**你自己配置的**接口 |
 
-## 现在有什么 / 没有什么
+## 当前进度
 
-| 已完成                                           | 未开始                  |
-| ------------------------------------------------ | ----------------------- |
-| 产品需求文档（PRD v1.1.1，53 条编号需求）        | 任何产品代码            |
-| 三窗口交互需求（PRD v2.0：圆点 / 卡片 / 主窗口） | 工程骨架、主链路开发    |
-| 三窗口交互规格（时序预算 / 状态机 / 边界清单）   | 视觉设计、图标          |
-| 4 份阻塞契约（架构 / IPC / DB / 提示词）         | 安装包、发布流程        |
-| 沉浸式翻译本地版交互调研（1.34.4）               | B-05~B-12 质量/发布文档 |
-| 关键决策与取舍记录                               | —                       |
-| 已知限制清单                                     | —                       |
-| UIA 验证报告（Q-1、D-1、Q-6、iframe 完成）       | —                       |
+| 阶段           | 状态                                                                     |
+| -------------- | ------------------------------------------------------------------------ |
+| 产品与交互设计 | ✅ PRD v2.0 三窗口基线（圆点 / 翻译卡片 / 主窗口）+ 交互规格             |
+| 技术契约       | ✅ 架构（B-01）、IPC（B-02）、DB schema v2.0（B-03）、提示词（B-04）     |
+| UIA 技术验证   | ✅ D-1 30/30、Q-6 93.3%、同源 iframe 10/10；Q-2 / Q-7 / 多屏等明确不支持 |
+| P4 工程骨架    | ✅ temp5 基座 + antd v6 双主题 + 双语 i18n + 取词链路 + DB 第一片        |
+| P5 主链路      | ⬜ 下一阶段                                                              |
+| 安装包 / 发布  | ⬜ 未开始（发版流程见 [.github/CICD.md](.github/CICD.md)）               |
+
+## 仓库架构
+
+```text
+snapword/
+├── packages/
+│   ├── main/          # 主进程：ModuleRunner + Controller/Service + 取词 / DB / 窗口
+│   ├── preload/       # 安全桥：apiBridge 封闭暴露面 + invokeTraced 链路追踪
+│   ├── renderer/      # 渲染进程：React 19 + Feature 驱动 + 双主题 + LinguiJS
+│   ├── shared/        # 跨进程契约层：IPC_CHANNELS / Result<T> / zod schemas
+│   ├── pr-review/     # PR 生命周期与 AI 审查看板 CLI
+│   └── tsconfig/      # base / node / react 编译配置继承包
+├── .agents/           # AI 横切规则与 pr-review skill
+├── .config/           # Biome / commitlint / changelogen / Playwright / Vitest
+├── .github/           # CI / CodeQL / OpenCodeReview / Release
+├── build/             # electron-builder + Sentry 构建配置
+├── docs/              # PRD / 交互规格 / 技术契约 / ADR / 研究
+├── drizzle/           # Drizzle 迁移
+├── e2e/               # Playwright 桌面端 E2E
+└── scripts/           # dev / build / verify / contrast-check
+```
+
+各业务包的职责、README 与规则文件都在 `packages/<name>/` 下，AI 协作者从根 [AGENTS.md](AGENTS.md) 的任务路由进入。
+
+## 快速开始
+
+| 依赖    | 版本要求                         |
+| :------ | :------------------------------- |
+| Node.js | >= 24.0.0                        |
+| pnpm    | ^12.0.0（仓库锁定 pnpm@12.15.0） |
+
+```bash
+pnpm install   # 安装工作区依赖（.npmrc 已内置 npmmirror 镜像加速）
+pnpm dev       # 开发模式：Vite DevServer + Electron 双进程热重载
+```
+
+| 命令                     | 用途                                                            |
+| :----------------------- | :-------------------------------------------------------------- |
+| `pnpm dev`               | 开发模式（Vite + Electron 热重载）                              |
+| `pnpm preview`           | 生产预览（构建后以生产形态启动；`pnpm start` 为等价别名）       |
+| `pnpm build:win`         | Windows 打包（NSIS 安装包 + portable）                          |
+| `pnpm build:unpack`      | 仅生成未打包目录，用于验证产物                                  |
+| `pnpm test`              | Vitest 单元测试（`pnpm test:pr-review` 单独跑 pr-review 包）    |
+| `pnpm test:e2e`          | Playwright 桌面端 E2E                                           |
+| `pnpm typecheck`         | TypeScript 全工作区类型检查                                     |
+| `pnpm lint` / `lint:fix` | Biome 检查 / 自动修复                                           |
+| `pnpm i18n:extract`      | 提取中文词条到 PO 字典（改文案后执行）                          |
+| `pnpm i18n:check`        | 校验英译完整性（CI 门禁）                                       |
+| `pnpm pr-review <cmd>`   | PR 生命周期：`create` / `status` / `pull` / `trigger` / `merge` |
+
+完整命令清单见 [CONTRIBUTING.md](CONTRIBUTING.md) 与根 `package.json` 的 `scripts`。
 
 ## 文档
 
@@ -47,8 +100,9 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | [docs/architecture.md](docs/architecture.md)                                                                         | **B-01 技术架构**：进程拓扑、Native Addon 拆分、线程模型、启动/退出、崩溃恢复、窗口与数据所有权       |
 | [docs/ipc-contract.md](docs/ipc-contract.md)                                                                         | **B-02 IPC 契约**：消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                                  |
 | [docs/data-model.md](docs/data-model.md)                                                                             | **B-03 数据库 schema v2.0**：Drizzle schema-as-code、软删除/撤销、同步预留、索引、迁移/损坏恢复       |
-| [docs/adr/](docs/adr/)                                                                                               | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite                                    |
+| [docs/adr/](docs/adr/)                                                                                               | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite、Sentry 生产启用                   |
 | [docs/prompt-contract.md](docs/prompt-contract.md)                                                                   | **B-04 提示词契约**：两条提示词全文、JSON schema、占位符、重试、模型参数                              |
+| [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                 | **视觉规范**：设计令牌、双主题、字号 / 间距、对比度规则                                               |
 | [docs/PRD.md](docs/PRD.md)                                                                                           | 历史基线 v1.1.1：背景、范围、取词方案、53 条功能需求、异常、风险、AI 能力契约                         |
 | [docs/interaction-spec.md](docs/interaction-spec.md)                                                                 | 历史基线 v1.0：气泡 + 侧边栏的逐帧时序（已被 v2 取代）                                                |
 | [docs/research/immersive-translate-interaction-2026-11.md](docs/research/immersive-translate-interaction-2026-11.md) | 本机沉浸式翻译 1.34.4 的三窗口交互调研：圆点尺寸、卡片布局、拖拽/保持打开、参考交互取舍               |
@@ -101,13 +155,9 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 
 数据库不存完整原文段落、API Key、Base URL 或日志正文；导出与同步文件同样不包含这些内容。同步默认不同步语境片段，可在设置中开启。
 
-## 第一条任务
+## 贡献
 
-**不是写界面，是先做完技术验证与契约。**
-
-D-1 已在 Chrome/Edge 156 上通过：3 类页面 × 10 次共 30 次取词，成功率 100%，P95 16.2/24.2ms，零剪贴板写入；Q-6 `RangeFromPoint` 93.3%；同源 iframe 10/10。Q-1 也已确认 Paragraph 不退化成整页。详见 [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md)。
-
-Q-2、Q-7、多显示器第二屏、跨域 iframe、canvas/PDF 等已决定**暂不支持、不再验证**。4 份阻塞契约已完成：技术架构、IPC、DB schema、提示词。下一步是**工程骨架**（Electron main + utilityProcess + Native Addon 空链路），再按 v2.0 落地界面。
+欢迎 PR。动手前请读 [CONTRIBUTING.md](CONTRIBUTING.md)；提交信息遵循 Conventional Commits，且 subject 必须包含简体中文（commitlint + husky 自动校验）。使用 AI 协作者请先读 [AGENTS.md](AGENTS.md)。文档与代码不一致时以代码为准，并欢迎提 PR 修正。
 
 ## License
 

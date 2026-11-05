@@ -24,7 +24,7 @@
 
 ```bash
 # ⚠️ 关键门禁：根目录 `pnpm test` 在 vitest.config.ts 中排除了 packages/pr-review/**
-# 修改本包代码后，必须显式单独执行专用单测命令（覆盖 44 个单元测试）：
+# 修改本包代码后，必须显式单独执行专用单测命令：
 pnpm test:pr-review
 
 # 类型与代码风格校验（全仓门禁）：
