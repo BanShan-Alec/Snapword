@@ -2,8 +2,8 @@ import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { PagePlaceholder } from '@/components/layout/PagePlaceholder';
 
-/** 生词本页占位（RM-05 最小形态）：收藏 / 搜索 / 导出随链路接入。 */
-export const VocabularyPage = () => {
+/** 生词本域占位（RM-05 最小形态）：收藏 / 搜索 / 导出随链路接入。 */
+export const VocabularyFeature = () => {
   useLingui();
   return (
     <PagePlaceholder

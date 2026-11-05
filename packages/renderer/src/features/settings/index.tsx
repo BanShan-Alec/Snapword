@@ -5,12 +5,12 @@ import { Card, Segmented } from 'antd';
 import { type ThemeMode, useAppStore } from '@/stores/useAppStore';
 
 /**
- * 设置页占位（C-05 最小形态）：主题与界面语言真实生效（RC-16 / RM-13），
+ * 设置域占位（C-05 最小形态）：主题与界面语言真实生效（RC-16 / RM-13），
  * 当前选择存 zustand 占位 store，P5 配置层（config.json + safeStorage）落地后
  * 迁移到 setting 表并持久化。其余设置分组（API / 取词 / 卡片 / 数据 / 系统 / 朗读）
  * 随配置层接入。
  */
-export const SettingsPage = () => {
+export const SettingsFeature = () => {
   useLingui();
   const themeMode = useAppStore((state) => state.themeMode);
   const setThemeMode = useAppStore((state) => state.setThemeMode);

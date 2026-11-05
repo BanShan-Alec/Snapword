@@ -7,12 +7,12 @@ import { useAppStore } from '@/stores/useAppStore';
 const MAX_TRANSLATE_CHARS = 20_000;
 
 /**
- * 翻译页占位（C-05 主窗口外壳，RM-03 最小形态）：
+ * 翻译域占位（C-05 主窗口外壳，RM-03 最小形态）：
  * 输入区 / 翻译按钮 / 结果区 / 最近的骨架与文案先就位；
  * 翻译链路与共享历史未接入，点击「翻译」仅提示占位（不发请求、不写历史）。
- * 输入草稿放共享 store：页面切换卸载后不丢（RM-03）。
+ * 输入草稿放共享 store：域切换卸载后不丢（RM-03）。
  */
-export const TranslatePage = () => {
+export const TranslateFeature = () => {
   useLingui();
   const value = useAppStore((state) => state.translateInput);
   const setValue = useAppStore((state) => state.setTranslateInput);
