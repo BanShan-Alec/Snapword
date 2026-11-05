@@ -114,7 +114,7 @@ _CodeQL_ 与 _OpenCodeReview_（信息性）：安全漏洞与 AI 增量代码�
 - **触发**：推送 `v*` tag（由 `pnpm release:*` 产生），或手动 `workflow_dispatch`（仅构建、不发布）。
 - **构建**：`windows-latest` 上执行 `pnpm run build:win -- -p never`，产物为 NSIS 安装包与 portable 免安装包。
 - **发布**：tag 触发时把 `dist/*.exe`、`*.yml`、`*.blockmap` 上传到 GitHub Releases。
-- **Release 正文**：标题为 `<productName> <tag>`（productName 读根 `package.json`），正文由 GitHub `generate_release_notes` 按本版合并的 PR 自动生成；正文规范见 [CONTRIBUTING.md §四.3](../CONTRIBUTING.md)。
+- **Release 正文**：标题为 `<productName> <tag>`（productName 读根 `package.json`），正文首行为 CHANGELOG 导航链接，其余由 GitHub `generate_release_notes` 按本版合并的 PR 自动生成；正文规范见 [CONTRIBUTING.md §四.3](../CONTRIBUTING.md)。
 - **不再有 docs 部署**：`packages/docs` 已移除，`.github/workflows/docs-deploy.yml` 不随仓库恢复。
 
 ---

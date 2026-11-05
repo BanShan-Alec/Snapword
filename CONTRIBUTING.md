@@ -151,7 +151,7 @@ main 受分支保护禁直推，发版走 PR 形态：
 
 ### 3. GitHub Release 正文
 
-Release 正文由 GitHub 按本版合并的 PR 自动生成（`generate_release_notes`），标题为 `<productName> <tag>`，productName 读根 `package.json`（与安装包、快捷方式名同源）。
+Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合并的 PR 自动生成（`generate_release_notes`）；标题为 `<productName> <tag>`，productName 读根 `package.json`（与安装包、快捷方式名同源）。
 
 - **PR 标题就是 release 条目**：写成用户能看懂的一句话（见 §二.4），这是正文质量唯一的杠杆。
 - **破坏性变更**：PR 标题加 `!`，迁移步骤写进 PR 正文——release 页只显示标题，细节靠条目里的 PR 链接。
