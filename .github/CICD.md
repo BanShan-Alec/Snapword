@@ -95,6 +95,8 @@ GitHub Actions 流水线（`.github/workflows/ci.yml`）包含四个并行 job�
 - **`test`**（**Required**）：Vitest 单元测试（`ubuntu-latest`）。
 - **`e2e`**（**Required**）：Playwright + Electron 端到端测试（`windows-latest`，含 `pnpm build` 与 `install-electron`）。
 
+**触发与资源控制**：只在 PR 指向 `main`、或 `main` 收到推送时运行；`paths` 过滤为 `packages/**`、`.github/**`、`pnpm-lock.yaml`、`package.json`、`pnpm-workspace.yaml`、`tsconfig.json`、`.config/**`、`scripts/**`、`build/**`（纯文档变更不跑 CI）。同分支并发任务 `cancel-in-progress: true`；每个 job `timeout-minutes: 30`。
+
 _CodeQL_ 与 _OpenCodeReview_（信息性）：安全漏洞与 AI 增量代码审查（详见 [packages/pr-review/README.md](../packages/pr-review/README.md)）。新开 PR 自动审查；后续提交可在 PR 评论回复 `/review` 手动触发增量复查，不阻塞合入。
 
 分支保护要求所有变更经 PR、squash 合并、以上四个 check 全绿才可合入——`main` 上每个提交都对应一个完整 PR，回滚与 changelog 都以 PR 为单位。
