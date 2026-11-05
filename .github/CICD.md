@@ -8,9 +8,9 @@
 
 1. **“提 PR / 走 PR 流程”严格终止于创建 PR**：
    - 当用户发出“提 PR”、“提交代码并建 PR”、“走 PR 流程”等指令时，AI 的任务**严格终止于成功执行 `pnpm pr-review create` 并向用户提供 PR 网页链接**。
-   - 🛑 **严禁擅自执行 `pnpm pr-review merge`**！合并主分支属于不可逆变更，决策权完全属于人类。
+   - 🛑 **严禁擅自执行 `pnpm pr-review merge`**！合并主分支属于不可逆生产环境变更，决策权完全属于人类。
 2. **合并命令的唯一触发前提**：
-   - 只有当用户发出**显式、单独的合并指令**（例如：“确认合并”、“帮我把 PR 合并了”）时，AI 才可以协助执行 `pnpm pr-review merge`。
+   - 只有当用户在对话中发出**显式、单独的合并指令**（例如：“确认合并”、“帮我把 PR 合并了”）时，AI 才可以协助执行 `pnpm pr-review merge`。
    - `@app/pr-review` 已内置非交互终端防护与门禁等待校验机制。
 3. **严禁擅自发版**：
    - 严禁自主执行 `pnpm release:*` 或向远端推送 release tag。发版必须由人类明确下达指令。
@@ -23,7 +23,7 @@
 
 ```mermaid
 flowchart TD
-  A["本地功能开发 (分支: <type>/<topic>)"] --> B["Step 1: 本地质量门禁自检<br/>lint + typecheck + test"]
+  A["本地功能开发 (分支: <type>/<topic>)"] --> B["Step 1: 本地质量门禁自检<br/>lint + typecheck + test + test:e2e"]
   B --> C["Step 2: 规范提交代码<br/>Conventional Commit + 中文说明"]
   C --> D["Step 3: 创建 Pull Request<br/>pnpm pr-review create (推流 + 自动生成 PR)"]
   D --> E["🛑 AI 任务终止点<br/>向用户汇报 PR 链接，等待人类 Review"]
@@ -54,6 +54,8 @@ pnpm test:e2e    # Playwright + Electron 端到端测试（仅 Windows）
 
 ### Step 3: 创建 Pull Request（AI 终止点 🛑）
 
+运行一键提 PR 命令：
+
 ```bash
 pnpm pr-review create
 ```
@@ -62,6 +64,8 @@ pnpm pr-review create
 - **AI 动作要求**：命令执行完成后**立即停步**，将生成的 PR 链接回复给用户，提醒用户审查。**严禁继续执行合并命令！**
 
 ### Step 4: 合并 PR（仅当人类显式授权时）
+
+只有在用户明确确认并下达合并指令后，方可协助执行：
 
 ```bash
 pnpm pr-review status          # 查看当前 PR 的门禁状态
@@ -110,6 +114,7 @@ _CodeQL_ 与 _OpenCodeReview_（信息性）：安全漏洞与 AI 增量代码�
 - **触发**：推送 `v*` tag（由 `pnpm release:*` 产生），或手动 `workflow_dispatch`（仅构建、不发布）。
 - **构建**：`windows-latest` 上执行 `pnpm run build:win -- -p never`，产物为 NSIS 安装包与 portable 免安装包。
 - **发布**：tag 触发时把 `dist/*.exe`、`*.yml`、`*.blockmap` 上传到 GitHub Releases。
+- **Release 正文**：标题为 `<productName> <tag>`（productName 读根 `package.json`），正文由 GitHub `generate_release_notes` 按本版合并的 PR 自动生成；正文规范见 [CONTRIBUTING.md §四.3](../CONTRIBUTING.md)。
 - **不再有 docs 部署**：`packages/docs` 已移除，`.github/workflows/docs-deploy.yml` 不随仓库恢复。
 
 ---
@@ -135,5 +140,6 @@ _CodeQL_ 与 _OpenCodeReview_（信息性）：安全漏洞与 AI 增量代码�
 ## 📌 6. 与其他文档的关系
 
 - PR 工具链契约唯一真源：[.agents/skills/pr-review/SKILL.md](../.agents/skills/pr-review/SKILL.md)
+- 工程规范 / Commit / 发版正文：[CONTRIBUTING.md](../CONTRIBUTING.md)
 - 落盘日志规范：[.agents/rules/logging-specification.md](../.agents/rules/logging-specification.md)
 - Sentry 生产启用决策：[docs/adr/0004-sentry-production-optin.md](../docs/adr/0004-sentry-production-optin.md)

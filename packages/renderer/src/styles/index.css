@@ -32,7 +32,7 @@
 
 /*
  * 项目自留别名 → --paseo-* 变量（存量组件词汇表，新代码优先用包的规范名：
- * bg-surface-1 / text-text-secondary / border-border 等，见 docs/design-tokens.md）。
+ * bg-surface-1 / text-text-secondary / border-border 等，见 packages/renderer/docs/DESIGN.md）。
  * inline 必须带：映射值是 var() 引用，工具类需内联引用本体而非再包一层主题变量。
  * 不写 fallback：颜色链路断了应当显形（透明），而不是退回另一套品牌色。
  */

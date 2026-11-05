@@ -1,3 +1,6 @@
+<!-- 标题即 Release 正文条目:写成用户能看懂的一句话,一事一 PR -->
+<!-- Title becomes a release-note bullet: one user-readable sentence, one concern per PR -->
+
 ## 意图 / Intent
 
 <!-- 为什么改:一句话动机;关联 issue 用 #编号 -->
