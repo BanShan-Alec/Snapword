@@ -10,19 +10,19 @@
 
 ## 1. 传输与消息格式
 
-| 项 | 约定 |
-|---|---|
-| 传输 | Electron `utilityProcess` 的父子消息通道 |
-| 创建 | 主进程 `utilityProcess.fork('capture-service.js', [], { serviceName: 'snapword-capture' })` |
-| 发送 | 主进程 `child.postMessage(message)`；取词服务 `process.parentPort.postMessage(message)` |
-| 接收 | 主进程 `child.on('message', ...)`；取词服务 `process.parentPort.on('message', ...)` |
-| 序列化 | Electron structured clone；直接传 JS 对象，**不传 JSON 字符串** |
-| 最大消息 | 1 MiB（序列化后）；超限主进程拒绝并记 `PayloadTooLarge` |
-| 协议版本 | `protocolVersion: 1`；每条消息必带 |
-| 心跳 | 取词服务每 5s 发 `service_status`；主进程 12s 未收到视为服务死亡 |
-| 连接超时 | `fork` 后 5s 内必须 `hello`；否则 `kill()` 并重启 |
-| 请求超时 | 主进程→取词服务的请求默认 1s；`capture_current` 用 500ms；`diagnose` 2s |
-| 关闭 | 主进程发 `shutdown`，取词服务回 `shutdown_ack` 后退出；1s 未回则 `kill()` |
+| 项       | 约定                                                                                        |
+| -------- | ------------------------------------------------------------------------------------------- |
+| 传输     | Electron `utilityProcess` 的父子消息通道                                                    |
+| 创建     | 主进程 `utilityProcess.fork('capture-service.js', [], { serviceName: 'snapword-capture' })` |
+| 发送     | 主进程 `child.postMessage(message)`；取词服务 `process.parentPort.postMessage(message)`     |
+| 接收     | 主进程 `child.on('message', ...)`；取词服务 `process.parentPort.on('message', ...)`         |
+| 序列化   | Electron structured clone；直接传 JS 对象，**不传 JSON 字符串**                             |
+| 最大消息 | 1 MiB（序列化后）；超限主进程拒绝并记 `PayloadTooLarge`                                     |
+| 协议版本 | `protocolVersion: 1`；每条消息必带                                                          |
+| 心跳     | 取词服务每 5s 发 `service_status`；主进程 12s 未收到视为服务死亡                            |
+| 连接超时 | `fork` 后 5s 内必须 `hello`；否则 `kill()` 并重启                                           |
+| 请求超时 | 主进程→取词服务的请求默认 1s；`capture_current` 用 500ms；`diagnose` 2s                     |
+| 关闭     | 主进程发 `shutdown`，取词服务回 `shutdown_ack` 后退出；1s 未回则 `kill()`                   |
 
 **为什么用 utilityProcess 消息通道**：
 
@@ -72,13 +72,13 @@
 
 ### 2.3 文本与长度上限
 
-| 字段 | 上限 | 处理 |
-|---|---:|---|
-| `text` | 20,000 字符 | 超出截断，`textTruncated=true` |
-| `paragraph` | 2,000 字符 | 超出截断，`paragraphTruncated=true` |
-| `windowTitle` | 200 字符 | 超出截断 |
-| `processName` | 64 字符 | 超出截断 |
-| `message`（错误） | 500 字符 | 不得包含选中原文 |
+| 字段              |        上限 | 处理                                |
+| ----------------- | ----------: | ----------------------------------- |
+| `text`            | 20,000 字符 | 超出截断，`textTruncated=true`      |
+| `paragraph`       |  2,000 字符 | 超出截断，`paragraphTruncated=true` |
+| `windowTitle`     |    200 字符 | 超出截断                            |
+| `processName`     |     64 字符 | 超出截断                            |
+| `message`（错误） |    500 字符 | 不得包含选中原文                    |
 
 - `text` 必须 `trim()` 后非空；内部换行保留。
 - 禁止在 `message` / 日志中携带 `text` / `paragraph`。
@@ -186,26 +186,26 @@ sequenceDiagram
 
 ## 4. 消息目录
 
-| 消息 | 方向 | 类型 | 触发 | 失败处理 |
-|---|---|---|---|---|
-| `hello` | 服务→主 | 事件 | 服务加载 addon 后 | 5s 未收到 → kill 重启 |
-| `hello_ack` | 主→服务 | 响应 | 收到 hello | 服务 5s 未收到 → 退出 |
-| `config_update` | 主→服务 | 请求 | 设置变更 | 超时 1s → 保留旧配置并提示 |
-| `config_ack` | 服务→主 | 响应 | 配置应用成功 | — |
-| `config_error` | 服务→主 | 响应 | 配置无效 | 设置页内联错误；旧配置继续 |
-| `capture_current` | 主→服务 | 请求 | Alt+D / 诊断 | 500ms 超时 → 卡片错误 |
-| `capture_result` | 服务→主 | 响应 | 取词成功 | 主进程校验后打开卡片 |
-| `capture_error` | 服务→主 | 响应/事件 | 取词失败 | 卡片错误态 / 托盘提示 |
-| `dot_clicked` | 服务→主 | 事件 | 点击圆点 | 主进程校验后打开卡片 |
-| `dot_hidden` | 服务→主 | 事件 | 圆点消失 | 仅诊断/状态同步 |
-| `foreground_changed` | 服务→主 | 事件 | 前台窗口变化 | 主进程关闭普通卡片 |
-| `service_status` | 服务→主 | 事件 | 每 5s / 状态变化 | 12s 缺失 → 判定服务死亡 |
-| `diagnose` | 主→服务 | 请求 | 诊断页 | 2s 超时 → 显示未知 |
-| `diagnose_result` | 服务→主 | 响应 | 诊断完成 | — |
-| `hide_dot` | 主→服务 | 命令 | 卡片打开 / 应用切换 | 失败忽略（服务会自行隐藏） |
-| `shutdown` | 主→服务 | 命令 | 退出应用 | 1s 未回 → `kill()` |
-| `shutdown_ack` | 服务→主 | 响应 | 收到 shutdown | — |
-| `error` | 双向 | 事件 | 协议/内部错误 | 记录并断开/降级 |
+| 消息                 | 方向    | 类型      | 触发                | 失败处理                   |
+| -------------------- | ------- | --------- | ------------------- | -------------------------- |
+| `hello`              | 服务→主 | 事件      | 服务加载 addon 后   | 5s 未收到 → kill 重启      |
+| `hello_ack`          | 主→服务 | 响应      | 收到 hello          | 服务 5s 未收到 → 退出      |
+| `config_update`      | 主→服务 | 请求      | 设置变更            | 超时 1s → 保留旧配置并提示 |
+| `config_ack`         | 服务→主 | 响应      | 配置应用成功        | —                          |
+| `config_error`       | 服务→主 | 响应      | 配置无效            | 设置页内联错误；旧配置继续 |
+| `capture_current`    | 主→服务 | 请求      | Alt+D / 诊断        | 500ms 超时 → 卡片错误      |
+| `capture_result`     | 服务→主 | 响应      | 取词成功            | 主进程校验后打开卡片       |
+| `capture_error`      | 服务→主 | 响应/事件 | 取词失败            | 卡片错误态 / 托盘提示      |
+| `dot_clicked`        | 服务→主 | 事件      | 点击圆点            | 主进程校验后打开卡片       |
+| `dot_hidden`         | 服务→主 | 事件      | 圆点消失            | 仅诊断/状态同步            |
+| `foreground_changed` | 服务→主 | 事件      | 前台窗口变化        | 主进程关闭普通卡片         |
+| `service_status`     | 服务→主 | 事件      | 每 5s / 状态变化    | 12s 缺失 → 判定服务死亡    |
+| `diagnose`           | 主→服务 | 请求      | 诊断页              | 2s 超时 → 显示未知         |
+| `diagnose_result`    | 服务→主 | 响应      | 诊断完成            | —                          |
+| `hide_dot`           | 主→服务 | 命令      | 卡片打开 / 应用切换 | 失败忽略（服务会自行隐藏） |
+| `shutdown`           | 主→服务 | 命令      | 退出应用            | 1s 未回 → `kill()`         |
+| `shutdown_ack`       | 服务→主 | 响应      | 收到 shutdown       | —                          |
+| `error`              | 双向    | 事件      | 协议/内部错误       | 记录并断开/降级            |
 
 ---
 
@@ -429,25 +429,25 @@ sequenceDiagram
 
 ## 6. 错误码
 
-| code | 来源 | 含义 | 用户可见行为 | 可重试 |
-|---|---|---|---|---|
-| `NoForegroundWindow` | Addon | `GetForegroundWindow` 返回 NULL | 热键：托盘提示；圆点：静默 | 是（手动） |
-| `NotWhitelisted` | Addon | 前台进程不在白名单 | 圆点/热键均静默（诊断可见） | 否 |
-| `PasswordField` | Addon | 焦点/选区在密码框 | 完全静默，不记录文本 | 否 |
-| `EmptySelection` | Addon | 无选区 / 选区被清除 | 热键：卡片「未获取到选中文本」；圆点：静默 | 是（手动） |
-| `TextPatternNotSupported` | Addon | 目标无 TextPattern | 热键：托盘提示「当前应用不支持取词」 | 否 |
-| `Timeout` | Addon | UIA 500ms 未返回 | 卡片「取词超时」+ 重试 | 是（手动） |
-| `Busy` | Addon | 上一次探测未结束 | 热键：托盘提示「正在取词，请稍后」 | 是（手动） |
-| `ComError` | Addon | COM/UIA 调用异常 | 卡片错误 + 诊断 | 是（手动） |
-| `SelectionChanged` | Addon | 点击圆点时选区已变化 | 卡片「选区已变化」+ 关闭/重试 | 是（手动） |
-| `NoBoundingRects` | Addon | 文本成功但 rects 为空 | 卡片用 `pointer` 定位；圆点不显示 | 否（降级） |
-| `AddonLoadFailed` | 服务 | `.node` 路径/ABI/依赖加载失败 | 托盘提示 + 诊断；不无限重试 | 否（需修复安装） |
-| `PayloadTooLarge` | 双方 | 消息超过 1 MiB | 拒绝；主进程提示 | 否 |
-| `InvalidConfig` | 服务 | 配置字段无效 | 设置页内联错误；旧配置继续 | 是（改配置） |
-| `ProtocolError` | 双方 | 未知 type/版本/结构非法 | 终止服务；诊断提示 | 否（重启） |
-| `ServiceNotReady` | 主进程 | 服务未握手/已停止 | 卡片错误；主窗口翻译页仍可用 | 是（重启服务） |
-| `ServiceExited` | 主进程 | utilityProcess 退出 | 触发重启 | 自动 |
-| `Internal` | 双方 | 未分类内部错误 | 卡片错误 + 诊断 | 是（手动） |
+| code                      | 来源   | 含义                            | 用户可见行为                               | 可重试           |
+| ------------------------- | ------ | ------------------------------- | ------------------------------------------ | ---------------- |
+| `NoForegroundWindow`      | Addon  | `GetForegroundWindow` 返回 NULL | 热键：托盘提示；圆点：静默                 | 是（手动）       |
+| `NotWhitelisted`          | Addon  | 前台进程不在白名单              | 圆点/热键均静默（诊断可见）                | 否               |
+| `PasswordField`           | Addon  | 焦点/选区在密码框               | 完全静默，不记录文本                       | 否               |
+| `EmptySelection`          | Addon  | 无选区 / 选区被清除             | 热键：卡片「未获取到选中文本」；圆点：静默 | 是（手动）       |
+| `TextPatternNotSupported` | Addon  | 目标无 TextPattern              | 热键：托盘提示「当前应用不支持取词」       | 否               |
+| `Timeout`                 | Addon  | UIA 500ms 未返回                | 卡片「取词超时」+ 重试                     | 是（手动）       |
+| `Busy`                    | Addon  | 上一次探测未结束                | 热键：托盘提示「正在取词，请稍后」         | 是（手动）       |
+| `ComError`                | Addon  | COM/UIA 调用异常                | 卡片错误 + 诊断                            | 是（手动）       |
+| `SelectionChanged`        | Addon  | 点击圆点时选区已变化            | 卡片「选区已变化」+ 关闭/重试              | 是（手动）       |
+| `NoBoundingRects`         | Addon  | 文本成功但 rects 为空           | 卡片用 `pointer` 定位；圆点不显示          | 否（降级）       |
+| `AddonLoadFailed`         | 服务   | `.node` 路径/ABI/依赖加载失败   | 托盘提示 + 诊断；不无限重试                | 否（需修复安装） |
+| `PayloadTooLarge`         | 双方   | 消息超过 1 MiB                  | 拒绝；主进程提示                           | 否               |
+| `InvalidConfig`           | 服务   | 配置字段无效                    | 设置页内联错误；旧配置继续                 | 是（改配置）     |
+| `ProtocolError`           | 双方   | 未知 type/版本/结构非法         | 终止服务；诊断提示                         | 否（重启）       |
+| `ServiceNotReady`         | 主进程 | 服务未握手/已停止               | 卡片错误；主窗口翻译页仍可用               | 是（重启服务）   |
+| `ServiceExited`           | 主进程 | utilityProcess 退出             | 触发重启                                   | 自动             |
+| `Internal`                | 双方   | 未分类内部错误                  | 卡片错误 + 诊断                            | 是（手动）       |
 
 **静默规则**：`NotWhitelisted` / `PasswordField` / 非白名单取词不得产生任何可见 UI 或日志正文。
 
@@ -467,15 +467,15 @@ sequenceDiagram
 
 ## 8. 超时与重试矩阵
 
-| 操作 | 超时 | 自动重试 | 失败表现 |
-|---|---:|---|---|
-| 握手 `hello` | 5s | 重启服务，最多 3 次 | 托盘「取词服务未启动」 |
-| `config_update` | 1s | 1 次 | 设置页内联错误；旧配置继续 |
-| `capture_current` | 500ms | 0（用户手动） | 卡片错误/托盘提示 |
-| `diagnose` | 2s | 0 | 诊断页显示「未知」 |
-| `shutdown` | 1s | 0 | `kill()` |
-| 心跳 | 5s 间隔 / 12s 缺失 | 重启服务 | 托盘提示（第 3 次） |
-| 翻译请求 | 30s | 0（用户手动） | 卡片错误 + 重试 |
+| 操作              |               超时 | 自动重试            | 失败表现                   |
+| ----------------- | -----------------: | ------------------- | -------------------------- |
+| 握手 `hello`      |                 5s | 重启服务，最多 3 次 | 托盘「取词服务未启动」     |
+| `config_update`   |                 1s | 1 次                | 设置页内联错误；旧配置继续 |
+| `capture_current` |              500ms | 0（用户手动）       | 卡片错误/托盘提示          |
+| `diagnose`        |                 2s | 0                   | 诊断页显示「未知」         |
+| `shutdown`        |                 1s | 0                   | `kill()`                   |
+| 心跳              | 5s 间隔 / 12s 缺失 | 重启服务            | 托盘提示（第 3 次）        |
+| 翻译请求          |                30s | 0（用户手动）       | 卡片错误 + 重试            |
 
 ---
 

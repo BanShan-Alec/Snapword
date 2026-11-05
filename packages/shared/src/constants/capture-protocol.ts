@@ -36,6 +36,7 @@ export const MAIN_TO_CAPTURE_MESSAGE_TYPES = [
   'diagnose',
   'hide_dot',
   'shutdown',
+  'error',
 ] as const;
 
 export const CAPTURE_TO_MAIN_MESSAGE_TYPES = [

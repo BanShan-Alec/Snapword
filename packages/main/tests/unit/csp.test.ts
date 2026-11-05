@@ -167,7 +167,10 @@ describe('ContentSecurityPolicyModule', () => {
 
     let callbackResult: { responseHeaders: Record<string, string | string[]> } | undefined;
     listener(
-      { responseHeaders: { 'Content-Security-Policy': ['default-src example.com'] }, resourceType: 'mainFrame' },
+      {
+        responseHeaders: { 'Content-Security-Policy': ['default-src example.com'] },
+        resourceType: 'mainFrame',
+      },
       (res) => {
         callbackResult = res;
       },

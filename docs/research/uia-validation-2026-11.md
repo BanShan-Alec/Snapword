@@ -20,18 +20,18 @@
 
 ## 2. 验证环境与方法
 
-| 项 | 值 |
-|---|---|
-| 操作系统 | Windows 11 26100 |
-| 浏览器 | Chrome 156.0.8078.49；Edge 156.0.4314.50 |
-| 显示缩放 | 175% DPI |
-| 取词接口 | UIA `TextPattern.GetSelection()`，专用 COM MTA 工作线程，无剪贴板 |
-| 扩展接口 | `IUIAutomationTextRange::ExpandToEnclosingUnit`，7 种 TextUnit |
-| 探针 | `probeExpandUnits`：每个单位测「选区原样」与「折叠到起点」两种模式 |
-| 页面（Q-1） | 本地 testpage；Wikipedia《UI Automation》；GitHub Snapword README；Martin Fowler《Microservices》 |
-| D-1 脚本 | `scripts/d1-feasibility.mjs`：每浏览器 3 类页面 ×（5 单词 + 5 句子），并对同一批选区测 Q-6 |
-| D-1 页面 | Wikipedia《UI Automation》；GitHub `microsoft/vscode` README；本地同源 iframe（`testpage/iframe.html`） |
-| 选区设置 | CDP 在页面内设置确定性选区；不是鼠标划选 |
+| 项          | 值                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| 操作系统    | Windows 11 26100                                                                                        |
+| 浏览器      | Chrome 156.0.8078.49；Edge 156.0.4314.50                                                                |
+| 显示缩放    | 175% DPI                                                                                                |
+| 取词接口    | UIA `TextPattern.GetSelection()`，专用 COM MTA 工作线程，无剪贴板                                       |
+| 扩展接口    | `IUIAutomationTextRange::ExpandToEnclosingUnit`，7 种 TextUnit                                          |
+| 探针        | `probeExpandUnits`：每个单位测「选区原样」与「折叠到起点」两种模式                                      |
+| 页面（Q-1） | 本地 testpage；Wikipedia《UI Automation》；GitHub Snapword README；Martin Fowler《Microservices》       |
+| D-1 脚本    | `scripts/d1-feasibility.mjs`：每浏览器 3 类页面 ×（5 单词 + 5 句子），并对同一批选区测 Q-6              |
+| D-1 页面    | Wikipedia《UI Automation》；GitHub `microsoft/vscode` README；本地同源 iframe（`testpage/iframe.html`） |
+| 选区设置    | CDP 在页面内设置确定性选区；不是鼠标划选                                                                |
 
 **重要前提**：Chromium 默认是精简无障碍树。自动化必须同时具备：
 
@@ -45,25 +45,25 @@
 
 ### 3.1 各 TextUnit 的字符数
 
-| TextUnit | testpage | Wikipedia 首段 | GitHub README 首段 | Martin Fowler 首段 | 观察 |
-|---|---:|---:|---:|---:|---|
-| Character | 1 | 1 | 1 | 1 | 单字符 |
-| Word | `"brown "` 6 / `"vexingly "` 9 | `"Microsoft "` 10 | `"Windows "` 8；CJK `"划"` 1 | `"Microservices"` 13 | 英文可能带尾随空格；后接标点不带；CJK 单字 |
-| Line | 76 / 75 | 117 | 52 | 74 | 当前渲染行 |
-| Format | 401 / 268；嵌套 `<strong>` 内 8 | 29 | 52 | 655 | 随格式连续性变化，可能跨段；不能当段落兜底 |
-| Paragraph | 133 / 121 / 131 | 191 | 53 | 608 | 精确命中所在段落（含尾部换行） |
-| Page | 1015 | 15,435 | 3,142 | 45,527 | **等于整个 Document** |
-| Document | 1015 | 15,435 | 3,142 | 45,527 | 整个文档 |
+| TextUnit  |                        testpage |    Wikipedia 首段 |           GitHub README 首段 |   Martin Fowler 首段 | 观察                                       |
+| --------- | ------------------------------: | ----------------: | ---------------------------: | -------------------: | ------------------------------------------ |
+| Character |                               1 |                 1 |                            1 |                    1 | 单字符                                     |
+| Word      |  `"brown "` 6 / `"vexingly "` 9 | `"Microsoft "` 10 | `"Windows "` 8；CJK `"划"` 1 | `"Microservices"` 13 | 英文可能带尾随空格；后接标点不带；CJK 单字 |
+| Line      |                         76 / 75 |               117 |                           52 |                   74 | 当前渲染行                                 |
+| Format    | 401 / 268；嵌套 `<strong>` 内 8 |                29 |                           52 |                  655 | 随格式连续性变化，可能跨段；不能当段落兜底 |
+| Paragraph |                 133 / 121 / 131 |               191 |                           53 |                  608 | 精确命中所在段落（含尾部换行）             |
+| Page      |                            1015 |            15,435 |                        3,142 |               45,527 | **等于整个 Document**                      |
+| Document  |                            1015 |            15,435 |                        3,142 |               45,527 | 整个文档                                   |
 
 ### 3.2 场景行为
 
-| 场景 | Paragraph 结果 |
-|---|---|
+| 场景                                 | Paragraph 结果                                      |
+| ------------------------------------ | --------------------------------------------------- |
 | 单词 / 半句 / 整段选区，起点在段落 A | A 全文（testpage 133 字符），不退化到 Page/Document |
-| 跨段选区 A 中部 → B 中部（196 字符） | 只返回 A（133 字符），B 部分被丢弃 |
-| 跨段选区 B 中部 → C 中部（156 字符） | 只返回 B（121 字符），C 部分被丢弃 |
-| 选中嵌套 `<strong>` 内的词 | 扩到整个 `<p>`（131 字符），跨内联格式正常 |
-| `selection` vs `collapsed-start` | 对 Paragraph 结果一致 |
+| 跨段选区 A 中部 → B 中部（196 字符） | 只返回 A（133 字符），B 部分被丢弃                  |
+| 跨段选区 B 中部 → C 中部（156 字符） | 只返回 B（121 字符），C 部分被丢弃                  |
+| 选中嵌套 `<strong>` 内的词           | 扩到整个 `<p>`（131 字符），跨内联格式正常          |
+| `selection` vs `collapsed-start`     | 对 Paragraph 结果一致                               |
 
 ### 3.3 Martin Fowler《Microservices》实际案例
 
@@ -116,18 +116,18 @@ D-1 的验收标准：
 
 ### 6.1 结果
 
-| 浏览器 | 成功 | P50 | P95 | Max | Q-6 | 剪贴板写入 |
-|---|---:|---:|---:|---:|---:|---:|
-| Chrome 156.0.8078.49 | **30/30（100%）** | 1.7ms | 16.2ms | 30.1ms | 28/30（93.3%） | 0 |
-| Edge 156.0.4314.50 | **30/30（100%）** | 1.0ms | 24.2ms | 26.3ms | 28/30（93.3%） | 0 |
+| 浏览器               |              成功 |   P50 |    P95 |    Max |            Q-6 | 剪贴板写入 |
+| -------------------- | ----------------: | ----: | -----: | -----: | -------------: | ---------: |
+| Chrome 156.0.8078.49 | **30/30（100%）** | 1.7ms | 16.2ms | 30.1ms | 28/30（93.3%） |          0 |
+| Edge 156.0.4314.50   | **30/30（100%）** | 1.0ms | 24.2ms | 26.3ms | 28/30（93.3%） |          0 |
 
 分页面（Chrome / Edge）：
 
-| 页面 | 成功 | P95（Chrome / Edge） | Q-6（Chrome / Edge） |
-|---|---:|---:|---:|
-| 普通文章页 | 10/10 / 10/10 | 30.1ms / 10.0ms | 9/10 / 8/10 |
-| GitHub README | 10/10 / 10/10 | 10.4ms / 26.3ms | 9/10 / 10/10 |
-| 含 iframe 页面 | 10/10 / 10/10 | 16.2ms / 24.2ms | 10/10 / 10/10 |
+| 页面           |          成功 | P95（Chrome / Edge） | Q-6（Chrome / Edge） |
+| -------------- | ------------: | -------------------: | -------------------: |
+| 普通文章页     | 10/10 / 10/10 |      30.1ms / 10.0ms |          9/10 / 8/10 |
+| GitHub README  | 10/10 / 10/10 |      10.4ms / 26.3ms |         9/10 / 10/10 |
+| 含 iframe 页面 | 10/10 / 10/10 |      16.2ms / 24.2ms |        10/10 / 10/10 |
 
 ### 6.2 结论
 

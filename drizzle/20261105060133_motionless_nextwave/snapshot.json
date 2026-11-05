@@ -1,0 +1,622 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "49ffecf4-6a20-4621-836f-39f41ad24e7c",
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
+  "ddl": [
+    {
+      "name": "setting",
+      "entityType": "tables"
+    },
+    {
+      "name": "term",
+      "entityType": "tables"
+    },
+    {
+      "name": "vocabulary",
+      "entityType": "tables"
+    },
+    {
+      "table": "setting",
+      "name": "key",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "setting",
+      "name": "value_json",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "setting",
+      "name": "updated_at",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "setting",
+      "name": "rev",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "setting",
+      "name": "origin_device",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "term",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "term_norm",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "match_type",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "action",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "translation",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "enabled",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "created_at",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "updated_at",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "rev",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "deleted_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "deleted_batch",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "origin_device",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "word",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "word_norm",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "phonetic_us",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "''",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "phonetic_uk",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "context_sense",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "context_snippet",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "senses_json",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'[]'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "source_title",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "source_domain",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "tags_json",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'[]'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "created_at",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "updated_at",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "rev",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "deleted_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "deleted_batch",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "vocabulary",
+      "name": "origin_device",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "term",
+      "name": "ux_term_norm_match",
+      "columns": [
+        {
+          "value": "term_norm",
+          "isExpression": false
+        },
+        {
+          "value": "match_type",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "term",
+      "name": "ix_term_enabled_live",
+      "columns": [
+        {
+          "value": "enabled",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": "\"term\".\"deleted_at\" IS NULL",
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "term",
+      "name": "ix_term_updated_at_live",
+      "columns": [
+        {
+          "value": "\"updated_at\" desc",
+          "isExpression": true
+        }
+      ],
+      "isUnique": false,
+      "where": "\"term\".\"deleted_at\" IS NULL",
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "term",
+      "name": "ix_term_deleted_at",
+      "columns": [
+        {
+          "value": "deleted_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ux_vocabulary_word_norm",
+      "columns": [
+        {
+          "value": "word_norm",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ix_vocabulary_created_at_live",
+      "columns": [
+        {
+          "value": "\"created_at\" desc",
+          "isExpression": true
+        }
+      ],
+      "isUnique": false,
+      "where": "\"vocabulary\".\"deleted_at\" IS NULL",
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ix_vocabulary_updated_at_live",
+      "columns": [
+        {
+          "value": "\"updated_at\" desc",
+          "isExpression": true
+        }
+      ],
+      "isUnique": false,
+      "where": "\"vocabulary\".\"deleted_at\" IS NULL",
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ix_vocabulary_deleted_at",
+      "columns": [
+        {
+          "value": "deleted_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "setting",
+      "name": "setting_pk",
+      "columns": ["key"],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "term",
+      "name": "term_pk",
+      "columns": ["id"],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "vocabulary_pk",
+      "columns": ["id"],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "setting",
+      "name": "ck_setting_value_json",
+      "value": "json_valid(\"value_json\")",
+      "entityType": "checks"
+    },
+    {
+      "table": "term",
+      "name": "ck_term_len",
+      "value": "length(trim(\"term\")) BETWEEN 1 AND 200",
+      "entityType": "checks"
+    },
+    {
+      "table": "term",
+      "name": "ck_term_norm_len",
+      "value": "length(\"term_norm\") BETWEEN 1 AND 200",
+      "entityType": "checks"
+    },
+    {
+      "table": "term",
+      "name": "ck_term_match_type",
+      "value": "\"match_type\" IN ('exact','contains','regex')",
+      "entityType": "checks"
+    },
+    {
+      "table": "term",
+      "name": "ck_term_action",
+      "value": "\"action\" IN ('keep','translate')",
+      "entityType": "checks"
+    },
+    {
+      "table": "term",
+      "name": "ck_term_translation_pair",
+      "value": "\n    (\"deleted_at\" IS NOT NULL)\n    OR (\"action\" = 'translate' AND \"translation\" IS NOT NULL AND length(trim(\"translation\")) > 0)\n    OR (\"action\" = 'keep' AND \"translation\" IS NULL)\n  ",
+      "entityType": "checks"
+    },
+    {
+      "table": "term",
+      "name": "ck_term_translation_len",
+      "value": "\"translation\" IS NULL OR length(\"translation\") <= 500",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_word_len",
+      "value": "length(trim(\"word\")) BETWEEN 1 AND 120",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_word_norm_len",
+      "value": "length(\"word_norm\") BETWEEN 1 AND 120",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_phonetic_us_len",
+      "value": "length(\"phonetic_us\") <= 120",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_phonetic_uk_len",
+      "value": "\"phonetic_uk\" IS NULL OR length(\"phonetic_uk\") <= 120",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_context_sense_len",
+      "value": "\"context_sense\" IS NULL OR length(\"context_sense\") <= 1000",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_context_snippet_len",
+      "value": "\"context_snippet\" IS NULL OR length(\"context_snippet\") <= 300",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_senses_json",
+      "value": "json_valid(\"senses_json\") AND json_type(\"senses_json\") = 'array'",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_senses_len",
+      "value": "json_array_length(\"senses_json\") <= 5",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_tags_json",
+      "value": "json_valid(\"tags_json\") AND json_type(\"tags_json\") = 'array'",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_tags_len",
+      "value": "json_array_length(\"tags_json\") <= 5",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_source_title_len",
+      "value": "\"source_title\" IS NULL OR length(\"source_title\") <= 300",
+      "entityType": "checks"
+    },
+    {
+      "table": "vocabulary",
+      "name": "ck_vocabulary_source_domain_len",
+      "value": "\"source_domain\" IS NULL OR length(\"source_domain\") <= 255",
+      "entityType": "checks"
+    }
+  ],
+  "renames": []
+}

@@ -15,7 +15,9 @@
       "default": "./dist/index.cjs"
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "drizzle-orm": "1.0.0-rc.5"
+  },
   "devDependencies": {
     "@app/preload": "workspace:*",
     "@app/renderer": "workspace:*",

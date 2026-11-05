@@ -7,6 +7,8 @@
 export const IPC_CHANNELS = {
   SYSTEM_PING: 'system:ping',
   SYSTEM_GET_INFO: 'system:get-info',
+  /** 渲染层语言切换后通知主进程重建托盘文案（RM-13 立即生效） */
+  SYSTEM_SET_LOCALE: 'system:set-locale',
 
   DIAGNOSTICS_LOG: 'diagnostics:log',
   DIAGNOSTICS_OPEN_LOG_FOLDER: 'diagnostics:open-log-folder',

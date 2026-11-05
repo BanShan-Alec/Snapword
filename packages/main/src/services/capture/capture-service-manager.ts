@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { app, type UtilityProcess, utilityProcess } from 'electron';
 import {
   CONFIG_UPDATE_TIMEOUT_MS,
   HANDSHAKE_TIMEOUT_MS,
@@ -18,6 +17,7 @@ import type {
   ShutdownMessage,
 } from '@app/shared/types/capture-protocol';
 import { asRequestId, checkEnvelope } from '@app/shared/utils/capture-protocol';
+import { app, type UtilityProcess, utilityProcess } from 'electron';
 import { getLogManager } from '../../modules/log.module';
 import { getTrayManager } from '../../modules/tray.module';
 import { createDefaultCaptureConfig } from './capture-config';
@@ -28,6 +28,8 @@ export type CaptureServiceManagerState = 'idle' | 'starting' | 'ready' | 'degrad
 /** fork 失败 / 5s 未 hello 的重试节奏（B-01 §7 失败表：每 3s 重试，最多 3 次） */
 const STARTUP_RETRY_DELAY_MS = 3_000;
 const STARTUP_MAX_ATTEMPTS = 3;
+/** 握手成功后稳定运行多久才把「崩溃重启计数」清零（B-01 §9.1：第 3 次崩溃才提示） */
+const STABLE_RUN_RESET_MS = 60_000;
 
 /**
  * 取词服务守护（主进程侧）
@@ -55,10 +57,16 @@ export class CaptureServiceManager {
   private handshakeTimer: NodeJS.Timeout | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private restartTimer: NodeJS.Timeout | null = null;
-  /** 连续启动失败次数；握手成功（config_ack）后清零 */
-  private consecutiveFailures = 0;
+  private stabilityTimer: NodeJS.Timeout | null = null;
+  /** 连续启动失败次数（fork 失败 / 5s 未 hello）；握手成功后清零 */
+  private startupFailures = 0;
+  /** 握手成功后连续意外退出次数；稳定运行 60s 后才清零（B-01 §9.1） */
+  private crashFailures = 0;
   /** 在飞请求（config_update / shutdown）的 requestId → 完成回调 */
-  private readonly pendingRequests = new Map<string, (message: CaptureToMainMessage | null) => void>();
+  private readonly pendingRequests = new Map<
+    string,
+    (message: CaptureToMainMessage | null) => void
+  >();
   /** 最近一次 service_status 心跳内容（诊断占位，B-02 §5.7） */
   private lastServiceStatus: ServiceStatusMessage | null = null;
 
@@ -127,13 +135,14 @@ export class CaptureServiceManager {
 
   /**
    * 退出流程第 3 步（B-01 §8）：shutdown → shutdown_ack ≤1s → kill() 兜底。
-   * before-quit 同步调用；等待与 kill 在定时器/事件回调中完成，不阻塞退出。
+   * 返回 Promise 供 before-quit await；最坏情况 1s 超时后 kill 并返回。
    */
-  stop(): void {
+  async stop(): Promise<void> {
     if (this.restartTimer !== null) {
       clearTimeout(this.restartTimer);
       this.restartTimer = null;
     }
+    this.clearStabilityTimer();
     const child = this.child;
     if (child === null) {
       this.state = 'idle';
@@ -151,19 +160,20 @@ export class CaptureServiceManager {
       requestId: randomUUID(),
       reason: 'app_quit',
     };
-    void this.sendRequest(request, SHUTDOWN_ACK_TIMEOUT_MS).then((ack) => {
-      if (ack === null && this.child === child) {
-        this.logger.warn('shutdown_ack not received within 1s, killing capture service');
-        child.kill();
-      }
-    });
+    const ack = await this.sendRequest(request, SHUTDOWN_ACK_TIMEOUT_MS);
+    if (ack === null && this.child === child) {
+      this.logger.warn('shutdown_ack not received within 1s, killing capture service');
+      child.kill();
+    }
   }
 
   /**
    * 下发配置快照（B-02 §2.4/§4 config_update）：revision 单调递增，
    * 1s 超时自动重试 1 次；config_error 时保留旧配置并返回原因。
    */
-  async updateConfig(next: Omit<CaptureConfigSnapshot, 'revision'>): Promise<{ ok: boolean; reason?: string }> {
+  async updateConfig(
+    next: Omit<CaptureConfigSnapshot, 'revision'>,
+  ): Promise<{ ok: boolean; reason?: string }> {
     const revision = this.configSnapshot.revision + 1;
     let lastReason = 'timeout';
 
@@ -190,7 +200,9 @@ export class CaptureServiceManager {
       lastReason = 'timeout';
     }
 
-    this.logger.warn(`Capture config update failed, keeping revision=${this.configSnapshot.revision}: ${lastReason}`);
+    this.logger.warn(
+      `Capture config update failed, keeping revision=${this.configSnapshot.revision}: ${lastReason}`,
+    );
     return { ok: false, reason: lastReason };
   }
 
@@ -233,7 +245,8 @@ export class CaptureServiceManager {
         // 握手完成（B-02 §10）：fork 后 5s 内 hello/hello_ack/config_ack
         this.clearHandshakeTimer();
         this.state = 'ready';
-        this.consecutiveFailures = 0;
+        this.startupFailures = 0;
+        this.armStabilityTimer();
         this.logger.info(`Capture service ready (config revision=${typed.revision})`);
         return;
       }
@@ -278,9 +291,11 @@ export class CaptureServiceManager {
     if (this.child !== child) {
       return; // 旧实例的迟到事件
     }
+    const wasReady = this.state === 'ready';
     this.child = null;
     this.clearHandshakeTimer();
     this.clearHeartbeatWatchdog();
+    this.clearStabilityTimer();
     this.rejectAllPending();
 
     if (this.state === 'stopping') {
@@ -288,7 +303,11 @@ export class CaptureServiceManager {
       this.logger.info('Capture service exited after shutdown');
       return;
     }
-    // B-01 §9.1：意外退出 → 3s 内重新 fork；连续失败走失败表
+    // B-01 §9.1：握手完成后退出按「崩溃」计数；握手前退出按「启动失败」计数
+    if (wasReady) {
+      this.handleCrashFailure(`capture service exited unexpectedly (code=${code})`);
+      return;
+    }
     this.handleStartupFailure(`capture service exited unexpectedly (code=${code})`);
   }
 
@@ -297,22 +316,31 @@ export class CaptureServiceManager {
   // -------------------------------------------------------------------------
 
   private handleStartupFailure(reason: string): void {
+    this.startupFailures += 1;
+    this.handleFailure('startup', this.startupFailures, reason);
+  }
+
+  private handleCrashFailure(reason: string): void {
+    this.crashFailures += 1;
+    this.handleFailure('crash', this.crashFailures, reason);
+  }
+
+  private handleFailure(kind: 'startup' | 'crash', failures: number, reason: string): void {
     if (this.state === 'stopping') {
       return;
     }
-    this.consecutiveFailures += 1;
-    if (this.consecutiveFailures >= STARTUP_MAX_ATTEMPTS) {
-      // B-01 §7：连续 3 次失败进入 degraded，不再自动重试；托盘提示占位
+    if (failures >= STARTUP_MAX_ATTEMPTS) {
+      // B-01 §7/§9.1：连续 3 次失败进入 degraded，不再自动重试；托盘提示
       this.state = 'degraded';
       this.logger.error(
-        `Capture service degraded after ${this.consecutiveFailures} failed attempts: ${reason}`,
+        `Capture service degraded after ${failures} failed ${kind} attempts: ${reason}`,
       );
-      getTrayManager().notifyCaptureServiceIssue('取词服务未启动（已自动重试 3 次）');
+      getTrayManager().notifyCaptureServiceIssue(kind);
       return;
     }
     this.state = 'idle';
     this.logger.warn(
-      `Capture service startup failed (attempt ${this.consecutiveFailures}/${STARTUP_MAX_ATTEMPTS}): ${reason}; retry in ${STARTUP_RETRY_DELAY_MS}ms`,
+      `Capture service ${kind} failure (attempt ${failures}/${STARTUP_MAX_ATTEMPTS}): ${reason}; retry in ${STARTUP_RETRY_DELAY_MS}ms`,
     );
     this.restartTimer = setTimeout(() => {
       this.restartTimer = null;
@@ -320,10 +348,27 @@ export class CaptureServiceManager {
     }, STARTUP_RETRY_DELAY_MS);
   }
 
+  /** 握手成功后计时；稳定运行窗口内未再退出才清零崩溃计数（B-01 §9.1）。 */
+  private armStabilityTimer(): void {
+    this.clearStabilityTimer();
+    this.stabilityTimer = setTimeout(() => {
+      this.stabilityTimer = null;
+      this.crashFailures = 0;
+    }, STABLE_RUN_RESET_MS);
+  }
+
+  private clearStabilityTimer(): void {
+    if (this.stabilityTimer !== null) {
+      clearTimeout(this.stabilityTimer);
+      this.stabilityTimer = null;
+    }
+  }
+
   /** B-02 §2.1/§6：协议错误 → 终止服务；exit 回调里按失败表重启 */
   private killChild(reason: string): void {
     this.clearHandshakeTimer();
     this.clearHeartbeatWatchdog();
+    this.clearStabilityTimer();
     const child = this.child;
     if (child === null) {
       return;

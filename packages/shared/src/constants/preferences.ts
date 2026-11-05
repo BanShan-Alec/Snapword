@@ -12,29 +12,35 @@ export const DEFAULT_THEME_MODE: ThemeMode = 'system';
 /** 解析 'system' 时使用的 OS 明暗偏好媒体查询 */
 export const LIGHT_COLOR_SCHEME_QUERY = '(prefers-color-scheme: light)';
 
-/** 实际拥有 catalog 的语种 */
-export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const;
+/** 实际拥有 catalog 的语种（与 lingui.config.ts 的 locales 保持一致） */
+export const SUPPORTED_LOCALES = ['zh-CN', 'en'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+
+/** 缺译时的回落语种（也是 lingui 的 sourceLocale） */
+export const FALLBACK_LOCALE: SupportedLocale = 'zh-CN';
 
 /** 界面语言偏好：'system' 跟随操作系统，其余为具体语种 */
 export const LANGUAGE_MODES = ['system', ...SUPPORTED_LOCALES] as const;
 export type LanguageMode = (typeof LANGUAGE_MODES)[number];
 
-/** 默认语言偏好（中文优先；选 'system' 才跟随 OS） */
-export const DEFAULT_LANGUAGE: LanguageMode = 'zh-CN';
+/** 默认语言偏好：跟随系统（RM-13） */
+export const DEFAULT_LANGUAGE: LanguageMode = 'system';
 
 /**
  * 把语言偏好解析成实际加载的 catalog 语种。
- * 只保留中英两套词条：中文系（zh-*）落到 zh-CN，其余系统语言落到 en-US；
- * 拿不到系统语言时回落默认值，避免设置页与主进程出现空态。
+ * 只保留中英两套词条：中文系（zh-*）落到 zh-CN，英文系（en-*）落到 en；
+ * 其它无法识别的系统语言按 FR-49 回落 FALLBACK_LOCALE（zh-CN）。
  */
 export function resolveLocale(mode: LanguageMode, systemLocale: string): SupportedLocale {
   if (mode !== 'system') {
     return mode;
   }
   const normalized = systemLocale.toLowerCase();
-  if (!normalized) {
+  if (normalized.startsWith('zh')) {
     return 'zh-CN';
   }
-  return normalized.startsWith('zh') ? 'zh-CN' : 'en-US';
+  if (normalized.startsWith('en')) {
+    return 'en';
+  }
+  return FALLBACK_LOCALE;
 }

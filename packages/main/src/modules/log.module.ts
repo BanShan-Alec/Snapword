@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
+import type { SpanRecord } from '@app/shared/types/telemetry';
 import { app, shell } from 'electron';
+import type { LogMessage } from 'electron-log';
 import log from 'electron-log/main';
 import type { AppModule } from '../AppModule';
 import {
@@ -9,9 +11,11 @@ import {
   LOG_ARCHIVE_MAX_FILES,
   LOG_FILE_MAX_SIZE_BYTES,
   RENDERER_LINE_MAX_LENGTH,
+  TRACE_FILE_MAX_SIZE_BYTES,
 } from '../constants/logging';
 import { isDev } from '../env';
 import type { ModuleContext } from '../ModuleContext';
+import { getTracer } from '../telemetry/tracer';
 import { cleanArchivedLogs, createCustomArchiveLogFn } from './log-archiver';
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
@@ -34,7 +38,25 @@ export interface IScopedLogger {
 
 export class LogManager implements AppModule {
   public readonly mainLogger = log;
+  public readonly traceLogger = log.create({ logId: 'traces' });
   private readonly windowLoggers = new Map<string, ReturnType<typeof log.create>>();
+
+  private readonly injectTraceHook = (message: LogMessage): LogMessage => {
+    const ctx = getTracer().getActiveContext();
+    if (!ctx || !message.data || message.data.length === 0) {
+      return message;
+    }
+    const traceTag = `[trace_id:${ctx.traceId} span_id:${ctx.spanId}]`;
+    const data = [...message.data];
+    if (typeof data[0] === 'string') {
+      if (!data[0].includes('[trace_id:')) {
+        data[0] = `${traceTag} ${data[0]}`;
+      }
+    } else {
+      data.unshift(traceTag);
+    }
+    return { ...message, data };
+  };
 
   constructor() {
     this.setupLoggers();
@@ -49,6 +71,7 @@ export class LogManager implements AppModule {
       winLogger.transports.file.maxSize = LOG_FILE_MAX_SIZE_BYTES;
       winLogger.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
       winLogger.transports.file.archiveLogFn = createCustomArchiveLogFn();
+      winLogger.hooks.push(this.injectTraceHook);
       this.windowLoggers.set(windowName, winLogger);
     }
     return winLogger;
@@ -64,13 +87,21 @@ export class LogManager implements AppModule {
   }
 
   private setupLoggers(): void {
-    // 主日志 5MB 轮转上限
+    // 主日志 5MB / 遥测日志 10MB 轮转上限
     const MAX_SIZE = LOG_FILE_MAX_SIZE_BYTES;
+    const TRACE_MAX_SIZE = TRACE_FILE_MAX_SIZE_BYTES;
 
     // 主进程日志配置
     this.mainLogger.transports.file.fileName = 'main.log';
     this.mainLogger.transports.file.maxSize = MAX_SIZE;
     this.mainLogger.transports.file.archiveLogFn = createCustomArchiveLogFn();
+
+    // 遥测拓扑日志配置 (NDJSON 独立文件)
+    this.traceLogger.transports.file.fileName = 'traces.ndjson';
+    this.traceLogger.transports.file.maxSize = TRACE_MAX_SIZE;
+    this.traceLogger.transports.file.format = '{text}';
+    this.traceLogger.transports.console.level = false;
+    this.traceLogger.transports.file.archiveLogFn = createCustomArchiveLogFn();
 
     // 格式化输出
     const format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
@@ -84,14 +115,26 @@ export class LogManager implements AppModule {
       },
     });
 
+    // 注册主进程 Trace 注入 Hook
+    this.mainLogger.hooks.push(this.injectTraceHook);
+
     // 预初始化默认 home 窗口的 logger
     this.getWindowLogger('home');
+
+    // 监听 Span 结束，以 NDJSON 格式落盘至 traces.ndjson
+    getTracer().onSpanEnd((record: SpanRecord) => {
+      try {
+        this.traceLogger.info(JSON.stringify(record));
+      } catch (err) {
+        this.mainLogger.warn('[LogManager] Failed to write SpanRecord:', err);
+      }
+    });
   }
 
-  public enable({ app: electronApp }: ModuleContext): void {
-    electronApp.whenReady().then(() => {
+  public enable({ app }: ModuleContext): void {
+    app.whenReady().then(() => {
       this.cleanOldLogs();
-      // 固定标记的启动分隔行，标记一轮 App 运行的边界（main.log 独有；
+      // D7 替代方案：固定标记的启动分隔行，标记一轮 App 运行的边界（main.log 独有；
       // 渲染窗口的创建边界另由 logWindowStarted 写入 renderer-<window>.log）
       this.mainLogger.info(`[App Lifecycle] ===== App started (v${app.getVersion()}) =====`);
       this.mainLogger.info('[App Lifecycle] Application ready, logging system initialized');
@@ -147,6 +190,8 @@ export class LogManager implements AppModule {
     message: string,
     args?: unknown[],
     windowName?: string,
+    traceId?: string,
+    spanId?: string,
   ): void {
     const targetName = windowName || 'home';
     const targetLogger = this.getWindowLogger(targetName);
@@ -160,12 +205,15 @@ export class LogManager implements AppModule {
         ...(args ?? []),
       ),
     );
-    fn(formatted);
+    const line = traceId
+      ? `[trace_id:${traceId}${spanId ? ` span_id:${spanId}` : ''}] ${formatted}`
+      : formatted;
+    fn(line);
   }
 
   /**
    * 写入渲染窗口的启动分隔行：标记该窗口本轮创建。
-   * reload 不重建窗口，因此不会重复写。
+   * reload 不重建窗口，因此不会重复写；updater 窗口重新创建时会产生新的一行。
    */
   public logWindowStarted(windowName: string): void {
     this.logRendererMessage(

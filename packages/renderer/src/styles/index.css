@@ -14,6 +14,8 @@
  * var(--paseo-*)；变量实体是包发布产物 —— :root 浅色（Claude Light），
  * @media (prefers-color-scheme: dark) 与 .dark 深色（Paseo Dark），与 antd
  * ConfigProvider 里两套 ThemeConfig 同一条 token 管线（单测校验一致）。
+ * 显式 light/dark 由 applyColorScheme 把当前模式变量内联到 <html> 覆盖 media 块
+ * （否则系统深色 + 手动浅色会被 media 的 :root 深色值压住）。
  */
 @import "paseo-antd-themes/tailwind.css";
 @import "./tokens.css";

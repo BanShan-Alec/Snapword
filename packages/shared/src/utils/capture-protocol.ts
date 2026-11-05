@@ -6,14 +6,14 @@
  * 本模块为双方共用的纯函数，禁止依赖 electron / node 内置模块以外的运行时。
  */
 import {
-  type CaptureToMainMessageType,
   CAPTURE_TO_MAIN_MESSAGE_TYPES,
-  type MainToCaptureMessageType,
+  type CaptureToMainMessageType,
   MAIN_TO_CAPTURE_MESSAGE_TYPES,
   MAX_ERROR_MESSAGE_CHARS,
   MAX_PARAGRAPH_CHARS,
   MAX_PROCESS_NAME_CHARS,
   MAX_TEXT_CHARS,
+  type MainToCaptureMessageType,
   PROTOCOL_VERSION,
 } from '../constants/capture-protocol';
 
@@ -37,7 +37,10 @@ export function isCaptureToMainType(type: string): type is CaptureToMainMessageT
  * 信封预检（B-02 §9）：type 在白名单且 protocolVersion 匹配。
  * 返回 null 表示通过；否则返回失败原因（用于日志，不含业务文本）。
  */
-export function checkEnvelope(message: unknown, direction: 'main-to-capture' | 'capture-to-main'): {
+export function checkEnvelope(
+  message: unknown,
+  direction: 'main-to-capture' | 'capture-to-main',
+): {
   type: string;
 } | null {
   const record = asRecord(message);
@@ -66,7 +69,9 @@ export function asRequestId(value: unknown): string | null {
 
 /** 错误消息钳制（B-02 §2.3：message ≤500 字符，不得包含选中原文——由调用方保证） */
 export function clampErrorMessage(message: string): string {
-  return message.length <= MAX_ERROR_MESSAGE_CHARS ? message : message.slice(0, MAX_ERROR_MESSAGE_CHARS);
+  return message.length <= MAX_ERROR_MESSAGE_CHARS
+    ? message
+    : message.slice(0, MAX_ERROR_MESSAGE_CHARS);
 }
 
 function isIntBetween(value: unknown, min: number, max: number): boolean {
@@ -108,7 +113,10 @@ export function validateCaptureConfig(config: unknown): string | null {
   if (!isIntBetween(c.dedupeWindowMs, 0, 5_000)) {
     return 'dedupeWindowMs must be an integer between 0 and 5000';
   }
-  if (typeof c.minEnglishRatio !== 'number' || !(c.minEnglishRatio >= 0 && c.minEnglishRatio <= 1)) {
+  if (
+    typeof c.minEnglishRatio !== 'number' ||
+    !(c.minEnglishRatio >= 0 && c.minEnglishRatio <= 1)
+  ) {
     return 'minEnglishRatio must be a number between 0 and 1';
   }
   if (!isIntBetween(c.maxTextChars, 1, MAX_TEXT_CHARS)) {

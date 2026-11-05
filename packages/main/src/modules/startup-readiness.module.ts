@@ -1,7 +1,7 @@
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
 import type { StartupGateSnapshot, StartupMainReadyPayload } from '@app/shared/types/startup';
-import { ipcMain } from 'electron';
 import type { AppModule } from '../AppModule';
+import { handleTraced } from '../telemetry/ipc-tracer';
 import { broadcast } from './window/window-registry';
 
 /**
@@ -27,7 +27,7 @@ export function createStartupReadinessModule(): AppModule {
       };
       snapshot = { mainReady: true, payload };
 
-      ipcMain.handle(IPC_CHANNELS.STARTUP_GET_SNAPSHOT, () => snapshot);
+      handleTraced(IPC_CHANNELS.STARTUP_GET_SNAPSHOT, () => snapshot);
 
       // 此刻注册表为空属预期空操作；契约对后续创建的窗口成立
       broadcast(IPC_CHANNELS.STARTUP_EVENT_MAIN_READY, payload);

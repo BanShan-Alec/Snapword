@@ -2,6 +2,7 @@ import { WINDOW_IDS } from '@app/shared/constants/windows';
 import { app, BrowserWindow, screen } from 'electron';
 import type { AppInitConfig } from '../../AppInitConfig';
 import type { AppModule } from '../../AppModule';
+import { getPackedEnvArgument } from '../../env';
 import { appLifecycle } from '../../lifecycle';
 import type { ModuleContext } from '../../ModuleContext';
 import { getLogManager } from '../log.module';
@@ -76,6 +77,8 @@ export class WindowManager implements AppModule {
         sandbox: true,
         webviewTag: false,
         preload: this.preload.path,
+        // 运行时环境基座：主进程序列化快照经 argv 传给 preload，再挂到 window.__APP_ENV__
+        additionalArguments: [getPackedEnvArgument()],
       },
     });
 

@@ -120,7 +120,8 @@ export async function verifyPrebuild(): Promise<VerificationResult> {
     console.log('  ✅ renderer 样式规范校验通过 (字号阶 / 颜色令牌)');
   }
 
-  // en-US 词条门禁不在此处：缺译/空译由 CI 的 `pnpm i18n:check`（lingui check missing）负责
+  // en 词条门禁不在此处：缺译由 `pnpm i18n:check`（lingui check missing）负责，
+  // 英文 40 字符上限由同命令追加的 scripts/check-i18n-length.mjs 负责
 
   const valid = errors.length === 0;
   if (!valid) {

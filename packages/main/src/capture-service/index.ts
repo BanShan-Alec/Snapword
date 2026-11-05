@@ -1,4 +1,3 @@
-import type {} from 'electron';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import {
@@ -23,6 +22,7 @@ import {
   clampErrorMessage,
   validateCaptureConfig,
 } from '@app/shared/utils/capture-protocol';
+import type {} from 'electron';
 
 /**
  * 取词服务入口（utilityProcess 子进程侧，独立 bundle capture-service.cjs）
@@ -182,7 +182,7 @@ function handleConfigUpdate(message: ConfigUpdateMessage): void {
   const invalidReason = validateCaptureConfig(config);
   if (invalidReason !== null) {
     // B-02 §2.4：无效配置返回 config_error，保持旧配置
-    sendConfigError(requestId, config?.revision ?? (currentConfig?.revision ?? 0), invalidReason);
+    sendConfigError(requestId, config?.revision ?? currentConfig?.revision ?? 0, invalidReason);
     return;
   }
   if (currentConfig !== null && config.revision <= currentConfig.revision) {
@@ -310,7 +310,10 @@ parentPort.on('message', (event: Electron.MessageEvent) => {
       );
       return;
     }
-    sendError('ProtocolError', `message rejected: type=${type} in [${MAIN_TO_CAPTURE_MESSAGE_TYPES.join(', ')}]`);
+    sendError(
+      'ProtocolError',
+      `message rejected: type=${type} in [${MAIN_TO_CAPTURE_MESSAGE_TYPES.join(', ')}]`,
+    );
     return;
   }
 
@@ -334,6 +337,9 @@ parentPort.on('message', (event: Electron.MessageEvent) => {
       break;
     case 'diagnose':
       handleDiagnose(typed as unknown as Record<string, unknown>);
+      break;
+    case 'error':
+      // B-02 §4：error 为双向消息；服务侧收到主进程错误只需保持运行（错误已由主进程记录）
       break;
   }
 });

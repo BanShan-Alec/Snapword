@@ -1,3 +1,4 @@
+import { APP_ENV } from '@app/shared/constants/env';
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Button, Empty } from 'antd';
@@ -22,14 +23,14 @@ interface FallbackProps {
 
 function FallbackView({ error, resetError }: FallbackProps) {
   useLingui();
-  const isDev = import.meta.env.DEV;
+  const isDev = window.__APP_ENV__?.mode === APP_ENV.DEVELOPMENT || import.meta.env.DEV;
   const errorMessage = error instanceof Error ? error.message : String(error || '');
 
   const description = (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-base font-medium text-foreground">{t`页面出错啦~`}</span>
+      <span className="text-base font-medium text-foreground">{t`页面出错了`}</span>
       {isDev && errorMessage ? (
-        <span className="text-xs font-mono text-foreground-secondary max-w-lg break-all text-center">
+        <span className="text-xs text-foreground-secondary font-mono max-w-lg break-all text-center">
           {errorMessage}
         </span>
       ) : null}
@@ -49,7 +50,7 @@ function FallbackView({ error, resetError }: FallbackProps) {
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6 bg-background text-foreground">
       <Empty image={Empty.PRESENTED_IMAGE_DEFAULT} description={description} />
       <Button type="primary" onClick={handleReload}>
-        {t`刷新重试`}
+        {t`重新加载`}
       </Button>
     </div>
   );
@@ -73,8 +74,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // 渲染崩溃落盘：经 preload 日志桥写入 renderer-home.log；
-    // 组件名取 componentStack 首帧（即崩溃组件本身），免翻长栈定位
+    // 本地落盘：组件名取 componentStack 首帧（即崩溃组件本身），免翻长栈定位。
+    // 隐私约束（PRD 安全/隐私）：不向任何第三方上报崩溃数据。
     const crashedComponent =
       /^\s*at\s+([A-Za-z0-9_$]+)/m.exec(errorInfo.componentStack ?? '')?.[1] ?? 'unknown';
     logger.error(`React component crashed in <${crashedComponent}>:`, error, {

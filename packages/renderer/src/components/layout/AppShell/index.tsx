@@ -6,6 +6,8 @@ import {
   TableOutlined,
   ToolOutlined,
 } from '@ant-design/icons';
+import { msg } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react';
 import { Menu } from 'antd';
 import type React from 'react';
 import { useEffect } from 'react';
@@ -21,18 +23,19 @@ import logo from '@/assets/logo.svg';
  */
 
 // 私有常量
-/** 导航顺序即 RM-02 表格顺序，index 对应 Ctrl+N 的 N-1 */
+/** 导航顺序即 RM-02 表格顺序，index 对应 Ctrl+N 的 N-1；label 用 msg 描述符，渲染时再取当前语言 */
 const NAV_ITEMS = [
-  { path: '/', icon: <EditOutlined />, label: '翻译' },
-  { path: '/history', icon: <HistoryOutlined />, label: '翻译历史' },
-  { path: '/vocabulary', icon: <BookOutlined />, label: '生词本' },
-  { path: '/glossary', icon: <TableOutlined />, label: '术语表' },
-  { path: '/settings', icon: <SettingOutlined />, label: '设置' },
-  { path: '/help', icon: <ToolOutlined />, label: '帮助与诊断' },
+  { path: '/', icon: <EditOutlined />, label: msg`翻译` },
+  { path: '/history', icon: <HistoryOutlined />, label: msg`翻译历史` },
+  { path: '/vocabulary', icon: <BookOutlined />, label: msg`生词本` },
+  { path: '/glossary', icon: <TableOutlined />, label: msg`术语表` },
+  { path: '/settings', icon: <SettingOutlined />, label: msg`设置` },
+  { path: '/help', icon: <ToolOutlined />, label: msg`帮助与诊断` },
 ] as const;
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentPath, navigate] = useLocation();
+  const { i18n } = useLingui();
 
   // RM-02：Ctrl+1 ~ Ctrl+6 切换页面（主窗口获焦时）
   useEffect(() => {
@@ -60,11 +63,15 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         <Menu
           mode="inline"
           selectedKeys={[currentPath]}
-          items={NAV_ITEMS.map(({ path, icon, label }) => ({ key: path, icon, label }))}
+          items={NAV_ITEMS.map(({ path, icon, label }) => ({
+            key: path,
+            icon,
+            // ⑤ 侧栏导航定宽：英文最长词不换行、不截断
+            label: <span className="whitespace-nowrap">{i18n._(label)}</span>,
+          }))}
           onClick={({ key }) => navigate(key)}
           className="flex-1 border-none bg-transparent"
         />
-        <div className="px-4 py-3 text-caption text-text-tertiary">P4 骨架占位</div>
       </aside>
       <main className="stable-scrollbar min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto h-full w-full max-w-[1100px] px-6 py-6">{children}</div>

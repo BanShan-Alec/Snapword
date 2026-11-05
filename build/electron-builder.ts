@@ -72,6 +72,12 @@ const config: Configuration = {
       to: 'buildResources',
       filter: ['**/*'],
     },
+    {
+      // B-03 §10.1：migrate() 运行时读盘；打包后定位 process.resourcesPath/drizzle
+      from: 'drizzle',
+      to: 'drizzle',
+      filter: ['**/*'],
+    },
   ],
   /**
    * 采用 package.json 的 name (electron-react-monorepo-template)，零空格小写规范

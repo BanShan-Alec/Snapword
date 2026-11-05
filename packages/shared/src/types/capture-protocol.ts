@@ -6,8 +6,11 @@
  * 运行时校验见 @app/shared/utils/capture-protocol。
  * 取词服务禁止引入网络模块（B-01 §3 硬边界 2），shared 内的协议模块必须保持零依赖 electron。
  */
-import type { CaptureToMainMessageType, MainToCaptureMessageType } from '../constants/capture-protocol';
-import type { PROTOCOL_VERSION } from '../constants/capture-protocol';
+import type {
+  CaptureToMainMessageType,
+  MainToCaptureMessageType,
+  PROTOCOL_VERSION,
+} from '../constants/capture-protocol';
 
 // ---------------------------------------------------------------------------
 // 消息信封与公共结构（B-02 §2.1/§2.4）
@@ -129,7 +132,8 @@ export type MainToCaptureMessage =
   | CaptureCurrentMessage
   | DiagnoseMessage
   | HideDotMessage
-  | ShutdownMessage;
+  | ShutdownMessage
+  | ErrorMessage;
 
 /** 编译期检查：MainToCaptureMessage 与 type 白名单一一对应 */
 type AssertMainToCaptureTypes = MainToCaptureMessage['type'] extends MainToCaptureMessageType

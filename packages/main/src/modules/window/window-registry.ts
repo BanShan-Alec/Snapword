@@ -1,5 +1,6 @@
 import type { WindowId } from '@app/shared/constants/windows';
 import type { BrowserWindow } from 'electron';
+import { trackWindowLifecycle } from '../../telemetry/window-tracer';
 import { getLogManager } from '../log.module';
 
 const registry = new Map<WindowId, BrowserWindow>();
@@ -8,6 +9,7 @@ const reverseRegistry = new Map<BrowserWindow, WindowId>();
 export function registerWindow(id: WindowId, win: BrowserWindow): void {
   registry.set(id, win);
   reverseRegistry.set(win, id);
+  trackWindowLifecycle(id, win);
   win.on('closed', () => {
     reverseRegistry.delete(win);
     // 按实例注销，防止旧引用覆盖新实例

@@ -14,22 +14,24 @@ import { disallowMultipleAppInstance } from './modules/single-instance.module';
 import { createStartupReadinessModule } from './modules/startup-readiness.module';
 import { createTrayModule, getTrayManager } from './modules/tray.module';
 import { createWindowManagerModule } from './modules/window/index.module';
-import { getCaptureServiceManager } from './services/capture/capture-service-manager';
 import { createCaptureServiceModule } from './services/capture/capture.module';
+import { getCaptureServiceManager } from './services/capture/capture-service-manager';
 
 export async function initApp(initConfig: AppInitConfig) {
   const moduleRunner = createModuleRunner()
     .init(createLogModule())
     // B-01 §7 第 1 步：单实例锁最先持有；失败则退出，聚焦已有实例由 WindowManager 处理
-    .init(disallowMultipleAppInstance())
+    .init(disallowMultipleAppInstance());
+
+  moduleRunner
     .init(createIPCModule())
     // 主进程就绪源：链位在 WindowManager 之前，信号先于窗口与壳
     .init(createStartupReadinessModule())
     .init(createWindowManagerModule({ initConfig }))
     // B-01 §7：托盘先于取词服务创建
     .init(createTrayModule())
-    // B-01 §7 第 6 步：utilityProcess.fork(capture-service) 挂载点
-    // （P4 骨架只建目录与类型；hello/hello_ack/config_ack 握手由下一步实现）
+    // B-01 §7 第 6 步：utilityProcess.fork(capture-service.cjs)
+    // 握手 / 心跳 / 失败重启由 CaptureServiceManager 承担（B-02 §1/§3/§8）
     .init(createCaptureServiceModule())
 
     // Security
@@ -54,19 +56,32 @@ export async function initApp(initConfig: AppInitConfig) {
 /**
  * 退出顺序（B-01 §8）：托盘「退出」/ 系统关机 / 开发终端退出都汇入 before-quit。
  * 1. 停止接受新取词（captureEnabled=false）与 2. 注销全局热键 —— P5 接入热键/取词开关时补充；
- * 3. 取词服务 shutdown（握手实现后改为 shutdown → shutdown_ack ≤1s → kill 兜底）；
+ * 3. 取词服务 shutdown → shutdown_ack ≤1s → kill 兜底（CaptureServiceManager.stop，B-02 §8）；
  * 5. 窗口随 quit 自然关闭，销毁托盘；
  * 6. SQLite checkpoint 与 7. temp/ 清理 —— P5 接入 DB / 云 TTS 时补充。
+ *
+ * 第 3 步必须等 shutdown_ack/超时 kill 完成后再放行退出：before-quit 先 preventDefault，
+ * 待 stop() 的 1s 上限结束后再调用 app.quit()；第二次 before-quit 由 isQuitting 放行。
  */
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
   if (appLifecycle.isQuitting) {
     return;
   }
   appLifecycle.isQuitting = true;
+  event.preventDefault();
   const logger = getLogManager().scoped('App Lifecycle');
   logger.info('App quitting: begin ordered shutdown (B-01 §8)');
-  getCaptureServiceManager().stop();
-  getTrayManager().destroy();
+
+  void (async () => {
+    try {
+      await getCaptureServiceManager().stop();
+    } catch (error) {
+      logger.error('Capture service shutdown failed:', error);
+    } finally {
+      getTrayManager().destroy();
+      app.quit();
+    }
+  })();
 });
 
 // 自动引导启动主进程流水线

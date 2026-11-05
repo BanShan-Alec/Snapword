@@ -1,10 +1,15 @@
+import { t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react';
 import { PagePlaceholder } from '@/components/layout/PagePlaceholder';
 
 /** 术语表页占位（RM-06 最小形态）：术语管理 / 导入导出 / 校验后续接入。 */
-export const GlossaryPage = () => (
-  <PagePlaceholder
-    title="术语表"
-    description="术语与固定译法管理；表格与导入导出后续接入。"
-    emptyText="术语表还是空的"
-  />
-);
+export const GlossaryPage = () => {
+  useLingui();
+  return (
+    <PagePlaceholder
+      title={t`术语表`}
+      description={t`统一管理术语与固定译法，保持译名一致。`}
+      emptyText={t`还没有术语`}
+    />
+  );
+};

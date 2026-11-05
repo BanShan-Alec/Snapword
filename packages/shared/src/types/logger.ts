@@ -7,9 +7,17 @@
  */
 export type ILogMethod = (message: string, ...args: unknown[]) => void;
 
+export interface IScopedTraceLogger {
+  info: ILogMethod;
+  warn: ILogMethod;
+  error: ILogMethod;
+  debug: ILogMethod;
+}
+
 export interface LoggerApi {
   info: ILogMethod;
   warn: ILogMethod;
   error: ILogMethod;
   debug: ILogMethod;
+  withTrace: (traceId: string, spanId?: string) => IScopedTraceLogger;
 }

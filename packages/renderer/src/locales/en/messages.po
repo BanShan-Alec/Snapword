@@ -1,0 +1,166 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-05 13:43+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/pages/settings/index.tsx
+msgid "English"
+msgstr "English"
+
+#: src/pages/settings/index.tsx
+msgid "中文"
+msgstr "Chinese"
+
+#: src/pages/settings/index.tsx
+msgid "主题"
+msgstr "Theme"
+
+#: src/pages/history/index.tsx
+msgid "仅保留本次运行，退出后清空。"
+msgstr "This session only. Cleared on exit."
+
+#: src/pages/translate/index.tsx
+msgid "最近"
+msgstr "Recent"
+
+#: src/pages/history/index.tsx
+msgid "去翻译"
+msgstr "Translate"
+
+#: src/pages/settings/index.tsx
+msgid "外观"
+msgstr "Appearance"
+
+#: src/components/layout/AppShell/index.tsx
+#: src/pages/help/index.tsx
+msgid "帮助与诊断"
+msgstr "Help & Diagnostics"
+
+#: src/pages/settings/index.tsx
+msgid "当前设置仅本次运行有效，后续版本将自动保存。"
+msgstr "Changes last for this session only."
+
+#: src/pages/translate/index.tsx
+msgid "手动翻译文本，并回看最近结果。"
+msgstr "Translate text and see recent results."
+
+#: src/pages/vocabulary/index.tsx
+msgid "收藏的单词与语境片段，随时回看。"
+msgstr "Saved words and context snippets."
+
+#: src/pages/translate/index.tsx
+msgid "暂无最近翻译（将显示共享会话历史的前 5 条）"
+msgstr "No recent translations yet. Shows 5."
+
+#: src/pages/help/index.tsx
+msgid "暂无可展示的诊断信息"
+msgstr "No diagnostics available yet."
+
+#: src/components/layout/AppShell/index.tsx
+#: src/pages/glossary/index.tsx
+msgid "术语表"
+msgstr "Glossary"
+
+#: src/pages/settings/index.tsx
+msgid "浅色"
+msgstr "Light"
+
+#: src/pages/settings/index.tsx
+msgid "浅色、深色或跟随系统。"
+msgstr "Light, dark, or system."
+
+#: src/pages/settings/index.tsx
+msgid "深色"
+msgstr "Dark"
+
+#: src/pages/translate/index.tsx
+msgid "清空"
+msgstr "Clear"
+
+#: src/components/layout/AppShell/index.tsx
+#: src/pages/vocabulary/index.tsx
+msgid "生词本"
+msgstr "Vocabulary"
+
+#: src/pages/settings/index.tsx
+msgid "界面语言"
+msgstr "Interface language"
+
+#: src/pages/translate/index.tsx
+msgid "粘贴或输入英文，Ctrl+Enter 翻译"
+msgstr "Paste English, Ctrl+Enter to translate."
+
+#: src/pages/glossary/index.tsx
+msgid "统一管理术语与固定译法，保持译名一致。"
+msgstr "Keep terms and translations consistent."
+
+#: src/components/layout/AppShell/index.tsx
+#: src/pages/translate/index.tsx
+msgid "翻译"
+msgstr "Translate"
+
+#: src/pages/translate/index.tsx
+msgid "翻译功能将在后续版本开放。"
+msgstr "Translation is coming soon."
+
+#: src/components/layout/AppShell/index.tsx
+#: src/pages/history/index.tsx
+msgid "翻译历史"
+msgstr "History"
+
+#: src/pages/translate/index.tsx
+msgid "翻译结果会显示在这里"
+msgstr "Translation will appear here."
+
+#: src/pages/translate/index.tsx
+msgid "英语 → 简体中文"
+msgstr "English → Simplified Chinese"
+
+#: src/components/layout/AppShell/index.tsx
+#: src/pages/settings/index.tsx
+msgid "设置"
+msgstr "Settings"
+
+#: src/pages/settings/index.tsx
+msgid "语言"
+msgstr "Language"
+
+#: src/pages/settings/index.tsx
+msgid "跟随系统"
+msgstr "Follow system"
+
+#: src/pages/help/index.tsx
+msgid "运行自检、查看日志与排查常见问题。"
+msgstr "Run checks, view logs, and troubleshoot."
+
+#: src/pages/vocabulary/index.tsx
+msgid "还没有收藏单词"
+msgstr "No saved words yet."
+
+#: src/pages/glossary/index.tsx
+msgid "还没有术语"
+msgstr "No terms yet."
+
+#: src/pages/history/index.tsx
+msgid "还没有翻译记录"
+msgstr "No translations yet."
+
+#: src/components/layout/ErrorBoundary/index.tsx
+msgid "重新加载"
+msgstr "Reload"
+
+#: src/components/layout/ErrorBoundary/index.tsx
+msgid "页面出错了"
+msgstr "Something went wrong."
+
+#: src/pages/settings/index.tsx
+msgid "默认跟随系统，切换后立即生效。"
+msgstr "Follows the system. Applies instantly."
+
+#: src/pages/translate/index.tsx
+msgid "已超过 20000 字符上限，请删减后再翻译。"
+msgstr "Too long: max 20,000 characters."

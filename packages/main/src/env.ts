@@ -1,4 +1,5 @@
 import { APP_ENV, type AppEnv } from '@app/shared/constants/env';
+import type { AppRuntimeEnv } from '@app/shared/types/env';
 import { app } from 'electron';
 
 /**
@@ -48,3 +49,64 @@ export const devServerUrl: string | undefined =
   process.env.MODE === 'development' && process.env.VITE_DEV_SERVER_URL
     ? process.env.VITE_DEV_SERVER_URL
     : undefined;
+
+import type { EnvKey } from './env.d';
+
+/**
+ * 读取动态环境配置：
+ * 优先级 1：外部动态注入的带前缀环境变量 process.env[`${__ENV_PREFIX__}${key}`] (如 APP_SYSTEM_CODE)
+ * 优先级 2：调用处传入的显式 fallback (若提供)
+ * 优先级 3：编译期 Vite define 注入的静态默认值快照 __ENV_DEFAULTS__[key]
+ */
+export function getEnv(key: EnvKey, fallback?: string): string {
+  const prefix = typeof __ENV_PREFIX__ !== 'undefined' ? __ENV_PREFIX__ : 'APP_';
+  const prefixedKey = `${prefix}${key}`;
+  const envVal = process.env[prefixedKey];
+  if (envVal !== undefined && envVal !== '') {
+    return envVal;
+  }
+  if (fallback !== undefined) {
+    return fallback;
+  }
+  if (typeof __ENV_DEFAULTS__ !== 'undefined' && __ENV_DEFAULTS__[key] !== undefined) {
+    return __ENV_DEFAULTS__[key];
+  }
+  return '';
+}
+
+/**
+ * 编译期从根 package.json 的 repository.url 解析出的 GitHub 发布源坐标
+ *
+ * 未打包形态（preview）下 electron-updater 需要显式 setFeedURL；
+ * 该坐标属于仓库身份，随代码走，不再支持 .env 覆盖。
+ */
+export const bundledRepository = {
+  owner: typeof __GITHUB_OWNER__ !== 'undefined' ? __GITHUB_OWNER__ : '',
+  repo: typeof __GITHUB_REPO__ !== 'undefined' ? __GITHUB_REPO__ : '',
+} as const;
+
+/**
+ * 获取注入给渲染进程的全局只读运行时环境基座快照
+ */
+export function getRuntimeEnvSnapshot(): AppRuntimeEnv {
+  if (!app.isReady()) {
+    throw new Error('Cannot get runtime env snapshot before app is ready.');
+  }
+
+  return {
+    mode: currentAppEnv,
+    appVersion: app.getVersion(),
+    appName: app.getName(),
+    channel: getEnv('DISTRIBUTION_CHANNEL') || undefined,
+    systemCode: getEnv('SYSTEM_CODE') || undefined,
+  };
+}
+
+import { APP_ENV_ARG_PREFIX, packRuntimeEnv } from '@app/shared/utils/env-packer';
+
+/**
+ * 将运行时环境快照序列化为命令行启动参数（压缩混淆形式）
+ */
+export function getPackedEnvArgument(env: AppRuntimeEnv = getRuntimeEnvSnapshot()): string {
+  return `${APP_ENV_ARG_PREFIX}${packRuntimeEnv(env)}`;
+}

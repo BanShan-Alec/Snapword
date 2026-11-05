@@ -4,6 +4,7 @@ import { theme } from 'antd';
 import { claudeLightTheme, paseoDarkTheme } from 'paseo-antd-themes';
 import { describe, expect, it } from 'vitest';
 import { getAntdThemeConfig } from '@/styles/antd-theme';
+import { applyThemeVariables, getThemeVariables } from '@/styles/design-tokens';
 
 /**
  * C-05 颜色链路：antd 组件主题（claudeLightTheme / paseoDarkTheme）与
@@ -101,5 +102,52 @@ describe('Tailwind 桥接（paseo-antd-themes/tailwind.css）与 antd 主题同�
     expect(indexCss).toContain('linear-gradient(to top, var(--paseo-bg-container), transparent)');
     // 类策略暗色变体保持机制契约（applyColorScheme 同步 .dark）
     expect(indexCss).toContain('@custom-variant dark');
+  });
+});
+
+describe('显式主题模式（系统深色下手动浅色也必须生效）', () => {
+  const paseoCss = readPaseoTailwindCss();
+  const lightStart = paseoCss.indexOf(':root, :host {');
+  const mediaStart = paseoCss.indexOf('@media (prefers-color-scheme: dark)', lightStart);
+  const classStart = paseoCss.indexOf('.dark {', mediaStart);
+  const blocks = [
+    ['light', paseoCss.slice(lightStart, mediaStart)],
+    ['dark', paseoCss.slice(classStart)],
+  ] as const;
+
+  const parseVars = (block: string) =>
+    Object.fromEntries(
+      [...block.matchAll(/--paseo-([a-z0-9-]+):\s*([^;]+);/g)].map(([, name, value]) => [
+        name,
+        norm(value),
+      ]),
+    );
+
+  it.each(blocks)('%s 模式的内联变量与包产物逐项一致', (mode, block) => {
+    const expected = parseVars(block);
+    const actual = getThemeVariables(mode);
+    expect(Object.keys(actual).sort()).toEqual(Object.keys(expected).sort());
+    for (const [name, value] of Object.entries(actual)) {
+      expect(norm(value), `--paseo-${name}`).toBe(expected[name]);
+    }
+  });
+
+  it('applyThemeVariables 把当前模式全部变量写到根元素（内联样式压过 media 块）', () => {
+    const written = new Map<string, string>();
+    applyThemeVariables(
+      {
+        style: {
+          setProperty: (name, value) => {
+            written.set(name, value);
+          },
+        },
+      },
+      'light',
+    );
+    const expected = getThemeVariables('light');
+    expect(written.size).toBe(Object.keys(expected).length);
+    expect(written.get('--paseo-bg-layout')).toBe(expected['bg-layout']);
+    expect(written.get('--paseo-text')).toBe(expected.text);
+    expect(written.get('--paseo-surface-sidebar')).toBe(expected['surface-sidebar']);
   });
 });

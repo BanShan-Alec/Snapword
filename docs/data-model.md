@@ -24,13 +24,13 @@
 
 ## 2. 技术栈与事实源
 
-| 组件 | 版本/形态 | 职责 | 约束 |
-|---|---|---|---|
-| `drizzle-orm` | `1.0.0-rc.5`，精确锁版本 | schema 定义、查询构建、迁移执行 | 0.x/RC 期间 API 会变；升级必须单独 PR |
-| `drizzle-kit` | `1.0.0-rc.5`，**仅 devDependency** | 从 `schema.ts` 生成迁移 SQL | 禁止在生产/Electron 运行时运行；禁止对用户库 `push` |
-| `node:sqlite` | Node 内置 `DatabaseSync` | 同步 SQLite 驱动 | 已在 Electron 42/45 实测可用；项目内复现失败则回退 `better-sqlite3` |
-| `schema.ts` | `src/main/db/schema.ts` | 表、列、索引、CHECK 的唯一定义 | 所有 schema 变更从这里开始 |
-| `drizzle/` | 生成物，提交入库 | 迁移 SQL + snapshot | append-only；已应用的迁移文件禁止修改 |
+| 组件          | 版本/形态                          | 职责                            | 约束                                                                |
+| ------------- | ---------------------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| `drizzle-orm` | `1.0.0-rc.5`，精确锁版本           | schema 定义、查询构建、迁移执行 | 0.x/RC 期间 API 会变；升级必须单独 PR                               |
+| `drizzle-kit` | `1.0.0-rc.5`，**仅 devDependency** | 从 `schema.ts` 生成迁移 SQL     | 禁止在生产/Electron 运行时运行；禁止对用户库 `push`                 |
+| `node:sqlite` | Node 内置 `DatabaseSync`           | 同步 SQLite 驱动                | 已在 Electron 42/45 实测可用；项目内复现失败则回退 `better-sqlite3` |
+| `schema.ts`   | `src/main/db/schema.ts`            | 表、列、索引、CHECK 的唯一定义  | 所有 schema 变更从这里开始                                          |
+| `drizzle/`    | 生成物，提交入库                   | 迁移 SQL + snapshot             | append-only；已应用的迁移文件禁止修改                               |
 
 **工作流**：
 
@@ -98,100 +98,134 @@ export const db = drizzle({ client, schema });
 ### 4.1 Drizzle 定义（`src/main/db/schema.ts`）
 
 ```ts
-import {
-  sqliteTable, text, integer, index, uniqueIndex, check,
-} from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
 import { sql, desc } from 'drizzle-orm';
 
 export type Sense = { pos: string; def: string; example: string };
 export type JsonValue =
-  | string | number | boolean | null
-  | JsonValue[] | { [key: string]: JsonValue };
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 
-export const vocabulary = sqliteTable('vocabulary', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  word: text('word').notNull(),
-  wordNorm: text('word_norm').notNull(),
-  phoneticUs: text('phonetic_us').notNull().default(''),
-  phoneticUk: text('phonetic_uk'),
-  contextSense: text('context_sense'),
-  contextSnippet: text('context_snippet'),
-  sensesJson: text('senses_json', { mode: 'json' })
-    .$type<Sense[]>().notNull().default(sql`'[]'`),
-  sourceTitle: text('source_title'),
-  sourceDomain: text('source_domain'),
-  tagsJson: text('tags_json', { mode: 'json' })
-    .$type<string[]>().notNull().default(sql`'[]'`),
-  createdAt: text('created_at').notNull(),
-  updatedAt: text('updated_at').notNull(),
-  rev: integer('rev').notNull().default(0),
-  deletedAt: text('deleted_at'),
-  deletedBatch: text('deleted_batch'),
-  originDevice: text('origin_device').notNull(),
-}, (t) => [
-  uniqueIndex('ux_vocabulary_word_norm').on(t.wordNorm),
-  index('ix_vocabulary_created_at_live')
-    .on(desc(t.createdAt)).where(sql`${t.deletedAt} IS NULL`),
-  index('ix_vocabulary_updated_at_live')
-    .on(desc(t.updatedAt)).where(sql`${t.deletedAt} IS NULL`),
-  index('ix_vocabulary_deleted_at').on(t.deletedAt),
+export const vocabulary = sqliteTable(
+  'vocabulary',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    word: text('word').notNull(),
+    wordNorm: text('word_norm').notNull(),
+    phoneticUs: text('phonetic_us').notNull().default(''),
+    phoneticUk: text('phonetic_uk'),
+    contextSense: text('context_sense'),
+    contextSnippet: text('context_snippet'),
+    sensesJson: text('senses_json', { mode: 'json' }).$type<Sense[]>().notNull().default(sql`'[]'`),
+    sourceTitle: text('source_title'),
+    sourceDomain: text('source_domain'),
+    tagsJson: text('tags_json', { mode: 'json' }).$type<string[]>().notNull().default(sql`'[]'`),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+    rev: integer('rev').notNull().default(0),
+    deletedAt: text('deleted_at'),
+    deletedBatch: text('deleted_batch'),
+    originDevice: text('origin_device').notNull(),
+  },
+  (t) => [
+    uniqueIndex('ux_vocabulary_word_norm').on(t.wordNorm),
+    index('ix_vocabulary_created_at_live').on(desc(t.createdAt)).where(sql`${t.deletedAt} IS NULL`),
+    index('ix_vocabulary_updated_at_live').on(desc(t.updatedAt)).where(sql`${t.deletedAt} IS NULL`),
+    index('ix_vocabulary_deleted_at').on(t.deletedAt),
 
-  check('ck_vocabulary_word_len', sql`length(trim(${t.word})) BETWEEN 1 AND 120`),
-  check('ck_vocabulary_word_norm_len', sql`length(${t.wordNorm}) BETWEEN 1 AND 120`),
-  check('ck_vocabulary_phonetic_us_len', sql`length(${t.phoneticUs}) <= 120`),
-  check('ck_vocabulary_phonetic_uk_len', sql`${t.phoneticUk} IS NULL OR length(${t.phoneticUk}) <= 120`),
-  check('ck_vocabulary_context_sense_len', sql`${t.contextSense} IS NULL OR length(${t.contextSense}) <= 1000`),
-  check('ck_vocabulary_context_snippet_len', sql`${t.contextSnippet} IS NULL OR length(${t.contextSnippet}) <= 300`),
-  check('ck_vocabulary_senses_json', sql`json_valid(${t.sensesJson}) AND json_type(${t.sensesJson}) = 'array'`),
-  check('ck_vocabulary_senses_len', sql`json_array_length(${t.sensesJson}) <= 5`),
-  check('ck_vocabulary_tags_json', sql`json_valid(${t.tagsJson}) AND json_type(${t.tagsJson}) = 'array'`),
-  check('ck_vocabulary_tags_len', sql`json_array_length(${t.tagsJson}) <= 5`),
-  check('ck_vocabulary_source_title_len', sql`${t.sourceTitle} IS NULL OR length(${t.sourceTitle}) <= 300`),
-  check('ck_vocabulary_source_domain_len', sql`${t.sourceDomain} IS NULL OR length(${t.sourceDomain}) <= 255`),
-]);
+    check('ck_vocabulary_word_len', sql`length(trim(${t.word})) BETWEEN 1 AND 120`),
+    check('ck_vocabulary_word_norm_len', sql`length(${t.wordNorm}) BETWEEN 1 AND 120`),
+    check('ck_vocabulary_phonetic_us_len', sql`length(${t.phoneticUs}) <= 120`),
+    check(
+      'ck_vocabulary_phonetic_uk_len',
+      sql`${t.phoneticUk} IS NULL OR length(${t.phoneticUk}) <= 120`,
+    ),
+    check(
+      'ck_vocabulary_context_sense_len',
+      sql`${t.contextSense} IS NULL OR length(${t.contextSense}) <= 1000`,
+    ),
+    check(
+      'ck_vocabulary_context_snippet_len',
+      sql`${t.contextSnippet} IS NULL OR length(${t.contextSnippet}) <= 300`,
+    ),
+    check(
+      'ck_vocabulary_senses_json',
+      sql`json_valid(${t.sensesJson}) AND json_type(${t.sensesJson}) = 'array'`,
+    ),
+    check('ck_vocabulary_senses_len', sql`json_array_length(${t.sensesJson}) <= 5`),
+    check(
+      'ck_vocabulary_tags_json',
+      sql`json_valid(${t.tagsJson}) AND json_type(${t.tagsJson}) = 'array'`,
+    ),
+    check('ck_vocabulary_tags_len', sql`json_array_length(${t.tagsJson}) <= 5`),
+    check(
+      'ck_vocabulary_source_title_len',
+      sql`${t.sourceTitle} IS NULL OR length(${t.sourceTitle}) <= 300`,
+    ),
+    check(
+      'ck_vocabulary_source_domain_len',
+      sql`${t.sourceDomain} IS NULL OR length(${t.sourceDomain}) <= 255`,
+    ),
+  ],
+);
 
-export const term = sqliteTable('term', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  term: text('term').notNull(),
-  termNorm: text('term_norm').notNull(),
-  matchType: text('match_type', { enum: ['exact', 'contains', 'regex'] }).notNull(),
-  action: text('action', { enum: ['keep', 'translate'] }).notNull(),
-  translation: text('translation'),
-  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
-  createdAt: text('created_at').notNull(),
-  updatedAt: text('updated_at').notNull(),
-  rev: integer('rev').notNull().default(0),
-  deletedAt: text('deleted_at'),
-  deletedBatch: text('deleted_batch'),
-  originDevice: text('origin_device').notNull(),
-}, (t) => [
-  uniqueIndex('ux_term_norm_match').on(t.termNorm, t.matchType),
-  index('ix_term_enabled_live').on(t.enabled).where(sql`${t.deletedAt} IS NULL`),
-  index('ix_term_updated_at_live')
-    .on(desc(t.updatedAt)).where(sql`${t.deletedAt} IS NULL`),
-  index('ix_term_deleted_at').on(t.deletedAt),
+export const term = sqliteTable(
+  'term',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    term: text('term').notNull(),
+    termNorm: text('term_norm').notNull(),
+    matchType: text('match_type', { enum: ['exact', 'contains', 'regex'] }).notNull(),
+    action: text('action', { enum: ['keep', 'translate'] }).notNull(),
+    translation: text('translation'),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+    rev: integer('rev').notNull().default(0),
+    deletedAt: text('deleted_at'),
+    deletedBatch: text('deleted_batch'),
+    originDevice: text('origin_device').notNull(),
+  },
+  (t) => [
+    uniqueIndex('ux_term_norm_match').on(t.termNorm, t.matchType),
+    index('ix_term_enabled_live').on(t.enabled).where(sql`${t.deletedAt} IS NULL`),
+    index('ix_term_updated_at_live').on(desc(t.updatedAt)).where(sql`${t.deletedAt} IS NULL`),
+    index('ix_term_deleted_at').on(t.deletedAt),
 
-  check('ck_term_len', sql`length(trim(${t.term})) BETWEEN 1 AND 200`),
-  check('ck_term_norm_len', sql`length(${t.termNorm}) BETWEEN 1 AND 200`),
-  check('ck_term_match_type', sql`${t.matchType} IN ('exact','contains','regex')`),
-  check('ck_term_action', sql`${t.action} IN ('keep','translate')`),
-  check('ck_term_translation_pair', sql`
+    check('ck_term_len', sql`length(trim(${t.term})) BETWEEN 1 AND 200`),
+    check('ck_term_norm_len', sql`length(${t.termNorm}) BETWEEN 1 AND 200`),
+    check('ck_term_match_type', sql`${t.matchType} IN ('exact','contains','regex')`),
+    check('ck_term_action', sql`${t.action} IN ('keep','translate')`),
+    check(
+      'ck_term_translation_pair',
+      sql`
     (${t.deletedAt} IS NOT NULL)
     OR (${t.action} = 'translate' AND ${t.translation} IS NOT NULL AND length(trim(${t.translation})) > 0)
     OR (${t.action} = 'keep' AND ${t.translation} IS NULL)
-  `),
-  check('ck_term_translation_len', sql`${t.translation} IS NULL OR length(${t.translation}) <= 500`),
-]);
+  `,
+    ),
+    check(
+      'ck_term_translation_len',
+      sql`${t.translation} IS NULL OR length(${t.translation}) <= 500`,
+    ),
+  ],
+);
 
-export const setting = sqliteTable('setting', {
-  key: text('key').primaryKey().notNull(),
-  valueJson: text('value_json', { mode: 'json' }).$type<JsonValue>().notNull(),
-  updatedAt: text('updated_at').notNull(),
-  rev: integer('rev').notNull().default(0),
-  originDevice: text('origin_device').notNull(),
-}, (t) => [
-  check('ck_setting_value_json', sql`json_valid(${t.valueJson})`),
-]);
+export const setting = sqliteTable(
+  'setting',
+  {
+    key: text('key').primaryKey().notNull(),
+    valueJson: text('value_json', { mode: 'json' }).$type<JsonValue>().notNull(),
+    updatedAt: text('updated_at').notNull(),
+    rev: integer('rev').notNull().default(0),
+    originDevice: text('origin_device').notNull(),
+  },
+  (t) => [check('ck_setting_value_json', sql`json_valid(${t.valueJson})`)],
+);
 ```
 
 **说明**：
@@ -293,71 +327,71 @@ CREATE TABLE `setting` (
 
 ### 4.3 字段字典：`vocabulary`
 
-| 字段 | 类型 | 空 | 说明 |
-|---|---|---|---|
-| `id` | INTEGER | 否 | 自增主键；仅本地使用，不导出、不同步 |
-| `word` | TEXT | 否 | 展示用词条，保留用户收藏时的拼写 |
-| `word_norm` | TEXT | 否 | `trim + NFC + toLowerCase`；唯一键；同步合并键 |
-| `phonetic_us` | TEXT | 否 | 美式音标；无则空串；UI 标「AI 生成」 |
-| `phonetic_uk` | TEXT | 是 | 英式音标；无则 NULL |
-| `context_sense` | TEXT | 是 | 语境义（中文）；无语境时 NULL |
-| `context_snippet` | TEXT | 是 | 语境片段，≤300 字符；设置关闭时不写入；墓碑 5 秒后清空 |
-| `senses_json` | TEXT | 否 | JSON 数组，≤5 条；见 §4.5；墓碑清为 `[]` |
-| `source_title` | TEXT | 是 | 来源页面标题；不含完整 URL |
-| `source_domain` | TEXT | 是 | 来源域名；只保留 host，不含路径/查询参数 |
-| `tags_json` | TEXT | 否 | JSON 字符串数组，≤5 个；每个 ≤32 字符 |
-| `created_at` | TEXT | 否 | 首次收藏时间；复活墓碑时保留原值 |
-| `updated_at` | TEXT | 否 | 最近一次变更（内容、删除、撤销都算） |
-| `rev` | INTEGER | 否 | 同一行每次本地变更 +1；同步平局判定；默认 0 |
-| `deleted_at` | TEXT | 是 | 软删除时间；NULL = 存活 |
-| `deleted_batch` | TEXT | 是 | 本地撤销批次 UUID；不同步、不导出 |
-| `origin_device` | TEXT | 否 | 当前版本的来源设备 UUID；同步 LWW 平局判定 |
+| 字段              | 类型    | 空  | 说明                                                   |
+| ----------------- | ------- | --- | ------------------------------------------------------ |
+| `id`              | INTEGER | 否  | 自增主键；仅本地使用，不导出、不同步                   |
+| `word`            | TEXT    | 否  | 展示用词条，保留用户收藏时的拼写                       |
+| `word_norm`       | TEXT    | 否  | `trim + NFC + toLowerCase`；唯一键；同步合并键         |
+| `phonetic_us`     | TEXT    | 否  | 美式音标；无则空串；UI 标「AI 生成」                   |
+| `phonetic_uk`     | TEXT    | 是  | 英式音标；无则 NULL                                    |
+| `context_sense`   | TEXT    | 是  | 语境义（中文）；无语境时 NULL                          |
+| `context_snippet` | TEXT    | 是  | 语境片段，≤300 字符；设置关闭时不写入；墓碑 5 秒后清空 |
+| `senses_json`     | TEXT    | 否  | JSON 数组，≤5 条；见 §4.5；墓碑清为 `[]`               |
+| `source_title`    | TEXT    | 是  | 来源页面标题；不含完整 URL                             |
+| `source_domain`   | TEXT    | 是  | 来源域名；只保留 host，不含路径/查询参数               |
+| `tags_json`       | TEXT    | 否  | JSON 字符串数组，≤5 个；每个 ≤32 字符                  |
+| `created_at`      | TEXT    | 否  | 首次收藏时间；复活墓碑时保留原值                       |
+| `updated_at`      | TEXT    | 否  | 最近一次变更（内容、删除、撤销都算）                   |
+| `rev`             | INTEGER | 否  | 同一行每次本地变更 +1；同步平局判定；默认 0            |
+| `deleted_at`      | TEXT    | 是  | 软删除时间；NULL = 存活                                |
+| `deleted_batch`   | TEXT    | 是  | 本地撤销批次 UUID；不同步、不导出                      |
+| `origin_device`   | TEXT    | 否  | 当前版本的来源设备 UUID；同步 LWW 平局判定             |
 
 ### 4.4 字段字典：`term`
 
-| 字段 | 类型 | 空 | 说明 |
-|---|---|---|---|
-| `id` | INTEGER | 否 | 自增主键；不导出、不同步 |
-| `term` | TEXT | 否 | 展示用词条 |
-| `term_norm` | TEXT | 否 | `trim + NFC + toLowerCase`；与 `match_type` 组成唯一键 |
-| `match_type` | TEXT | 否 | `exact` / `contains` / `regex` |
-| `action` | TEXT | 否 | `keep`（不译）/ `translate`（固定译法） |
-| `translation` | TEXT | 是 | `action=translate` 时必填；`keep` 时必须 NULL |
-| `enabled` | INTEGER | 否 | 0/1；默认 1 |
-| `created_at` | TEXT | 否 | 创建时间 |
-| `updated_at` | TEXT | 否 | 最近一次变更 |
-| `rev` | INTEGER | 否 | 同一行每次本地变更 +1；同步平局判定；默认 0 |
-| `deleted_at` | TEXT | 是 | 软删除时间 |
-| `deleted_batch` | TEXT | 是 | 本地撤销批次；不同步 |
-| `origin_device` | TEXT | 否 | 同步 LWW 平局判定 |
+| 字段            | 类型    | 空  | 说明                                                   |
+| --------------- | ------- | --- | ------------------------------------------------------ |
+| `id`            | INTEGER | 否  | 自增主键；不导出、不同步                               |
+| `term`          | TEXT    | 否  | 展示用词条                                             |
+| `term_norm`     | TEXT    | 否  | `trim + NFC + toLowerCase`；与 `match_type` 组成唯一键 |
+| `match_type`    | TEXT    | 否  | `exact` / `contains` / `regex`                         |
+| `action`        | TEXT    | 否  | `keep`（不译）/ `translate`（固定译法）                |
+| `translation`   | TEXT    | 是  | `action=translate` 时必填；`keep` 时必须 NULL          |
+| `enabled`       | INTEGER | 否  | 0/1；默认 1                                            |
+| `created_at`    | TEXT    | 否  | 创建时间                                               |
+| `updated_at`    | TEXT    | 否  | 最近一次变更                                           |
+| `rev`           | INTEGER | 否  | 同一行每次本地变更 +1；同步平局判定；默认 0            |
+| `deleted_at`    | TEXT    | 是  | 软删除时间                                             |
+| `deleted_batch` | TEXT    | 是  | 本地撤销批次；不同步                                   |
+| `origin_device` | TEXT    | 否  | 同步 LWW 平局判定                                      |
 
 > MVP 不存 `domain` / `origin`；术语只来自用户手动维护。术语自动抽取与 domain 延后 v1.1，届时再加可空列与迁移。
 
 ### 4.5 字段字典：`setting`
 
-| 字段 | 类型 | 空 | 说明 |
-|---|---|---|---|
-| `key` | TEXT | 否 | 设置键，点分命名，如 `ui.theme` |
-| `value_json` | TEXT | 否 | JSON 值；标量或对象 |
-| `updated_at` | TEXT | 否 | 最近一次显式修改 |
-| `rev` | INTEGER | 否 | 同一键每次本地变更 +1；同步平局判定；默认 0 |
-| `origin_device` | TEXT | 否 | 来源设备 UUID |
+| 字段            | 类型    | 空  | 说明                                        |
+| --------------- | ------- | --- | ------------------------------------------- |
+| `key`           | TEXT    | 否  | 设置键，点分命名，如 `ui.theme`             |
+| `value_json`    | TEXT    | 否  | JSON 值；标量或对象                         |
+| `updated_at`    | TEXT    | 否  | 最近一次显式修改                            |
+| `rev`           | INTEGER | 否  | 同一键每次本地变更 +1；同步平局判定；默认 0 |
+| `origin_device` | TEXT    | 否  | 来源设备 UUID                               |
 
 **只存可同步设置**；密钥与设备本地项仍在 `config.json`。默认值**不落行**：键不存在 = "本设备没有意见"，避免新设备用默认值覆盖远端设置。
 
 **可同步设置白名单**：
 
-| key | 类型 | 默认值 |
-|---|---|---|
-| `ui.theme` | string | `system` |
-| `ui.fontSize` | number | `14` |
-| `ui.language` | string | `system` |
-| `capture.dotEnabled` | boolean | `true` |
-| `capture.fullscreenSuppression` | boolean | `true` |
-| `capture.snippetEnabled` | boolean | `true` |
-| `api.model` | string | `''` |
-| `api.temperature` | number | `0` |
-| `api.timeoutMs` | number | `30000` |
+| key                             | 类型    | 默认值   |
+| ------------------------------- | ------- | -------- |
+| `ui.theme`                      | string  | `system` |
+| `ui.fontSize`                   | number  | `14`     |
+| `ui.language`                   | string  | `system` |
+| `capture.dotEnabled`            | boolean | `true`   |
+| `capture.fullscreenSuppression` | boolean | `true`   |
+| `capture.snippetEnabled`        | boolean | `true`   |
+| `api.model`                     | string  | `''`     |
+| `api.temperature`               | number  | `0`      |
+| `api.timeoutMs`                 | number  | `30000`  |
 
 **不同步**：`api.key`、`api.baseUrl`（可能含凭据或指向本机代理）、全局热键、白名单进程、开机自启、托盘提示、TTS 引擎/语音/语速、窗口大小/位置、数据库路径、同步目录/设备 ID、日志。
 
@@ -388,19 +422,19 @@ CREATE TABLE `setting` (
 
 ### 4.7 索引与约束清单
 
-| 名称 | 解决什么 |
-|---|---|
-| `ux_vocabulary_word_norm` | A-03 去重；upsert 冲突目标；复活墓碑；同步合并键稳定 |
-| `ix_vocabulary_created_at_live` | 生词本默认按收藏时间倒序，只索引存活行 |
-| `ix_vocabulary_updated_at_live` | 最近更新列表；只索引存活行 |
-| `ix_vocabulary_deleted_at` | 清理任务按 `deleted_at` 扫描 |
-| `ux_term_norm_match` | 同一词不同匹配方式可共存；同一匹配方式不重复 |
-| `ix_term_enabled_live` | 启动时加载 `enabled=1` 的存活术语 |
-| `ix_term_updated_at_live` | 术语列表按更新时间倒序 |
-| `ix_term_deleted_at` | 清理任务 |
-| `ck_*_json` | 防手写 SQL/导入写坏 JSON；`json_valid` 不够，必须再加 `json_type='array'` |
-| `ck_*_len` | 防模型输出超长撑爆 UI/导出 |
-| `ck_term_translation_pair` | 数据库层面保证 keep/translate 配对，不写半成品 |
+| 名称                            | 解决什么                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `ux_vocabulary_word_norm`       | A-03 去重；upsert 冲突目标；复活墓碑；同步合并键稳定                      |
+| `ix_vocabulary_created_at_live` | 生词本默认按收藏时间倒序，只索引存活行                                    |
+| `ix_vocabulary_updated_at_live` | 最近更新列表；只索引存活行                                                |
+| `ix_vocabulary_deleted_at`      | 清理任务按 `deleted_at` 扫描                                              |
+| `ux_term_norm_match`            | 同一词不同匹配方式可共存；同一匹配方式不重复                              |
+| `ix_term_enabled_live`          | 启动时加载 `enabled=1` 的存活术语                                         |
+| `ix_term_updated_at_live`       | 术语列表按更新时间倒序                                                    |
+| `ix_term_deleted_at`            | 清理任务                                                                  |
+| `ck_*_json`                     | 防手写 SQL/导入写坏 JSON；`json_valid` 不够，必须再加 `json_type='array'` |
+| `ck_*_len`                      | 防模型输出超长撑爆 UI/导出                                                |
+| `ck_term_translation_pair`      | 数据库层面保证 keep/translate 配对，不写半成品                            |
 
 ---
 
@@ -436,37 +470,51 @@ CREATE TABLE `setting` (
 
 ```ts
 const now = new Date().toISOString();
-const rows = db.insert(vocabulary).values({
-  word, wordNorm, phoneticUs, phoneticUk,
-  contextSense, contextSnippet, sensesJson,
-  sourceTitle, sourceDomain, tagsJson,
-  createdAt: now, updatedAt: now,
-  rev: 1,
-  deletedAt: null, deletedBatch: null,
-  originDevice: deviceId,
-}).onConflictDoUpdate({
-  target: vocabulary.wordNorm,
-  set: {
-    word: sql`excluded.word`,
-    phoneticUs: sql`excluded.phonetic_us`,
-    phoneticUk: sql`excluded.phonetic_uk`,
-    contextSense: sql`excluded.context_sense`,
-    contextSnippet: sql`excluded.context_snippet`,
-    sensesJson: sql`excluded.senses_json`,
-    sourceTitle: sql`excluded.source_title`,
-    sourceDomain: sql`excluded.source_domain`,
-    tagsJson: sql`CASE WHEN excluded.tags_json = '[]' THEN ${vocabulary.tagsJson} ELSE excluded.tags_json END`,
-    deletedAt: sql`NULL`,
-    deletedBatch: sql`NULL`,
-    updatedAt: sql`excluded.updated_at`,
-    rev: sql`${vocabulary.rev} + 1`,
-    originDevice: sql`excluded.origin_device`,
-  },
-}).returning({
-  id: vocabulary.id,
-  createdAt: vocabulary.createdAt,
-  updatedAt: vocabulary.updatedAt,
-}).all();
+const rows = db
+  .insert(vocabulary)
+  .values({
+    word,
+    wordNorm,
+    phoneticUs,
+    phoneticUk,
+    contextSense,
+    contextSnippet,
+    sensesJson,
+    sourceTitle,
+    sourceDomain,
+    tagsJson,
+    createdAt: now,
+    updatedAt: now,
+    rev: 1,
+    deletedAt: null,
+    deletedBatch: null,
+    originDevice: deviceId,
+  })
+  .onConflictDoUpdate({
+    target: vocabulary.wordNorm,
+    set: {
+      word: sql`excluded.word`,
+      phoneticUs: sql`excluded.phonetic_us`,
+      phoneticUk: sql`excluded.phonetic_uk`,
+      contextSense: sql`excluded.context_sense`,
+      contextSnippet: sql`excluded.context_snippet`,
+      sensesJson: sql`excluded.senses_json`,
+      sourceTitle: sql`excluded.source_title`,
+      sourceDomain: sql`excluded.source_domain`,
+      tagsJson: sql`CASE WHEN excluded.tags_json = '[]' THEN ${vocabulary.tagsJson} ELSE excluded.tags_json END`,
+      deletedAt: sql`NULL`,
+      deletedBatch: sql`NULL`,
+      updatedAt: sql`excluded.updated_at`,
+      rev: sql`${vocabulary.rev} + 1`,
+      originDevice: sql`excluded.origin_device`,
+    },
+  })
+  .returning({
+    id: vocabulary.id,
+    createdAt: vocabulary.createdAt,
+    updatedAt: vocabulary.updatedAt,
+  })
+  .all();
 ```
 
 - **单语句原子**：避免“查不到→插入”之间的竞态；唯一索引是最终防线。
@@ -478,24 +526,36 @@ const rows = db.insert(vocabulary).values({
 ### 6.2 术语 upsert
 
 ```ts
-db.insert(term).values({
-  term, termNorm, matchType, action, translation, enabled,
-  createdAt: now, updatedAt: now, rev: 1,
-  deletedAt: null, deletedBatch: null, originDevice: deviceId,
-}).onConflictDoUpdate({
-  target: [term.termNorm, term.matchType],
-  set: {
-    term: sql`excluded.term`,
-    action: sql`excluded.action`,
-    translation: sql`excluded.translation`,
-    enabled: sql`excluded.enabled`,
-    deletedAt: sql`NULL`,
-    deletedBatch: sql`NULL`,
-    updatedAt: sql`excluded.updated_at`,
-    rev: sql`${term.rev} + 1`,
-    originDevice: sql`excluded.origin_device`,
-  },
-}).run();
+db.insert(term)
+  .values({
+    term,
+    termNorm,
+    matchType,
+    action,
+    translation,
+    enabled,
+    createdAt: now,
+    updatedAt: now,
+    rev: 1,
+    deletedAt: null,
+    deletedBatch: null,
+    originDevice: deviceId,
+  })
+  .onConflictDoUpdate({
+    target: [term.termNorm, term.matchType],
+    set: {
+      term: sql`excluded.term`,
+      action: sql`excluded.action`,
+      translation: sql`excluded.translation`,
+      enabled: sql`excluded.enabled`,
+      deletedAt: sql`NULL`,
+      deletedBatch: sql`NULL`,
+      updatedAt: sql`excluded.updated_at`,
+      rev: sql`${term.rev} + 1`,
+      originDevice: sql`excluded.origin_device`,
+    },
+  })
+  .run();
 ```
 
 - `action=keep` 时 `translation` 必须 NULL；`action=translate` 时必须非空。
@@ -510,7 +570,13 @@ db.insert(term).values({
 const batch = crypto.randomUUID();
 const now = new Date().toISOString();
 db.update(vocabulary)
-  .set({ deletedAt: now, deletedBatch: batch, updatedAt: now, rev: sql`${vocabulary.rev} + 1`, originDevice: deviceId })
+  .set({
+    deletedAt: now,
+    deletedBatch: batch,
+    updatedAt: now,
+    rev: sql`${vocabulary.rev} + 1`,
+    originDevice: deviceId,
+  })
   .where(and(isNull(vocabulary.deletedAt), inArray(vocabulary.id, ids)))
   .run();
 ```
@@ -524,7 +590,13 @@ db.update(vocabulary)
 
 ```ts
 db.update(vocabulary)
-  .set({ deletedAt: null, deletedBatch: null, updatedAt: now, rev: sql`${vocabulary.rev} + 1`, originDevice: deviceId })
+  .set({
+    deletedAt: null,
+    deletedBatch: null,
+    updatedAt: now,
+    rev: sql`${vocabulary.rev} + 1`,
+    originDevice: deviceId,
+  })
   .where(eq(vocabulary.deletedBatch, batch))
   .run();
 ```
@@ -538,34 +610,33 @@ db.update(vocabulary)
 1. **5 秒后清内容**：把墓碑的内容字段清空，只留 key + 时间戳 + `rev` + `origin_device` + `deleted_batch`，供同步和审计使用：
 
 ```ts
-db.update(vocabulary).set({
-  phoneticUs: '',
-  phoneticUk: null,
-  contextSense: null,
-  contextSnippet: null,
-  sensesJson: [],
-  sourceTitle: null,
-  sourceDomain: null,
-  tagsJson: [],
-}).where(and(
-  isNotNull(vocabulary.deletedAt),
-  lt(vocabulary.deletedAt, fiveSecondsAgo),
-)).run();
+db.update(vocabulary)
+  .set({
+    phoneticUs: '',
+    phoneticUk: null,
+    contextSense: null,
+    contextSnippet: null,
+    sensesJson: [],
+    sourceTitle: null,
+    sourceDomain: null,
+    tagsJson: [],
+  })
+  .where(and(isNotNull(vocabulary.deletedAt), lt(vocabulary.deletedAt, fiveSecondsAgo)))
+  .run();
 
 // 术语墓碑：只清 translation；term / term_norm / match_type / action / enabled 保留
-db.update(term).set({ translation: null }).where(and(
-  isNotNull(term.deletedAt),
-  lt(term.deletedAt, fiveSecondsAgo),
-)).run();
+db.update(term)
+  .set({ translation: null })
+  .where(and(isNotNull(term.deletedAt), lt(term.deletedAt, fiveSecondsAgo)))
+  .run();
 ```
 
 2. **保留期后硬删除**：
 
 ```ts
-db.delete(vocabulary).where(and(
-  isNotNull(vocabulary.deletedAt),
-  lt(vocabulary.deletedAt, purgeCutoff),
-)).run();
+db.delete(vocabulary)
+  .where(and(isNotNull(vocabulary.deletedAt), lt(vocabulary.deletedAt, purgeCutoff)))
+  .run();
 ```
 
 - 保留期：同步关闭 30 天；同步开启 90 天（给离线设备留同步窗口）。
@@ -600,10 +671,12 @@ db.delete(vocabulary).where(and(
 ### 7.2 生词本列表
 
 ```ts
-db.select().from(vocabulary)
+db.select()
+  .from(vocabulary)
   .where(isNull(vocabulary.deletedAt))
   .orderBy(desc(vocabulary.createdAt))
-  .limit(limit).offset(offset)
+  .limit(limit)
+  .offset(offset)
   .all();
 ```
 
@@ -613,14 +686,21 @@ db.select().from(vocabulary)
 
 ```ts
 const pattern = `%${escapeLike(query.trim().toLowerCase())}%`;
-db.select().from(vocabulary).where(and(
-  isNull(vocabulary.deletedAt),
-  or(
-    sql`${vocabulary.wordNorm} LIKE ${pattern} ESCAPE '\\'`,
-    sql`lower(coalesce(${vocabulary.contextSense}, '')) LIKE ${pattern} ESCAPE '\\'`,
-    sql`lower(${vocabulary.sensesJson}) LIKE ${pattern} ESCAPE '\\'`,
-  ),
-)).orderBy(desc(vocabulary.createdAt)).limit(200).all();
+db.select()
+  .from(vocabulary)
+  .where(
+    and(
+      isNull(vocabulary.deletedAt),
+      or(
+        sql`${vocabulary.wordNorm} LIKE ${pattern} ESCAPE '\\'`,
+        sql`lower(coalesce(${vocabulary.contextSense}, '')) LIKE ${pattern} ESCAPE '\\'`,
+        sql`lower(${vocabulary.sensesJson}) LIKE ${pattern} ESCAPE '\\'`,
+      ),
+    ),
+  )
+  .orderBy(desc(vocabulary.createdAt))
+  .limit(200)
+  .all();
 ```
 
 - `escapeLike` 转义 `\`、`%`、`_`。
@@ -635,7 +715,7 @@ db.select().from(vocabulary).where(and(
 sql`EXISTS (
   SELECT 1 FROM json_each(${vocabulary.tagsJson})
   WHERE json_each.value = ${tag}
-)`
+)`;
 ```
 
 - 精确匹配，天然处理引号/通配符；比 `LIKE '%"tag"%'` 正确。
@@ -645,7 +725,8 @@ sql`EXISTS (
 ### 7.5 术语列表与快照
 
 ```ts
-db.select().from(term)
+db.select()
+  .from(term)
   .where(and(isNull(term.deletedAt), eq(term.enabled, true)))
   .all();
 ```
@@ -728,7 +809,12 @@ word,phonetic_us,phonetic_uk,context_sense,context_snippet,senses_json,source_ti
   ],
   "terms": [],
   "settings": {
-    "ui.theme": { "value": "dark", "updatedAt": "2026-11-03T12:00:00.000Z", "rev": 1, "originDevice": "0f0c2c9e-..." }
+    "ui.theme": {
+      "value": "dark",
+      "updatedAt": "2026-11-03T12:00:00.000Z",
+      "rev": 1,
+      "originDevice": "0f0c2c9e-..."
+    }
   }
 }
 ```
@@ -787,7 +873,7 @@ word,phonetic_us,phonetic_uk,context_sense,context_snippet,senses_json,source_ti
 ```ts
 import { migrate } from 'drizzle-orm/node-sqlite/migrator';
 
-migrate(db, { migrationsFolder });   // 同步；不要放进 async 回调
+migrate(db, { migrationsFolder }); // 同步；不要放进 async 回调
 ```
 
 - node:sqlite 是同步驱动，`migrate()` **同步执行**；`await` 也能跑，但没有必要。
@@ -802,23 +888,23 @@ migrate(db, { migrationsFolder });   // 同步；不要放进 async 回调
 > 以下 `client` 指迁移连接（`enableForeignKeyConstraints: false`），守卫必须在 `migrate()` 之前执行。
 
 ```ts
-const local = localMigrationNames(migrationsFolder);   // 目录名，升序
-const applied = appliedMigrationNames(client);        // __drizzle_migrations.name
+const local = localMigrationNames(migrationsFolder); // 目录名，升序
+const applied = appliedMigrationNames(client); // __drizzle_migrations.name
 
 const unknown = applied.filter((n) => !local.includes(n));
 if (unknown.length > 0) {
-  throw new DbNewerThanAppError(unknown);             // 数据库来自更新版本
+  throw new DbNewerThanAppError(unknown); // 数据库来自更新版本
 }
 
 const pending = local.filter((n) => !applied.includes(n));
 if (pending.length > 0) backupDatabase();
 
-migrate(db, { migrationsFolder });   // 同步
+migrate(db, { migrationsFolder }); // 同步
 
 const after = appliedMigrationNames(client);
 const missing = local.filter((n) => !after.includes(n));
 if (missing.length > 0) {
-  throw new MigrationIncompleteError(missing);        // 迁移未真正应用
+  throw new MigrationIncompleteError(missing); // 迁移未真正应用
 }
 ```
 
@@ -861,16 +947,16 @@ if (missing.length > 0) {
 
 ## 11. 备份、损坏与恢复
 
-| 场景 | 处理 |
-|---|---|
+| 场景                        | 处理                                                                      |
+| --------------------------- | ------------------------------------------------------------------------- |
 | `SQLITE_CORRUPT` / 无法打开 | 关闭连接；文件重命名为 `vocab.corrupt-<timestamp>.db`；新建空库；托盘提示 |
-| 迁移失败 | 回滚；恢复迁移前备份；保留损坏副本；提示 |
-| 迁移未完整应用 | 报错；恢复备份；不继续启动写入 |
-| 数据库来自更新版本 | 拒绝写入；提示；只读/退出 |
-| 写锁超时 | 重试 1 次（50ms/150ms）；仍失败内联错误「保存失败 · 重试」 |
-| 磁盘满 | 内联错误；不删除旧数据；提示清理 |
-| 用户误删 | 5 秒撤销；之后从备份恢复（README 说明备份路径） |
-| 清空全部数据 | 输入 `delete` 确认；清空前自动备份 DB + config.json |
+| 迁移失败                    | 回滚；恢复迁移前备份；保留损坏副本；提示                                  |
+| 迁移未完整应用              | 报错；恢复备份；不继续启动写入                                            |
+| 数据库来自更新版本          | 拒绝写入；提示；只读/退出                                                 |
+| 写锁超时                    | 重试 1 次（50ms/150ms）；仍失败内联错误「保存失败 · 重试」                |
+| 磁盘满                      | 内联错误；不删除旧数据；提示清理                                          |
+| 用户误删                    | 5 秒撤销；之后从备份恢复（README 说明备份路径）                           |
+| 清空全部数据                | 输入 `delete` 确认；清空前自动备份 DB + config.json                       |
 
 备份文件保留最近 3 份；迁移备份不计入 3 份上限。
 
@@ -893,18 +979,18 @@ if (missing.length > 0) {
 
 ## 13. 隐私与保留
 
-| 数据 | 保留 | 说明 |
-|---|---|---|
-| 生词本（存活） | 直到用户删除 | 明文 SQLite；README 明示路径 |
-| 生词本墓碑 | 内容 5 秒后清空；元数据 30/90 天 | 5 秒内供撤销；之后只留 key + 时间戳供同步 |
-| 术语表（存活） | 直到用户删除 | 明文 SQLite |
-| 术语墓碑 | 内容 5 秒后清空（`translation` 置 NULL）；元数据 30/90 天 | 5 秒内供撤销；之后只留 key + 时间戳供同步 |
-| 可同步设置 | 直到用户修改/删除 | `setting` 表；不含密钥 |
-| 语境片段 | 直到用户删除/关闭开关 | ≤300 字符；关闭后新收藏不写入；墓碑 5 秒后清空 |
-| 同步文件 | 直到用户删除/关闭同步 | 云盘明文；墓碑仅元数据；片段默认不同步 |
-| 会话历史 | 应用运行期 | 内存；退出清空 |
-| 日志 | 7 天 | 文件；脱敏；不含原文/译文/Key |
-| 临时音频 | 退出清理 | `temp/` |
+| 数据           | 保留                                                      | 说明                                           |
+| -------------- | --------------------------------------------------------- | ---------------------------------------------- |
+| 生词本（存活） | 直到用户删除                                              | 明文 SQLite；README 明示路径                   |
+| 生词本墓碑     | 内容 5 秒后清空；元数据 30/90 天                          | 5 秒内供撤销；之后只留 key + 时间戳供同步      |
+| 术语表（存活） | 直到用户删除                                              | 明文 SQLite                                    |
+| 术语墓碑       | 内容 5 秒后清空（`translation` 置 NULL）；元数据 30/90 天 | 5 秒内供撤销；之后只留 key + 时间戳供同步      |
+| 可同步设置     | 直到用户修改/删除                                         | `setting` 表；不含密钥                         |
+| 语境片段       | 直到用户删除/关闭开关                                     | ≤300 字符；关闭后新收藏不写入；墓碑 5 秒后清空 |
+| 同步文件       | 直到用户删除/关闭同步                                     | 云盘明文；墓碑仅元数据；片段默认不同步         |
+| 会话历史       | 应用运行期                                                | 内存；退出清空                                 |
+| 日志           | 7 天                                                      | 文件；脱敏；不含原文/译文/Key                  |
+| 临时音频       | 退出清理                                                  | `temp/`                                        |
 
 **禁止**：数据库存完整原文段落、API Key、Base URL、日志正文；同步文件存 API Key、Base URL、日志、被删除词的内容。
 
@@ -912,18 +998,18 @@ if (missing.length > 0) {
 
 ## 14. 测试与 CI
 
-| 测试 | 内容 |
-|---|---|
-| 迁移测试 | 内存库跑真实 `migrate()`；断言表/索引/约束；不用 `push` 建测试库 |
-| 迁移安全测试 | 迁移连接外键关闭；构造带 `ON DELETE CASCADE` 的表重建迁移，断言子表数据仍在（#5782/#6621） |
-| 主键测试 | `PRAGMA table_info(setting)` 断言 `key` 的 `notnull=1`（#6165 补丁生效） |
-| 仓储测试 | 收藏 upsert、复活、标签合并、搜索、标签筛选、术语 CHECK |
-| 撤销测试 | 删除 → 5 秒内撤销；超时 → 内容清空；保留期 → 硬删除；重复收藏 → 撤销条失效 |
-| 同步测试 | 双/三设备快照、LWW、墓碑、缺席不删除、冲突副本、schemaVersion、时钟偏差 |
-| 打包冒烟 | Electron 主进程 `require('node:sqlite')`；`migrate()` 从 asar/extraResources 读迁移；`node:sqlite` 被 external |
-| DDL 快照 | 迁移后的 `sqlite_master` 规范化快照；schema 变更必须显式更新 |
-| 恢复测试 | 损坏文件、迁移失败、库比代码新、磁盘满 |
-| 性能 | 单条查询 <5ms；搜索 <50ms（<10k 行）；导出 1000 条 ≤2s |
+| 测试         | 内容                                                                                                           |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| 迁移测试     | 内存库跑真实 `migrate()`；断言表/索引/约束；不用 `push` 建测试库                                               |
+| 迁移安全测试 | 迁移连接外键关闭；构造带 `ON DELETE CASCADE` 的表重建迁移，断言子表数据仍在（#5782/#6621）                     |
+| 主键测试     | `PRAGMA table_info(setting)` 断言 `key` 的 `notnull=1`（#6165 补丁生效）                                       |
+| 仓储测试     | 收藏 upsert、复活、标签合并、搜索、标签筛选、术语 CHECK                                                        |
+| 撤销测试     | 删除 → 5 秒内撤销；超时 → 内容清空；保留期 → 硬删除；重复收藏 → 撤销条失效                                     |
+| 同步测试     | 双/三设备快照、LWW、墓碑、缺席不删除、冲突副本、schemaVersion、时钟偏差                                        |
+| 打包冒烟     | Electron 主进程 `require('node:sqlite')`；`migrate()` 从 asar/extraResources 读迁移；`node:sqlite` 被 external |
+| DDL 快照     | 迁移后的 `sqlite_master` 规范化快照；schema 变更必须显式更新                                                   |
+| 恢复测试     | 损坏文件、迁移失败、库比代码新、磁盘满                                                                         |
+| 性能         | 单条查询 <5ms；搜索 <50ms（<10k 行）；导出 1000 条 ≤2s                                                         |
 
 ---
 
@@ -980,19 +1066,19 @@ SELECT name FROM __drizzle_migrations ORDER BY name;
 
 ## 16. 与 UI/提示词的对应
 
-| 字段 | UI 位置 | 提示词字段 |
-|---|---|---|
-| `word` | 卡片词头 / 生词本列表 | `word` |
-| `phonetic_us` | 词头下方 | `phonetic_us` |
-| `phonetic_uk` | 词头下方（弱化） | `phonetic_uk` |
-| `context_sense` | 语境义置顶块 | `context_sense` |
-| `context_snippet` | 语境义下方原句片段 | `context_snippet`（≤50） |
-| `senses_json` | 全部义项（≤5） | `senses` |
-| `source_title` / `source_domain` | 生词本详情来源 | 不由模型生成 |
-| `tags_json` | 生词本标签 | 不由模型生成 |
-| `created_at` / `updated_at` | 列表时间 | 不由模型生成 |
-| `deleted_at` / `deleted_batch` | 删除撤销条 / 撤销 | 不由模型生成 |
-| `setting.*` | 设置页（可同步项） | 不由模型生成 |
+| 字段                             | UI 位置               | 提示词字段               |
+| -------------------------------- | --------------------- | ------------------------ |
+| `word`                           | 卡片词头 / 生词本列表 | `word`                   |
+| `phonetic_us`                    | 词头下方              | `phonetic_us`            |
+| `phonetic_uk`                    | 词头下方（弱化）      | `phonetic_uk`            |
+| `context_sense`                  | 语境义置顶块          | `context_sense`          |
+| `context_snippet`                | 语境义下方原句片段    | `context_snippet`（≤50） |
+| `senses_json`                    | 全部义项（≤5）        | `senses`                 |
+| `source_title` / `source_domain` | 生词本详情来源        | 不由模型生成             |
+| `tags_json`                      | 生词本标签            | 不由模型生成             |
+| `created_at` / `updated_at`      | 列表时间              | 不由模型生成             |
+| `deleted_at` / `deleted_batch`   | 删除撤销条 / 撤销     | 不由模型生成             |
+| `setting.*`                      | 设置页（可同步项）    | 不由模型生成             |
 
 > 提示词返回的 `context_snippet` ≤50 字符；保存时优先使用本地语境片段（≤300），缺失时回退到模型返回的 ≤50 片段。
 
@@ -1035,14 +1121,14 @@ SELECT name FROM __drizzle_migrations ORDER BY name;
 
 ### 17.3 rc.5 已知缺陷与规避
 
-| 缺陷 | 影响 | 规避 |
-|---|---|---|
-| #5782 / #6621：SQLite 表重建 + `ON DELETE CASCADE` | 静默删除子表数据，迁移仍报告成功 | 迁移连接 `enableForeignKeyConstraints: false`；review `__new_` 重建；v1.1 不用 CASCADE |
-| #6165：TEXT / 非整数主键丢掉 `NOT NULL` | SQLite 允许多行 `NULL` 主键 | `setting.key` 初始迁移手工补 `NOT NULL`；CI 断言 `PRAGMA table_info` |
-| #6531：`onConflictDoNothing({ target, where })` + 部分唯一索引 | 生成非法 SQL | 不用部分索引作为冲突目标；我们的 upsert 用全量唯一索引 |
-| #5387：`sideEffects: false` + `entityKind` | rspack/webpack 生产包 `ReferenceError` | 用 esbuild/Rollup，或标记 `drizzle-orm` side-effectful / 关闭 scope hoisting |
-| 不校验 hash、按名字选择 | 改已应用迁移被静默忽略；重命名目录会重跑 | 迁移 append-only；禁止改名 |
-| 整批一个事务 | 任一迁移失败回滚整批 | 迁移保持小步；迁移前备份 |
-| 默认 `busy_timeout=0` | 并发时立刻 `SQLITE_BUSY` | 每个连接设 `timeout` / `PRAGMA busy_timeout` |
-| `prepare()` 只执行第一条语句 | 手写迁移静默丢语句 | 每条语句之间加 `--> statement-breakpoint` |
-| Node 26 类名 `DatabaseSync` → `Database` | 未来 Electron 版本可能出 deprecation 提示 | 关注 Electron 的 Node 版本；rc.5 仍用 `DatabaseSync` |
+| 缺陷                                                           | 影响                                      | 规避                                                                                   |
+| -------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| #5782 / #6621：SQLite 表重建 + `ON DELETE CASCADE`             | 静默删除子表数据，迁移仍报告成功          | 迁移连接 `enableForeignKeyConstraints: false`；review `__new_` 重建；v1.1 不用 CASCADE |
+| #6165：TEXT / 非整数主键丢掉 `NOT NULL`                        | SQLite 允许多行 `NULL` 主键               | `setting.key` 初始迁移手工补 `NOT NULL`；CI 断言 `PRAGMA table_info`                   |
+| #6531：`onConflictDoNothing({ target, where })` + 部分唯一索引 | 生成非法 SQL                              | 不用部分索引作为冲突目标；我们的 upsert 用全量唯一索引                                 |
+| #5387：`sideEffects: false` + `entityKind`                     | rspack/webpack 生产包 `ReferenceError`    | 用 esbuild/Rollup，或标记 `drizzle-orm` side-effectful / 关闭 scope hoisting           |
+| 不校验 hash、按名字选择                                        | 改已应用迁移被静默忽略；重命名目录会重跑  | 迁移 append-only；禁止改名                                                             |
+| 整批一个事务                                                   | 任一迁移失败回滚整批                      | 迁移保持小步；迁移前备份                                                               |
+| 默认 `busy_timeout=0`                                          | 并发时立刻 `SQLITE_BUSY`                  | 每个连接设 `timeout` / `PRAGMA busy_timeout`                                           |
+| `prepare()` 只执行第一条语句                                   | 手写迁移静默丢语句                        | 每条语句之间加 `--> statement-breakpoint`                                              |
+| Node 26 类名 `DatabaseSync` → `Database`                       | 未来 Electron 版本可能出 deprecation 提示 | 关注 Electron 的 Node 版本；rc.5 仍用 `DatabaseSync`                                   |

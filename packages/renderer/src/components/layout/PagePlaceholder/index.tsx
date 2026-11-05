@@ -3,7 +3,7 @@ import type React from 'react';
 
 /**
  * 空态占位页脚手架（C-05 主窗口外壳，RM-02 逐页占位的最小公共形态）。
- * 标题 + 可选说明 + 居中空态；页面文案本步允许先写中文（i18n 下一步统一接入）。
+ * 标题 + 可选说明 + 居中空态；文案由调用页经 lingui 提供，本组件不持有用户可见字符串。
  */
 export interface PagePlaceholderProps {
   /** 页面标题（RM-16 的页面名，标题栏接入后续做） */

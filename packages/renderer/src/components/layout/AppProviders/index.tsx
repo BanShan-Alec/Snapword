@@ -1,9 +1,9 @@
+import { StyleProvider } from '@ant-design/cssinjs';
 import { resolveLocale } from '@app/shared/constants/preferences';
 import { I18nProvider } from '@lingui/react';
 import { App as AntdApp, ConfigProvider } from 'antd';
-import { StyleProvider } from '@ant-design/cssinjs';
 import type React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { usePlatform } from '@/hooks/usePlatform';
 import { useTheme } from '@/hooks/useTheme';
@@ -16,6 +16,8 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
   const languageMode = useAppStore((state) => state.language);
   // 'system' 在渲染层解析一次：navigator.language 反映 Chromium/OS 语言，无需额外 IPC
   const language = resolveLocale(languageMode, navigator.language);
+  // zh-CN 已静态加载，可立即渲染；en 需等 chunk 就绪，避免英文用户先看到中文再闪切
+  const [i18nReady, setI18nReady] = useState(language === 'zh-CN');
 
   // 注入平台类名，供 CSS 做平台避让
   usePlatform();
@@ -23,12 +25,37 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
   // 初始化并跟踪应用主题（设置 html 标签 data-theme 及 dark 类名）
   useTheme();
 
-  // 国际化语言包按需动态激活
+  // 国际化语言包按需动态激活；失败时保留静态 zh-CN 作为回落，不让首屏空转
   useEffect(() => {
-    dynamicActivate(language);
+    let cancelled = false;
+    dynamicActivate(language)
+      .catch((error: unknown) => {
+        logger.error('Failed to activate locale:', error);
+      })
+      .finally(() => {
+        if (!cancelled) setI18nReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
+
+  // RM-13：语言切换立即同步主进程托盘菜单/通知文案，不重启
+  useEffect(() => {
+    const setLocale = window.api?.system?.setLocale;
+    if (!setLocale) {
+      return;
+    }
+    void setLocale(language).catch((error: unknown) => {
+      logger.error('Failed to sync tray locale:', error);
+    });
   }, [language]);
 
   // TODO(P5)：配置层（config.json + safeStorage）落地后在此拉取/同步主题与语言偏好
+
+  if (!i18nReady) {
+    return null;
+  }
 
   return (
     <I18nProvider i18n={i18n}>

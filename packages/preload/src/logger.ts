@@ -1,11 +1,11 @@
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
 import type { LogInput } from '@app/shared/schemas/diagnostics';
-import type { ILogMethod, LoggerApi } from '@app/shared/types/logger';
+import type { ILogMethod, IScopedTraceLogger, LoggerApi } from '@app/shared/types/logger';
 import { ipcRenderer } from 'electron';
+import { resolveIsDev } from './env';
 
 const MAX_ARG_DEPTH = 5;
-// debug 仅开发构建生效：dev 会话经 cross-env 注入 MODE=development；打包态无该变量
-const isDev = process.env.MODE === 'development';
+const isDev = resolveIsDev();
 
 /** 原生 console 引用：回显必须走未包装的原生方法，杜绝与未来任何 console 改动相互递归 */
 const nativeConsole = {
@@ -69,34 +69,71 @@ function toCloneSafeArgs(args: unknown[]): unknown[] | undefined {
   return args.map((arg) => toCloneSafe(arg));
 }
 
-const emit =
+interface TraceMarker {
+  __trace_id?: string;
+  __span_id?: string;
+}
+
+function isTraceMarker(arg: unknown): arg is TraceMarker {
+  return typeof arg === 'object' && arg !== null && '__trace_id' in arg;
+}
+
+const emitWithContext =
+  (scopedTraceId?: string, scopedSpanId?: string) =>
   (level: LogInput['level']): ILogMethod =>
   (message: string, ...args: unknown[]): void => {
     // debug 仅开发构建生效：生产排障靠 info/warn/error，高频细节不进文件也不回显
     if (level === 'debug' && !isDev) return;
 
+    let finalTraceId = scopedTraceId;
+    let finalSpanId = scopedSpanId;
+    const cleanArgs = [...args];
+
+    // 支持通过最后一个入参携带 { __trace_id, __span_id } 提取 Trace 并剥离
+    const lastArg = cleanArgs[cleanArgs.length - 1];
+    if (isTraceMarker(lastArg)) {
+      cleanArgs.pop();
+      if (!finalTraceId) finalTraceId = lastArg.__trace_id;
+      if (!finalSpanId) finalSpanId = lastArg.__span_id;
+    }
+
     // 第一份：原生 console 回显 + 原始 args——DevTools 里对象可交互展开，与手写 console 体验一致。
     // 主进程侧节流只作用于落盘，不回显：被丢弃的日志在 DevTools 仍可见
-    nativeConsole[level](message, ...args);
+    nativeConsole[level](message, ...cleanArgs);
 
-    // 第二份：clone 安全预处理后经 diagnostics:log 落盘（fire-and-forget）
+    // 第二份：clone 安全预处理后经 diagnostics:log 落盘（静默管道，不生成独立 traceparent）
     const payload: LogInput = {
       level,
       message,
-      args: toCloneSafeArgs(args),
+      args: toCloneSafeArgs(cleanArgs),
+      traceId: finalTraceId,
+      spanId: finalSpanId,
     };
     void ipcRenderer.invoke(IPC_CHANNELS.DIAGNOSTICS_LOG, payload).catch(() => {
       // fire-and-forget：日志管道自身的故障不向业务调用方传播
     });
   };
 
+const createScopedLogger = (traceId?: string, spanId?: string): IScopedTraceLogger => {
+  const getEmit = emitWithContext(traceId, spanId);
+  return {
+    info: getEmit('info'),
+    warn: getEmit('warn'),
+    error: getEmit('error'),
+    debug: getEmit('debug'),
+  };
+};
+
+const defaultScoped = createScopedLogger();
+
 /**
  * 平行于 window.api 的日志桥：方法名即级别、变参、同步 void，调用形态与 console 一致。
  * 每次调用双写——DevTools 回显（原生 console）+ renderer-<window>.log 落盘。
  */
 export const loggerBridge: LoggerApi = {
-  info: emit('info'),
-  warn: emit('warn'),
-  error: emit('error'),
-  debug: emit('debug'),
+  info: defaultScoped.info,
+  warn: defaultScoped.warn,
+  error: defaultScoped.error,
+  debug: defaultScoped.debug,
+  withTrace: (traceId: string, spanId?: string) => createScopedLogger(traceId, spanId),
 };

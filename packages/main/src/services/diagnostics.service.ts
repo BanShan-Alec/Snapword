@@ -60,7 +60,14 @@ export class DiagnosticsService {
   logMessage(input: LogInput, windowName?: string, webContentsId?: number): void {
     const key = webContentsId === undefined ? `win:${windowName || 'home'}` : `wc#${webContentsId}`;
     if (!this.allowRenderLog(key)) return;
-    getLogManager().logRendererMessage(input.level, input.message, input.args, windowName);
+    getLogManager().logRendererMessage(
+      input.level,
+      input.message,
+      input.args,
+      windowName,
+      input.traceId,
+      input.spanId,
+    );
   }
 
   async openLogFolder(): Promise<{ success: boolean; path: string }> {

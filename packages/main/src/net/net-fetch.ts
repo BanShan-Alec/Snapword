@@ -37,7 +37,11 @@ export async function netFetch(
   const { timeoutMs = DEFAULT_NET_FETCH_TIMEOUT_MS, signal: externalSignal, ...init } = options;
 
   const timeoutSignal = timeoutMs > 0 ? AbortSignal.timeout(timeoutMs) : null;
-  const signals = [externalSignal, timeoutSignal].filter((s): s is AbortSignal => s !== null);
+  // 注意：未传 signal 时 externalSignal 是 undefined，不能只过滤 null，
+  // 否则单信号场景会退化成 AbortSignal.any([undefined, ...]) 并抛 TypeError。
+  const signals = [externalSignal, timeoutSignal].filter(
+    (s): s is AbortSignal => s !== null && s !== undefined,
+  );
   const signal = signals.length > 1 ? AbortSignal.any(signals) : (signals[0] ?? null);
 
   try {

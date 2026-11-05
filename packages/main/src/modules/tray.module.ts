@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { SupportedLocale } from '@app/shared/constants/preferences';
 import { WINDOW_IDS } from '@app/shared/constants/windows';
 import { app, Menu, nativeImage, Tray } from 'electron';
 import type { AppModule } from '../AppModule';
+import { getTrayMessages, resolveTrayLocale } from '../i18n/tray';
 import type { ModuleContext } from '../ModuleContext';
 import { getLogManager } from './log.module';
 import { getWindowManager } from './window/index.module';
@@ -17,6 +19,8 @@ import { getWindow } from './window/window-registry';
  */
 export class TrayManager implements AppModule {
   private tray: Tray | null = null;
+  private locale: SupportedLocale = resolveTrayLocale('');
+  private localeSetByRenderer = false;
   private readonly logger = getLogManager().scoped(this);
 
   public enable({ app: electronApp }: ModuleContext): void {
@@ -29,6 +33,10 @@ export class TrayManager implements AppModule {
     if (this.tray) return this.tray;
 
     try {
+      // 渲染层可能在托盘创建前已按应用内偏好调用 setLocale，此时不要用系统语言覆盖
+      if (!this.localeSetByRenderer) {
+        this.locale = resolveTrayLocale(app.getLocale());
+      }
       const iconPath = this.resolveIconPath();
       if (!iconPath) {
         this.tray = new Tray(nativeImage.createEmpty());
@@ -50,23 +58,7 @@ export class TrayManager implements AppModule {
       }
 
       this.tray.setToolTip(app.getName());
-      // TODO(i18n)：主进程文案等配置层落地后接 i18n（P5）
-      this.tray.setContextMenu(
-        Menu.buildFromTemplate([
-          {
-            label: '打开主窗口',
-            click: () => this.restoreMainWindow(),
-          },
-          { type: 'separator' },
-          {
-            label: '退出',
-            click: () => {
-              // before-quit 里按 B-01 §8 顺序清理（capture stop → 窗口关闭 → 托盘销毁）
-              app.quit();
-            },
-          },
-        ]),
-      );
+      this.applyContextMenu();
 
       // 单击托盘图标唤起主窗口
       this.tray.on('click', () => {
@@ -78,6 +70,39 @@ export class TrayManager implements AppModule {
       this.logger.error('Failed to initialize tray:', err);
       return null;
     }
+  }
+
+  /** 应用内语言切换后由 system:set-locale 调用；立即重建菜单，无需重启。 */
+  public setLocale(locale: SupportedLocale): void {
+    this.localeSetByRenderer = true;
+    if (this.locale === locale) {
+      return;
+    }
+    this.locale = locale;
+    this.applyContextMenu();
+  }
+
+  private applyContextMenu(): void {
+    if (!this.tray) {
+      return;
+    }
+    const trayMessages = getTrayMessages(this.locale);
+    this.tray.setContextMenu(
+      Menu.buildFromTemplate([
+        {
+          label: trayMessages.openMainWindow,
+          click: () => this.restoreMainWindow(),
+        },
+        { type: 'separator' },
+        {
+          label: trayMessages.quit,
+          click: () => {
+            // before-quit 里按 B-01 §8 顺序清理（capture stop → 窗口关闭 → 托盘销毁）
+            app.quit();
+          },
+        },
+      ]),
+    );
   }
 
   public restoreMainWindow(): void {
@@ -99,17 +124,19 @@ export class TrayManager implements AppModule {
   }
 
   /**
-   * 取词服务故障托盘提示（B-01 §7/§9.1 失败表占位）。
-   * P4 骨架：Windows 气泡 + 日志；点击跳转诊断入口与文案统一待 P5 接线。
-   * TODO(i18n)：主进程文案等配置层落地后接 i18n（P5）
+   * 取词服务故障托盘提示（B-01 §7/§9.1 失败表）。
+   * 文案取当前托盘语种字典；点击跳转诊断入口待 P5 接线。
    */
-  public notifyCaptureServiceIssue(detail: string): void {
-    this.logger.warn(`[capture-service] ${detail}`);
+  public notifyCaptureServiceIssue(kind: 'startup' | 'crash'): void {
+    const messages = getTrayMessages(this.locale);
+    const content =
+      kind === 'crash' ? messages.captureServiceCrashed : messages.captureServiceStartupFailed;
+    this.logger.warn(`[capture-service] ${content}`);
     if (process.platform === 'win32' && this.tray) {
       this.tray.displayBalloon({
         iconType: 'warning',
         title: 'Snapword',
-        content: detail,
+        content,
       });
     }
   }

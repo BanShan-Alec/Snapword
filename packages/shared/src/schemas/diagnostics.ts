@@ -4,6 +4,8 @@ export const logInputSchema = z.object({
   level: z.enum(['info', 'warn', 'error', 'debug']).default('info'),
   message: z.string(),
   args: z.array(z.unknown()).optional(),
+  traceId: z.string().optional(),
+  spanId: z.string().optional(),
 });
 
 export type LogInput = z.infer<typeof logInputSchema>;
