@@ -24,4 +24,10 @@ export interface AppRuntimeEnv {
   readonly channel?: string;
   /** 系统编号 / 业务标识 */
   readonly systemCode?: string;
+  /** 是否处于已打包二进制分发形态（Sentry 生产门控依据） */
+  readonly isPackaged?: boolean;
+  /** 生产监控 Sentry DSN (仅生产打包且显式配置时存在) */
+  readonly sentryDsn?: string;
+  /** 生产监控 Sentry Release 标识名称 */
+  readonly releaseName?: string;
 }

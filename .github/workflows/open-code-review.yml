@@ -1,0 +1,92 @@
+# AI code review on pull requests, powered by alibaba/open-code-review.
+name: OpenCodeReview
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review] # 仅新开 PR 或标为 ready 时自动触发；后续 push 不自动触发
+  issue_comment:
+    types: [created] # 支持在 PR 评论中回复 /review 或 /ocr 手动触发
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # 必须为 write，以支持 resolve_outdated 自动关闭已修复的 review threads
+  pull-requests: write # 发表 review 与 summary
+  issues: write
+
+jobs:
+  review:
+    name: AI Code Review
+    # 触发条件过滤：如果是 issue_comment，必须是 PR 且评论包含 /review 或 /ocr；如果是 pull_request 则直接运行
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event.issue.pull_request &&
+       (startsWith(github.event.comment.body, '/review') || startsWith(github.event.comment.body, '/ocr')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR Info
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            if (context.eventName === 'issue_comment') {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+              });
+              core.setOutput('base_ref', pr.base.ref);
+              core.setOutput('head_sha', pr.head.sha);
+              core.setOutput('pr_number', pr.number);
+            } else {
+              core.setOutput('base_ref', context.payload.pull_request.base.ref);
+              core.setOutput('head_sha', context.payload.pull_request.head.sha);
+              core.setOutput('pr_number', context.payload.pull_request.number);
+            }
+
+      - name: OpenCodeReview PR Review
+        uses: alibaba/open-code-review@v1.13.3
+        with:
+          # ===== PR 元信息适配（兼容 comment 触发与 PR 触发）=====
+          pr_number: ${{ steps.pr_info.outputs.pr_number }}
+          base_ref: ${{ steps.pr_info.outputs.base_ref }}
+          head_sha: ${{ steps.pr_info.outputs.head_sha }}
+
+          # ===== LLM API 配置 =====
+          llm_url: ${{ secrets.OCR_LLM_URL }}
+          llm_auth_token: ${{ secrets.OCR_LLM_TOKEN }}
+          llm_model: ${{ secrets.OCR_LLM_MODEL }}
+          # step_plan 端点走 anthropic messages 协议（/v1/messages），显式声明避免留空被歧义解析
+          llm_use_anthropic: "true"
+          # Step Fun 按 key 限并发（limit 5），OCR 多分组并行会 429 partial，压到 4 留余量
+          review_concurrency: "4"
+
+          # ===== 输出与语言配置 =====
+          language: "Chinese"
+
+          # ===== 增量审查配置 =====
+          checkpoint_range: "true" # 记录检查点，仅对最新 push 的 commits 进行增量审查
+          incremental: "true" # 行内评论不重复覆盖历史位置
+
+          # ===== 评论治理与看板配置 =====
+          stream_progress: "true" # 实时流式输出审查进度至 Actions 控制台日志，避免静默等待
+          sticky_summary: "true" # 置顶单一看板并原地更新，避免 PR 评论刷屏
+          route_severity_below: "" # 关闭向 Summary 倾倒 Low 建议，避免把看板变成垃圾桶
+          resolve_outdated: "true" # 代码修复后，自动 resolve 对应的旧 review threads
+
+          # 关闭内部无天数限制的上传，改由后续步骤托管
+          upload_artifacts: "false"
+
+      # ===== 自定义 Artifact 保存策略（保留 1 天）=====
+      - name: Upload Review Artifact (1 day retention)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocr-review-result-${{ steps.pr_info.outputs.pr_number }}-${{ github.run_id }}
+          path: |
+            /tmp/ocr-result.json
+            /tmp/ocr-stderr.log
+          retention-days: 1
+          if-no-files-found: ignore

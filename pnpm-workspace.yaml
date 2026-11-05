@@ -34,5 +34,6 @@ minimumReleaseAgeExclude:
 # 新增依赖撞该错误时：`pnpm ignored-builds` 查列表 → `pnpm approve-builds <包名>` 审批后决策落到此。
 # 注意：electron 42+ 起无 install 生命周期脚本（二进制惰性下载），不在此列，由根 postinstall 守卫兜底
 allowBuilds:
+  "@sentry/cli": true
   "electron-winstaller": true
   esbuild: true

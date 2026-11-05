@@ -10,6 +10,7 @@ import { createLogModule, getLogManager } from './modules/log.module';
 import { allowInternalOrigins } from './modules/security/block-origins';
 import { createContentSecurityPolicyModule } from './modules/security/csp';
 import { allowExternalUrls } from './modules/security/external-urls';
+import { createSentryModule, initMainSentry } from './modules/sentry.module';
 import { disallowMultipleAppInstance } from './modules/single-instance.module';
 import { createStartupReadinessModule } from './modules/startup-readiness.module';
 import { createTrayModule, getTrayManager } from './modules/tray.module';
@@ -23,7 +24,11 @@ export async function initApp(initConfig: AppInitConfig) {
     // B-01 §7 第 1 步：单实例锁最先持有；失败则退出，聚焦已有实例由 WindowManager 处理
     .init(disallowMultipleAppInstance());
 
+  // B-01 §7：Sentry 初始化必须在单实例锁之后，第二实例抢锁失败即退出、绝不上报
+  initMainSentry();
+
   moduleRunner
+    .init(createSentryModule())
     .init(createIPCModule())
     // 主进程就绪源：链位在 WindowManager 之前，信号先于窗口与壳
     .init(createStartupReadinessModule())

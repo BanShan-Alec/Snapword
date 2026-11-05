@@ -1,15 +1,18 @@
 import path from 'node:path';
 import { lingui } from '@lingui/vite-plugin';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { APP_IDENTITY } from '../../build/lib/app-identity.ts';
 import { findRepoRoot } from '../../build/lib/repo-paths.ts';
+import { getSentryBuildOptions } from '../../build/lib/sentry-options.ts';
 import { appTitlePlugin } from './plugins/app-title.ts';
 import { startupShellInlinePlugin } from './plugins/startup-shell.ts';
 
 const currentDir = import.meta.dirname;
 const rootDir = findRepoRoot(currentDir);
+const sentryOptions = getSentryBuildOptions(currentDir);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -25,6 +28,20 @@ export default defineConfig({
       configPath: path.resolve(currentDir, 'lingui.config.ts'),
       cwd: currentDir,
       macroTransform: true,
+    }),
+    // SourceMap 上传仅在配置 SENTRY_AUTH_TOKEN 时生效；无 token 自动跳过
+    sentryVitePlugin({
+      org: sentryOptions.sentryOrg,
+      project: sentryOptions.sentryProject,
+      authToken: sentryOptions.sentryAuthToken,
+      telemetry: false,
+      disable: !sentryOptions.sentryAuthToken,
+      release: {
+        name: sentryOptions.releaseName,
+      },
+      sourcemaps: {
+        filesToDeleteAfterUpload: ['dist/**/*.map'],
+      },
     }),
     // 开发态根路径自动重定向至 home 窗口入口，便于浏览器直接访问 dev server
     {

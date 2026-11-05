@@ -23,8 +23,6 @@ const { values } = parseArgs({
   options: {
     dir: { type: 'boolean', default: false },
     win: { type: 'boolean', default: false },
-    mac: { type: 'boolean', default: false },
-    linux: { type: 'boolean', default: false },
     x64: { type: 'boolean' },
     arm64: { type: 'boolean' },
     publish: { type: 'string', short: 'p', default: 'never' },
@@ -68,8 +66,6 @@ async function runBuild() {
   };
 
   if (values.win) buildOptions.win = [];
-  if (values.mac) buildOptions.mac = [];
-  if (values.linux) buildOptions.linux = [];
   if (values.x64) buildOptions.x64 = true;
   if (values.arm64) buildOptions.arm64 = true;
 

@@ -22,6 +22,11 @@ export default defineConfig({
       : ['packages/**/tests/unit/**/*.test.ts', 'packages/**/tests/**/*.test.ts'],
     exclude: isBenchmark
       ? ['**/node_modules/**', '**/dist/**']
-      : ['**/node_modules/**', '**/dist/**', 'packages/main/tests/benchmark/**'],
+      : [
+          '**/node_modules/**',
+          '**/dist/**',
+          'packages/main/tests/benchmark/**',
+          'packages/pr-review/**',
+        ],
   },
 });

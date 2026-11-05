@@ -1,6 +1,8 @@
 import { APP_ENV } from '@app/shared/constants/env';
+import { APP_FEATURES, buildSentryTags, SENTRY_TAGS } from '@app/shared/constants/telemetry';
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
+import * as Sentry from '@sentry/electron/renderer';
 import { Button, Empty } from 'antd';
 import { Component, type ErrorInfo, Fragment, type ReactNode } from 'react';
 
@@ -74,15 +76,26 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // 本地落盘：组件名取 componentStack 首帧（即崩溃组件本身），免翻长栈定位。
-    // 隐私约束（PRD 安全/隐私）：不向任何第三方上报崩溃数据。
+    // 1. 生产打包且配置 DSN 时上报至 Sentry；未初始化时 captureException 为 no-op
+    Sentry.captureException(error, {
+      tags: buildSentryTags(APP_FEATURES.RENDERER_HOME, {
+        [SENTRY_TAGS.LOGGER]: this.constructor.name,
+        [SENTRY_TAGS.PROCESS]: 'renderer',
+      }),
+      extra: {
+        componentStack: errorInfo.componentStack,
+      },
+    });
+
+    // 2. 本地落盘：Sentry 未激活（dev/测试/无 DSN）时这是渲染崩溃的唯一磁盘痕迹；
+    //    组件名取 componentStack 首帧（即崩溃组件本身），免翻长栈定位。
     const crashedComponent =
       /^\s*at\s+([A-Za-z0-9_$]+)/m.exec(errorInfo.componentStack ?? '')?.[1] ?? 'unknown';
     logger.error(`React component crashed in <${crashedComponent}>:`, error, {
       componentStack: errorInfo.componentStack,
     });
 
-    // 执行外部业务传入的 onError 回调
+    // 3. 执行外部业务传入的 onError 回调
     this.props.onError?.(error, errorInfo);
   }
 

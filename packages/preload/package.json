@@ -18,6 +18,7 @@
   "devDependencies": {
     "@app/shared": "workspace:*",
     "@app/tsconfig": "workspace:*",
+    "@sentry/electron": "^8.3.0",
     "typescript": "catalog:",
     "vite": "catalog:"
   }

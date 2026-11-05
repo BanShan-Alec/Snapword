@@ -23,6 +23,8 @@
     "@app/renderer": "workspace:*",
     "@app/shared": "workspace:*",
     "@app/tsconfig": "workspace:*",
+    "@sentry/electron": "^8.3.0",
+    "@sentry/vite-plugin": "^5.4.0",
     "electron-log": "^5.4.4",
     "typescript": "catalog:",
     "vite": "catalog:",

@@ -1,0 +1,61 @@
+# Snapword PR / main 分支门禁：类型检查、代码规范、单元测试、Electron e2e。
+# 四个 job 并行，均为分支保护的 required checks。
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+      - run: pnpm run typecheck
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+      - run: pnpm run lint
+      - run: pnpm run verify:prebuild
+      - run: pnpm run i18n:check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+      - run: pnpm run test
+
+  e2e:
+    name: e2e
+    # Snapword 仅支持 Windows（UIA / 原生取词），e2e 必须在 windows-latest 跑
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+      # 保险冗余：根 postinstall 的 install-electron 已装（zip 由 setup-env 缓存预热）；
+      # 此步确保即便 postinstall 被跳过或改动，e2e 启动前二进制必在位
+      - run: pnpm exec install-electron
+      # electron.launch 以 package.json main 为入口，需要先产出各包的构建产物
+      - run: pnpm run build
+      - run: pnpm run test:e2e

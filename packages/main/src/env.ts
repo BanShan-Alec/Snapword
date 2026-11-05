@@ -99,6 +99,11 @@ export function getRuntimeEnvSnapshot(): AppRuntimeEnv {
     appName: app.getName(),
     channel: getEnv('DISTRIBUTION_CHANNEL') || undefined,
     systemCode: getEnv('SYSTEM_CODE') || undefined,
+    isPackaged,
+    sentryDsn:
+      getEnv('SENTRY_DSN') ||
+      (typeof __SENTRY_DSN__ !== 'undefined' && __SENTRY_DSN__ ? __SENTRY_DSN__ : undefined),
+    releaseName: typeof __RELEASE_NAME__ !== 'undefined' ? __RELEASE_NAME__ : undefined,
   };
 }
 

@@ -386,6 +386,8 @@ sequenceDiagram
 5. **渲染隔离**：`sandbox`、`contextIsolation`、CSP；preload 白名单；禁止 `eval`/远程模块。
 6. **权限**：不申请管理员、不写 HKLM、不注入进程、不修改他人窗口。
 7. **Addon 路径**：只从 `app.asar.unpacked/native/uia-probe.node` 加载；校验文件存在与版本。
+8. **Sentry**：仅生产构建（`app.isPackaged`）且构建期显式配置 DSN 时初始化并上报；开发/测试构建不初始化、不上报；初始化位置在单实例锁之后。开启时抓包可见 Sentry 上报域名，这是「仅 Base URL」验收的唯一例外（ADR-0004）。
+9. **telemetry**：仅进程内/IPC trace context，不远程导出、不落盘。
 
 ---
 
@@ -449,6 +451,6 @@ sequenceDiagram
 - [ ] 主进程退出时 utilityProcess 随之退出，无孤儿进程。
 - [ ] 关闭主窗口只隐藏到托盘；托盘退出按第 8 节顺序清理。
 - [ ] 渲染进程无法访问 `fs`/`child_process`/`process.env`。
-- [ ] 取词服务无网络请求；主进程抓包只访问 Base URL。
+- [ ] 取词服务无网络请求；主进程抓包只访问 Base URL（生产构建显式配置 Sentry DSN 时，另有 Sentry 上报域名）。
 - [ ] Addon 只在 utilityProcess 加载，主进程/renderer 无法 `require` 它。
 - [ ] 日志中无原文、译文、Key。

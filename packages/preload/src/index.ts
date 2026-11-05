@@ -1,3 +1,6 @@
+// @sentry/electron/preload 通过 vite.config.ts 的 ssr.noExternal: true 完全内联打包进 dist/index.cjs，
+// 运行时零外部依赖，故作为 devDependencies 安装与管理
+import '@sentry/electron/preload';
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
 import { APP_STARTUP_MAIN_READY_EVENT } from '@app/shared/constants/startup';
 import type { LogInput, PerformActionInput } from '@app/shared/schemas/diagnostics';
