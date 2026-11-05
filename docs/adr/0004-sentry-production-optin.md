@@ -22,7 +22,7 @@ PRD v1.1.1 与 v2.0 的原始隐私条款是「无服务器、无账号、无统
    - 主进程 `isSentryEnabled()` 直接使用 `app.isPackaged && Boolean(getSentryDsn())`；
    - 渲染进程通过 preload 注入的 `window.__APP_ENV__.isPackaged` 判定，未打包的 preview 同样不启用；
    - 测试/开发构建不初始化、不上报。
-3. DSN 通过构建期环境变量注入：本地/CI 均读取 `SENTRY_DSN`（外部注入优先于 `.env`），Vite 以 `__SENTRY_DSN__` 静态内联；`.env.example` 保持空白，真实 DSN 只存在于 CI secret。
+3. DSN 按 temp5 约定存放在**仓库内 `.env`**（已入库）：构建期由 Vite 读取并以 `__SENTRY_DSN__` 静态内联；外部同名环境变量优先，可用于按环境覆盖。`.env.example` 保留空键位说明。`SENTRY_AUTH_TOKEN` 仍只存 CI secret。
 4. SourceMap 上传仅在配置 `SENTRY_AUTH_TOKEN` 时生效；无 token 时 `sentryVitePlugin` 自动 disable，构建照常完成。
 5. Sentry 初始化调用放在单实例锁模块之后；Sentry 模块只负责窗口崩溃/无响应监听。
 6. `telemetry` 保持进程内/IPC trace context，不远程导出、不落盘，与 Sentry 解耦。
@@ -30,7 +30,7 @@ PRD v1.1.1 与 v2.0 的原始隐私条款是「无服务器、无账号、无统
 ## 理由
 
 - **崩溃可观测性与隐私的折中**：只在用户实际使用的打包产物中采集，且必须由发布方显式配置，默认行为仍是零上报。
-- **DSN 属于部署配置而非仓库身份**：DSN 随环境变化，不应硬编码；CI secret 注入可让同一份源码构建出「开启」或「关闭」Sentry 的产物。
+- **DSN 随仓库走，AUTH_TOKEN 才需要保密**：与 temp5 的部署约定一致；DSN 是客户端标识（会出现在客户端产物里），不是服务端密钥。需要按环境区分时用外部 `SENTRY_DSN` 覆盖即可。
 - **门控使用 `app.isPackaged` 而非 `MODE=production`**：`preview` 只是本地生产行为预览，不应产生远程上报；测试构建同理。
 - **关闭 Breadcrumbs/Tracing**：崩溃堆栈足以定位问题，行为轨迹与性能数据会扩大隐私面。
 - **SourceMap 上传与运行时上报分离**：上传是构建期行为，只依赖 `SENTRY_AUTH_TOKEN`；运行时是否上报只依赖 DSN，两者互不耦合。
@@ -39,6 +39,6 @@ PRD v1.1.1 与 v2.0 的原始隐私条款是「无服务器、无账号、无统
 
 - PRD 相关条款修订：默认无统计上报，生产构建可选启用 Sentry 崩溃上报；「除 Base URL 外无任何外连」增加 Sentry 上报域名例外（2026-11-05 用户拍板修订）。
 - `docs/architecture.md` §12 增加 Sentry 边界条目，§16 抓包验收增加 Sentry 域名例外。
-- 发布流水线需要配置 `SENTRY_DSN`；如需上传 SourceMap，还需 `SENTRY_AUTH_TOKEN`、`SENTRY_ORG`、`SENTRY_PROJECT`。未配置时生产 Sentry 自动关闭，构建不受影响。
-- 仓库不提交 `.env` 与真实 DSN；`.env.example` 仅保留空键位。
+- 发布流水线只需配置 `SENTRY_AUTH_TOKEN`（SourceMap 上传）；`SENTRY_DSN`/`SENTRY_ORG`/`SENTRY_PROJECT` 在 `.env` 中维护。未配置 DSN 时生产 Sentry 自动关闭，构建不受影响。
+- `.env` 按 temp5 约定入库（当前 DSN 为空占位）；`.env.local` 用于本地覆盖且不入库；`.env.example` 保留键位说明。
 - 抓包验收需区分「未配置 DSN 的生产构建」与「已配置 DSN 的生产构建」两种形态。

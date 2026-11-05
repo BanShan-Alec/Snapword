@@ -118,12 +118,11 @@ _CodeQL_ 与 _OpenCodeReview_（信息性）：安全漏洞与 AI 增量代码�
 
 配置路径：仓库 Settings -> Secrets and variables -> Actions -> New repository secret。
 
+**仓库内配置（`.env`，按 temp5 约定入库）**：`SENTRY_DSN`、`SENTRY_ORG`、`SENTRY_PROJECT` 写在根 `.env`，构建期由 Vite 读取；DSN 是客户端标识（会出现在客户端产物中），不是服务端密钥。本地覆盖用 `.env.local`（已被 gitignore）。
+
 | Secret              | 用途                                  | 缺失时行为                                    |
 | :------------------ | :------------------------------------ | :-------------------------------------------- |
-| `SENTRY_DSN`        | 构建期注入生产 Sentry DSN             | 生产构建 Sentry 自动关闭，不上报              |
 | `SENTRY_AUTH_TOKEN` | 构建期上传 SourceMap 到 Sentry        | Vite 插件自动 disable，跳过上传，构建照常完成 |
-| `SENTRY_ORG`        | Sentry 组织标识                       | SourceMap 上传不可用（需与 token 一起配置）   |
-| `SENTRY_PROJECT`    | Sentry 项目标识                       | SourceMap 上传不可用（需与 token 一起配置）   |
 | `OCR_LLM_URL`       | OpenCodeReview 使用的 OpenAI 兼容端点 | AI 代码审查 job 无法运行                      |
 | `OCR_LLM_TOKEN`     | OpenCodeReview 的大模型访问密钥       | AI 代码审查 job 无法运行                      |
 | `OCR_LLM_MODEL`     | OpenCodeReview 使用的模型名称         | AI 代码审查 job 无法运行                      |

@@ -27,13 +27,14 @@ obj/
 target/
 *.pdb
 
-# 配置与密钥 —— 绝不提交
+# 配置与密钥
 config.json
 config.bak
 *.key
 *.pem
-.env
-.env.*
+# .env 按 temp5 约定入库（DSN 是客户端标识，不是服务端密钥）；本地覆盖用 .env.local
+.env.local
+.env.*.local
 !/.env.example
 
 # 本地数据

@@ -23,10 +23,8 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     env:
+      # DSN / ORG / PROJECT 来自仓库内 .env（与 temp5 约定一致）；这里只注入上传 SourceMap 用的 token
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-env
