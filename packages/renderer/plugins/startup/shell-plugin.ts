@@ -9,7 +9,7 @@ import { build, normalizePath } from 'vite';
  * dev 与 build 走同一 transformIndexHtml，替换两个占位符：
  * - `<!-- __APP_STARTUP_LOGO__ -->` ← src/assets/logo.svg 文件原文直读
  *   （该文件同时是应用图标 / docs 图标的主源，导出步骤见 build/electron-builder.ts）
- * - `<!-- __APP_STARTUP_COORDINATOR__ -->` ← src/startup/coordinator.ts 打包的经典 IIFE
+ * - `<!-- __APP_STARTUP_COORDINATOR__ -->` ← plugins/startup/coordinator.ts 打包的经典 IIFE
  *   内联 `<script>`（含其 import 的 @app/shared 纯常量），物理位置先于 main.tsx
  *
  * 压缩策略：dev（ctx.server 在场）不压缩，内联脚本可读便于排查；
@@ -35,7 +35,7 @@ export interface StartupShellInlinePluginOptions {
 export function startupShellInlinePlugin(options: StartupShellInlinePluginOptions): Plugin {
   const { root } = options;
   const indexEntry = normalizePath(path.resolve(root, 'src/entries/home/index.html')).toLowerCase();
-  const coordinatorEntry = path.resolve(root, 'src/startup/coordinator.ts');
+  const coordinatorEntry = path.resolve(import.meta.dirname, 'coordinator.ts');
   const logoFile = path.resolve(root, 'src/assets/logo.svg');
 
   const bundleCoordinator = async (minify: boolean): Promise<string> => {

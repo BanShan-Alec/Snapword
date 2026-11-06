@@ -8,7 +8,7 @@ import { APP_IDENTITY } from '../../build/lib/app-identity.ts';
 import { findRepoRoot } from '../../build/lib/repo-paths.ts';
 import { getSentryBuildOptions } from '../../build/lib/sentry-options.ts';
 import { appTitlePlugin } from './plugins/app-title.ts';
-import { startupShellInlinePlugin } from './plugins/startup-shell.ts';
+import { startupShellInlinePlugin } from './plugins/startup/shell-plugin.ts';
 
 const currentDir = import.meta.dirname;
 const rootDir = findRepoRoot(currentDir);
