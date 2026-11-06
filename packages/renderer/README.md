@@ -2,7 +2,7 @@
 
 渲染进程（Vite 8 + React 19 + antd v6 + TailwindCSS v4 + LinguiJS + zustand + wouter），通过 preload 暴露的 `window.api` 与主进程进行类型安全的 IPC 通信。
 
-> 🤖 **AI 协作者**：本包的目录结构 / Feature 规范 / 请求层 / 组件约定已收敛至 [AGENTS.md](./AGENTS.md)，动手前必读；视觉规范见 [docs/DESIGN.md](./docs/DESIGN.md)；全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。
+> 架构分层、Feature 规范、请求层与组件约定见 [AGENTS.md](./AGENTS.md)；视觉规范见 [docs/DESIGN.md](./docs/DESIGN.md)；全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。
 
 ```bash
 pnpm --filter @app/renderer dev        # 本地开发（由根目录 pnpm dev 统一编排）

@@ -1,4 +1,4 @@
-# @app/renderer AGENTS.md — 渲染进程规则（AI 必读）
+# @app/renderer AGENTS.md — 渲染进程架构与规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。本文件为该包规则唯一真源。
 > 视觉与 token 纪律另见 [docs/DESIGN.md](./docs/DESIGN.md)。

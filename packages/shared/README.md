@@ -1,8 +1,8 @@
-# @app/shared 架构分层与开发指南
+# @app/shared 跨端通信契约
 
 `@app/shared` 是全栈跨端通信契约的**单一事实源 (Single Source of Truth)**，负责在 Electron 的主进程 (`main`)、预加载脚本 (`preload`) 以及渲染进程 (`renderer`) 之间共享数据结构、校验模型与通信通道。
 
-> 🤖 **AI 协作者**：本包的目录架构 / 设计原则 / 命名规范 / 开发 SOP 已收敛至 [AGENTS.md](./AGENTS.md)，动手前必读；全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。
+> 四层职能架构、设计原则与导出契约见 [AGENTS.md](./AGENTS.md)；全局红线与任务路由见 [根 AGENTS.md](../../AGENTS.md)。
 
 ---
 

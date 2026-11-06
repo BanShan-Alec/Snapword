@@ -61,7 +61,7 @@ snapword/
 └── scripts/           # dev / build / verify / contrast-check
 ```
 
-各业务包的职责、README 与规则文件都在 `packages/<name>/` 下，AI 协作者从根 [AGENTS.md](AGENTS.md) 的任务路由进入。
+各业务包的职责与架构规则都在 `packages/<name>/` 下，全仓任务路由与红线指引见根 [AGENTS.md](AGENTS.md)。
 
 ## 快速开始
 
@@ -157,7 +157,7 @@ pnpm dev       # 开发模式：Vite DevServer + Electron 双进程热重载
 
 ## 贡献
 
-欢迎 PR。动手前请读 [CONTRIBUTING.md](CONTRIBUTING.md)；提交信息遵循 Conventional Commits，且 subject 必须包含简体中文（commitlint + husky 自动校验）。使用 AI 协作者请先读 [AGENTS.md](AGENTS.md)。文档与代码不一致时以代码为准，并欢迎提 PR 修正。
+欢迎 PR。动手前请读 [CONTRIBUTING.md](CONTRIBUTING.md)；全仓架构红线与任务路由见 [AGENTS.md](AGENTS.md)。提交信息遵循 Conventional Commits 且 subject 必须包含简体中文（commitlint + husky 自动校验）。文档与代码不一致时以代码为准，欢迎提 PR 修正。
 
 ## License
 
