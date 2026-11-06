@@ -23,7 +23,7 @@ pnpm --filter @app/renderer lint       # Biome 代码规范与格式化检查
 
 - **路由层只做编排**：主窗口的六个业务域挂在 `entries/home/App.tsx` 的 wouter 路由上，不引入大型路由库；业务状态默认下沉在 feature 内，出现第二个独立消费者再上提。
 - **不建第二份 API map**：类型全部从 `ElectronApi`（`@app/shared/types/api`）推导，避免手写表与真实契约漂移。
-- **请求 hooks 随 P5 引入**：当前 IPC 调用统一经 `lib/ipc.ts` 的 `callIpc`；`useIpc` / `useManualRequest` 落地后按 AGENTS.md §4 的 manual-only 规则执行。
+- **请求层 manual-only**：IPC 调用统一经 `lib/ipc.ts` 的 `callIpc`；单接口用 `useIpc('domain.method')`，多通道编排用 `useManualRequest`，自动触发能力在类型、Lint 与运行期均被禁用。
 
 ## 跨包与文档关联
 

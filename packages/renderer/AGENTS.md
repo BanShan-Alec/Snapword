@@ -12,10 +12,9 @@
 | `entries/`    | 多窗口独立挂载入口（MPA 架构：当前 `home/` 主窗口）                                     | 仅做顶层根节点挂载与全局 Provider 装配                          |
 | `features/`   | 业务域实现（`translate` / `vocabulary` / `history` / `glossary` / `settings` / `help`） | 外部仅允许引用域入口 `index.tsx`，域间禁止互相 import           |
 | `components/` | 跨 feature 复用的通用 UI（`layout/` 全局骨架，`startup/` 首屏壳组件）                   | 一组件一文件夹（`Xxx/index.tsx`），被 2 个以上域共用才上提      |
-| `hooks/`      | 跨域基础 hooks（`useTheme`, `usePlatform`）                                             | 请求与应用级状态抽象，禁止在业务组件中直连原生 ahooks           |
+| `hooks/`      | 跨域基础 hooks（`useManualRequest`, `useIpc`, `useTheme`, `usePlatform`）               | 请求与应用级状态抽象，禁止在业务组件中直连原生 ahooks           |
 | `lib/`        | 跨域底层能力（`ipc.ts` 契约解构与追踪、`classNames.ts`、`sentry.ts`）                   | 纯工具函数与全局运行时初始化                                    |
 | `locales/`    | LinguiJS 国际化模块（`zh-CN`, `en` 字典与 `dynamicActivate`）                           | 中文源码作为 msgid（Source-as-Key），运行时按需加载语言包 Chunk |
-| `startup/`    | 首屏启动壳协调器（构建期内联注入 `index.html`）                                         | 三门禁齐备后结算并挂载 `body.app-startup-ready`                 |
 | `stores/`     | 全局 Zustand 状态（主题、语言等跨窗口/跨域状态）                                        | 仅存放全应用级公共状态                                          |
 
 > 卡片窗口的独立 renderer 入口随 P5 主链路落地；新增入口一律放 `entries/<window>/`，不与主窗口共用入口。
@@ -51,34 +50,12 @@ hook 实例化必须落在 feature 内部。没有跨域共享需求就不上提
 
 ## 4. 请求层与 manual-only 铁律
 
-所有 IPC 通信必须走 `lib/ipc.ts`，禁止在 feature 里直接手写 `window.api.*` + `if (!res.success)`：
-统一拿到解构后的 `data`、统一抛出带 `code` 的 `IpcError`、统一链路计时与日志。当前唯一入口是 `callIpc`；`useIpc` / `useManualRequest` 请求 hooks 随 P5 主链路引入，落地后按下述规则执行。
+所有 IPC 通信必须走安全包装层，严禁在业务中手写 `window.api.*` + `if (!res.success)` 散装解构。
 
-```ts
-// 单通道调用：类型推导自 API 契约，data 为 Result 的解包 T
-const { data, runAsync } = useIpc('config.update', window.api.config.update, {
-  onError: (err) => message.error(`更新失败: ${err.message}`),
-});
-
-// 多通道编排：状态归 useManualRequest，内部通过 callIpc 组合
-const { runAsync: runOp } = useManualRequest(async (action: VocabularyAction) => {
-  return callIpc('vocabulary.' + action, window.api.vocabulary[action], [{ term }]);
-});
-```
-
-| 场景                                        | 推荐用法                                             |
-| :------------------------------------------ | :--------------------------------------------------- |
-| 一次请求对一个 channel                      | `useIpc(channel, window.api.x.y)`                    |
-| 一个动作路由到多个 channel                  | `useManualRequest(service)`，内部调用 `callIpc(...)` |
-| 失败属于正常业务流程（如用户取消）          | 业务 hook 内自行处理为状态，不抛出为 IpcError        |
-| 非 Result 形态的 API（如 `getPathForFile`） | 直接调用，不走 IPC 包装层                            |
-
-### manual-only 铁律
-
-- 异步请求一律使用 `useManualRequest`（`manual: true` 硬编码），请求发起必须显式调用 `run()/runAsync()`。
-- **一切自动触发能力一律禁止**：禁止使用 `refreshDeps`、轮询 `pollingInterval`、聚焦刷新 `refreshOnWindowFocus` 或自动防抖节流。触发必须写在明处（事件处理函数或显式 `useEffect`）。
-- **三层刚性拦截**：类型层（`Omit` 剔除自动触发配置项）、Lint 层（`noRestrictedImports` 禁止直连 `ahooks` `useRequest`）与 CI 门禁。防抖请用 `useDebounceFn`，轮询请用 `useInterval`。
-- **日志纪律**：开发态打印 channel + 耗时 + 结果；生产态仅输出单行 `console.info`。严禁在日志中打印包含敏感路径与 URL 的入参 body。
+- **调用原语**：单接口请求一律使用 `useIpc('domain.method', options)`（由点分路径推导入参与解包类型，失败抛出 `IpcError`）；多通道业务编排使用 `useManualRequest` 并在内部按需调用 `callIpc('domain.method', args?)`（无参可省略 `args`）。非 Result 契约的辅助 API（如 `getPathForFile`）直接调用。
+- **manual-only 铁律**：所有异步请求写死 `manual: true`，严禁隐式触发。禁止使用 `refreshDeps`、`pollingInterval`、`refreshOnWindowFocus` 与自动防抖。请求必须显式由事件回调或挂载 `useEffect` 触发；防抖统一用 `useDebounceFn`，轮询统一用 `useInterval`。
+- **三层刚性拦截**：类型层（`Omit` 剔除 16 个自动触发键）、Lint 门禁（`noRestrictedImports` 禁止直连 `ahooks` 的 `useRequest`）与 CI 构建。
+- **日志与安全纪律**：仅记录 channel、耗时与结果状态；严禁在日志中打印包含敏感路径与 URL 的入参 body。
 
 ## 5. 组件书写约定与七段式语义模板
 
@@ -87,6 +64,7 @@ const { runAsync: runOp } = useManualRequest(async (action: VocabularyAction) =>
 - **一组件一文件夹**：组件一律为 `Xxx/index.tsx`（PascalCase 目录，本体实现而非桶文件，不触发 Biome `noBarrelFile`）。
 - **Props 接口规范**：Props 类型必须使用 `export interface XxxProps` 声明（空 props 统一采用 `export type XxxProps = Record<string, never>`），禁止行内字面量。
 - **导出与 Memo 规范**：展示卡片统一使用具名导出并包裹 `memo`（`export const X = memo(_X)`，杜绝 `export default`）；入口容器组件使用 `export const XFeature = ...`，不套 memo。
+- **React Compiler 纪律**：全仓由 React Compiler 全自动接管依赖记忆化，禁止手写样板式 `useMemo` 与 `useCallback`；遵守组件纯函数渲染，严禁在 render 期间读写 `ref.current`（Biome `useReactCompiler` 为 error 刚性阻断）。展示组件按约定包裹外层 `memo(_Xxx)` 导出以阻断跨组件重渲染。
 - **附属物就近原则**：组件私有 hook、样式与辅助函数维护在组件目录内；跨组件共享的上提顶层。别名 `@/` 指向 `src/*`，跨端契约仅消费 `@app/shared`。
 
 ### 2. 组件代码七段式语义模板
@@ -113,7 +91,7 @@ const _UserCard = (props: UserCardProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // ③ 网络IO / 异步操作（useIpc, useManualRequest 等通信 Hooks）
-  const { data, loading, runAsync } = useIpc('user.get', window.api.user.get);
+  const { data, loading, runAsync } = useIpc('user.get');
 
   // ④ 数据转换 / 派生（React Compiler 自动记忆化推导，无需手动 useMemo）
   const filteredList = data?.filter((item) => item.name.includes(filterText)) ?? [];

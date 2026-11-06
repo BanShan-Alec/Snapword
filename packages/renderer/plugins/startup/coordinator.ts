@@ -11,7 +11,7 @@ import {
 /**
  * 启动壳门禁注册表就绪协调器（specs/first-screen-loading.md §4.3 / D9）
  *
- * React 引导前的裸 DOM 引导层：构建期经 plugins/startup-shell.ts
+ * React 引导前的裸 DOM 引导层：构建期经 plugins/startup/shell-plugin.ts
  * 打包为经典 IIFE 内联进 index.html（先于 main.tsx 执行），豁免 7 段式模板；
  * import 面仅限 @app/shared/constants 纯常量（壳产物自足红线 §6.1）。
  *
