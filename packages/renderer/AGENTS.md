@@ -12,7 +12,7 @@
 | `entries/`    | 多窗口独立挂载入口（MPA 架构：当前 `home/` 主窗口）                                     | 仅做顶层根节点挂载与全局 Provider 装配                          |
 | `features/`   | 业务域实现（`translate` / `vocabulary` / `history` / `glossary` / `settings` / `help`） | 外部仅允许引用域入口 `index.tsx`，域间禁止互相 import           |
 | `components/` | 跨 feature 复用的通用 UI（`layout/` 全局骨架，`startup/` 首屏壳组件）                   | 一组件一文件夹（`Xxx/index.tsx`），被 2 个以上域共用才上提      |
-| `hooks/`      | 跨域基础 hooks（`useTheme`, `usePlatform`）                                             | 请求与应用级状态抽象，禁止在业务组件中直连原生 ahooks           |
+| `hooks/`      | 跨域基础 hooks（`useManualRequest`, `useIpc`, `useTheme`, `usePlatform`）               | 请求与应用级状态抽象，禁止在业务组件中直连原生 ahooks           |
 | `lib/`        | 跨域底层能力（`ipc.ts` 契约解构与追踪、`classNames.ts`、`sentry.ts`）                   | 纯工具函数与全局运行时初始化                                    |
 | `locales/`    | LinguiJS 国际化模块（`zh-CN`, `en` 字典与 `dynamicActivate`）                           | 中文源码作为 msgid（Source-as-Key），运行时按需加载语言包 Chunk |
 | `stores/`     | 全局 Zustand 状态（主题、语言等跨窗口/跨域状态）                                        | 仅存放全应用级公共状态                                          |
@@ -52,7 +52,7 @@ hook 实例化必须落在 feature 内部。没有跨域共享需求就不上提
 
 所有 IPC 通信必须走安全包装层，严禁在业务中手写 `window.api.*` + `if (!res.success)` 散装解构。
 
-- **调用原语**：单接口请求一律使用 `useIpc('domain.method', options)`（由点分路径推导入参与解包类型，失败抛出 `IpcError`）；多通道业务编排使用 `useManualRequest` 并在内部按需调用 `callIpc('domain.method', args?)`（无参可省略 `args`）。非 Result 契约的辅助 API（如 `getPathForFile`）直接调用。`useIpc` / `useManualRequest` 随 P5 主链路引入；在此之前一律经 `callIpc` 显式调用。
+- **调用原语**：单接口请求一律使用 `useIpc('domain.method', options)`（由点分路径推导入参与解包类型，失败抛出 `IpcError`）；多通道业务编排使用 `useManualRequest` 并在内部按需调用 `callIpc('domain.method', args?)`（无参可省略 `args`）。非 Result 契约的辅助 API（如 `getPathForFile`）直接调用。
 - **manual-only 铁律**：所有异步请求写死 `manual: true`，严禁隐式触发。禁止使用 `refreshDeps`、`pollingInterval`、`refreshOnWindowFocus` 与自动防抖。请求必须显式由事件回调或挂载 `useEffect` 触发；防抖统一用 `useDebounceFn`，轮询统一用 `useInterval`。
 - **三层刚性拦截**：类型层（`Omit` 剔除 16 个自动触发键）、Lint 门禁（`noRestrictedImports` 禁止直连 `ahooks` 的 `useRequest`）与 CI 构建。
 - **日志与安全纪律**：仅记录 channel、耗时与结果状态；严禁在日志中打印包含敏感路径与 URL 的入参 body。
