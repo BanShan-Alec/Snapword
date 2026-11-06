@@ -1,4 +1,4 @@
-# @app/main AGENTS.md — 主进程规则（AI 必读）
+# @app/main AGENTS.md — 主进程架构与执行规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。本文件为该包规则唯一真源。
 
@@ -48,7 +48,12 @@ export class NotesService {
       throw new AppError('Title is required', ErrorCode.VALIDATION_ERROR);
     }
     // 纯业务逻辑 / 文件持久化 / 系统 API 调用
-    return { id: 'note-1', title: input.title, content: input.content, createdAt: Date.now() };
+    return {
+      id: 'note-1',
+      title: input.title,
+      content: input.content,
+      createdAt: Date.now(),
+    };
   }
 }
 

@@ -1,8 +1,7 @@
-# AGENTS.md — AI 协作者目录与全局守则
+# AGENTS.md — 全局架构守则与全仓任务路由
 
-> 本文件是 AI 编程助手（ZCode / Cursor / Claude Code 等）的项目入口：全局红线 + 全仓导航。
-> 进入任何 `packages/` 目录工作前，先读该包的 `AGENTS.md`——cwd 在包内时它会自动注入；
-> cwd 在根目录时按下方包索引主动读取。人类向产品总览见 [README.md](README.md)。
+> 本文件是全仓架构红线与任务路由入口：全局硬红线 + 包级规则索引 + 开发流门禁。
+> 进入任何 `packages/` 目录工作前，以该包的 `AGENTS.md` 为唯一真源。项目总览与架构见 [README.md](README.md)。
 
 ## 1. 技术栈速览
 
@@ -68,7 +67,7 @@ Playwright（E2E，真实 Electron 窗口）· Drizzle ORM + `node:sqlite` · pn
 
 ## 6. 指针
 
-- 人类向全局工程规范（Biome 细节 / commit / husky / changelogen / .config / pnpm / CJS 脚本）：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 全局工程规范与协作基础设施（Git 规范 / PR 闭环 / 发版 SOP / pnpm 12 机制 / build/lib）：[CONTRIBUTING.md](CONTRIBUTING.md)
 - 发版流水线与仓库 Secrets：[.github/CICD.md](.github/CICD.md)
 - 横切规则（globs 触发，落盘日志英文）：[.agents/rules/logging-specification.md](.agents/rules/logging-specification.md)
 
