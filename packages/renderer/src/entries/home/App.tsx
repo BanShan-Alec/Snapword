@@ -1,37 +1,49 @@
-import { memo, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { memo } from 'react';
+import { Route, Switch } from 'wouter';
+import { AppShell } from '@/components/layout/AppShell';
 import { Header } from '@/components/layout/Header';
+import { GlossaryFeature } from '@/features/glossary';
+import { HelpFeature } from '@/features/help';
+import { HistoryFeature } from '@/features/history';
+import { SettingsFeature } from '@/features/settings';
+import { TranslateFeature } from '@/features/translate';
+import { VocabularyFeature } from '@/features/vocabulary';
 
 /**
- * 路由切换叙事：每次路径变化落一行 info（首次渲染即初始路由）。
- * 「崩溃前用户翻到过哪页」是排障叙事的核心线索，主进程看不到这条线。
+ * 主窗口（C-05 外壳）：顶部 32px 系统标题栏拖拽层（WCO 避让）+ RM-02 左侧导航内容区，
+ * 六个业务域挂 wouter 路由。默认域「翻译」；未知路径统一回「翻译」。
  */
-function NavigationLogger() {
-  const [location] = useLocation();
-  useEffect(() => {
-    logger.info('Route changed', { path: location });
-  }, [location]);
-  return null;
-}
-
-/**
- * 应用主界面壳层。业务路由由 Snapword 功能域接入时填充。
- */
-const _App = () => {
-  return (
-    <div className="h-screen flex flex-col bg-background text-foreground selection:bg-primary/20">
-      {/* App Header & Navigation */}
-      <Header />
-      <NavigationLogger />
-
-      {/* Main Content Area */}
-      <main className="relative flex-1 min-h-0 w-full overflow-hidden">
-        <div className="h-full w-full overflow-y-auto stable-scrollbar">
-          <div className="max-w-7xl mx-auto p-6" />
-        </div>
-      </main>
-    </div>
-  );
-};
+const _App = () => (
+  <div className="h-screen flex flex-col bg-background text-foreground selection:bg-primary/20">
+    {/* 系统标题栏拖拽层（WCO 避让） */}
+    <Header />
+    <AppShell>
+      <Switch>
+        <Route path="/">
+          <TranslateFeature />
+        </Route>
+        <Route path="/history">
+          <HistoryFeature />
+        </Route>
+        <Route path="/vocabulary">
+          <VocabularyFeature />
+        </Route>
+        <Route path="/glossary">
+          <GlossaryFeature />
+        </Route>
+        <Route path="/settings">
+          <SettingsFeature />
+        </Route>
+        <Route path="/help">
+          <HelpFeature />
+        </Route>
+        {/* 未知路径统一回根路径（翻译） */}
+        <Route path="/:rest*">
+          <TranslateFeature />
+        </Route>
+      </Switch>
+    </AppShell>
+  </div>
+);
 
 export const App = memo(_App);

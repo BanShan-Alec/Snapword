@@ -10,11 +10,10 @@
     height: 100%;
     width: 100%;
     overflow: hidden;
-    /* 首帧画布由原生 BrowserWindow.backgroundColor 承担（window 模块 resolveNativeTheme），
-       renderer 恒透明叠于其上；React 根须不透明满幅，否则原生底色透出（见 DESIGN.md §3）。 */
-    background-color: transparent;
-    font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--window-bg);
+    color: var(--window-fg);
+    /* 与主题同一字体栈（paseo-antd-themes 注入的 --paseo-font，见 index.css） */
+    font-family: var(--paseo-font);
     user-select: none;
     -webkit-font-smoothing: antialiased;
   }

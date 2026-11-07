@@ -1,15 +1,31 @@
 msgid ""
 msgstr ""
-"Language: en-US\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"POT-Creation-Date: 2026-11-05 13:43+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/features/settings/index.tsx
+msgid "English"
+msgstr "English"
 
 #: src/features/updater/components/ProgressCard/index.tsx
 msgid "下载进度"
 msgstr "Download progress"
 
-#: src/components/layout/Header/index.tsx
-msgid "企业级端到端类型安全桌面客户端脚手架"
-msgstr "Type-safe desktop starter"
+#: src/features/settings/index.tsx
+msgid "中文"
+msgstr "Chinese"
+
+#: src/features/settings/index.tsx
+msgid "主题"
+msgstr "Theme"
+
+#: src/features/history/index.tsx
+msgid "仅保留本次运行，退出后清空。"
+msgstr "This session only. Cleared on exit."
 
 #: src/features/updater/components/ProgressCard/index.tsx
 msgid "传输速率"
@@ -27,6 +43,10 @@ msgstr "The app stays in the tray; click its icon to reopen."
 msgid "关闭窗口还是退出应用？"
 msgstr "Close the window or quit the app?"
 
+#: src/features/translate/index.tsx
+msgid "最近"
+msgstr "Recent"
+
 #: src/components/layout/ErrorBoundary/index.tsx
 msgid "刷新重试"
 msgstr "Reload and retry"
@@ -35,6 +55,10 @@ msgstr "Reload and retry"
 msgid "包含常规稳定性改进与性能优化。"
 msgstr "Includes stability and performance fixes."
 
+#: src/features/history/index.tsx
+msgid "去翻译"
+msgstr "Translate"
+
 #: src/features/updater/index.tsx
 msgid "发现新版本"
 msgstr "Update available"
@@ -42,6 +66,10 @@ msgstr "Update available"
 #: src/features/updater/index.tsx
 msgid "取消下载"
 msgstr "Cancel download"
+
+#: src/features/settings/index.tsx
+msgid "外观"
+msgstr "Appearance"
 
 #: src/features/updater/index.tsx
 msgid "安装包下载中，完成后即可进行安装升级。"
@@ -55,17 +83,38 @@ msgstr "Expand all"
 msgid "已是最新版本"
 msgstr "Up to date"
 
+#: src/features/translate/index.tsx
+msgid "已超过 20000 字符上限，请删减后再翻译。"
+msgstr "Too long: max 20,000 characters."
+
+#: src/components/layout/AppShell/index.tsx
+#: src/features/help/index.tsx
+msgid "帮助与诊断"
+msgstr "Help & Diagnostics"
+
 #: src/features/updater/index.tsx
 msgid "当前安装的应用已包含所有最新功能与安全更新。"
 msgstr "You're on the latest version."
+
+#: src/features/settings/index.tsx
+msgid "当前设置仅本次运行有效，后续版本将自动保存。"
+msgstr "Changes last for this session only."
 
 #: src/features/updater/index.tsx
 msgid "您的应用已保持在最新版本，无需更新。"
 msgstr "You're up to date; no update needed."
 
+#: src/features/translate/index.tsx
+msgid "手动翻译文本，并回看最近结果。"
+msgstr "Translate text and see recent results."
+
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "提交关闭选择失败"
 msgstr "Couldn't save the close choice"
+
+#: src/features/vocabulary/index.tsx
+msgid "收藏的单词与语境片段，随时回看。"
+msgstr "Saved words and context snippets."
 
 #: src/features/updater/components/ChangelogCard/index.tsx
 msgid "收起"
@@ -78,6 +127,14 @@ msgstr "Update downloaded. Restart to install."
 #: src/features/updater/index.tsx
 msgid "新版本已经准备就绪，包含最新的功能与改进。"
 msgstr "A new version is ready with the latest features."
+
+#: src/features/translate/index.tsx
+msgid "暂无最近翻译（将显示共享会话历史的前 5 条）"
+msgstr "No recent translations yet. Shows 5."
+
+#: src/features/help/index.tsx
+msgid "暂无可展示的诊断信息"
+msgstr "No diagnostics available yet."
 
 #: src/features/updater/index.tsx
 msgid "暂无可用更新信息。"
@@ -107,6 +164,11 @@ msgstr "Update service is not configured."
 msgid "更新过程中出现未知错误，请稍后重试。"
 msgstr "Something went wrong during the update. Try again."
 
+#: src/components/layout/AppShell/index.tsx
+#: src/features/glossary/index.tsx
+msgid "术语表"
+msgstr "Glossary"
+
 #: src/features/updater/index.tsx
 msgid "检查或下载更新时发生异常，请检查网络后重试。"
 msgstr "Couldn't check or download the update. Check your network."
@@ -127,6 +189,31 @@ msgstr "Connecting to the update server…"
 msgid "正在检查更新..."
 msgstr "Checking for updates…"
 
+#: src/features/settings/index.tsx
+msgid "浅色"
+msgstr "Light"
+
+#: src/features/settings/index.tsx
+msgid "浅色、深色或跟随系统。"
+msgstr "Light, dark, or system."
+
+#: src/features/settings/index.tsx
+msgid "深色"
+msgstr "Dark"
+
+#: src/features/translate/index.tsx
+msgid "清空"
+msgstr "Clear"
+
+#: src/components/layout/AppShell/index.tsx
+#: src/features/vocabulary/index.tsx
+msgid "生词本"
+msgstr "Vocabulary"
+
+#: src/features/settings/index.tsx
+msgid "界面语言"
+msgstr "Interface language"
+
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "留在托盘"
 msgstr "Keep in tray"
@@ -143,13 +230,72 @@ msgstr "Remind me later"
 msgid "立即更新"
 msgstr "Update now"
 
+#: src/features/translate/index.tsx
+msgid "粘贴或输入英文，Ctrl+Enter 翻译"
+msgstr "Paste English, Ctrl+Enter to translate."
+
+#: src/features/glossary/index.tsx
+msgid "统一管理术语与固定译法，保持译名一致。"
+msgstr "Keep terms and translations consistent."
+
 #: src/features/updater/index.tsx
 msgid "网络连接失败或超时，请检查网络后重试。"
 msgstr "Network failed or timed out. Check your connection."
 
+#: src/components/layout/AppShell/index.tsx
+#: src/features/translate/index.tsx
+msgid "翻译"
+msgstr "Translate"
+
+#: src/features/translate/index.tsx
+msgid "翻译功能将在后续版本开放。"
+msgstr "Translation is coming soon."
+
+#: src/components/layout/AppShell/index.tsx
+#: src/features/history/index.tsx
+msgid "翻译历史"
+msgstr "History"
+
+#: src/features/translate/index.tsx
+msgid "翻译结果会显示在这里"
+msgstr "Translation will appear here."
+
+#: src/features/translate/index.tsx
+msgid "英语 → 简体中文"
+msgstr "English → Simplified Chinese"
+
+#: src/components/layout/AppShell/index.tsx
+#: src/features/settings/index.tsx
+msgid "设置"
+msgstr "Settings"
+
+#: src/features/settings/index.tsx
+msgid "语言"
+msgstr "Language"
+
+#: src/features/settings/index.tsx
+msgid "跟随系统"
+msgstr "Follow system"
+
 #: src/features/updater/index.tsx
 msgid "软件更新"
 msgstr "Software update"
+
+#: src/features/help/index.tsx
+msgid "运行自检、查看日志与排查常见问题。"
+msgstr "Run checks, view logs, and troubleshoot."
+
+#: src/features/vocabulary/index.tsx
+msgid "还没有收藏单词"
+msgstr "No saved words yet."
+
+#: src/features/glossary/index.tsx
+msgid "还没有术语"
+msgstr "No terms yet."
+
+#: src/features/history/index.tsx
+msgid "还没有翻译记录"
+msgstr "No translations yet."
 
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "退出应用"
@@ -170,3 +316,7 @@ msgstr "Hide to background"
 #: src/components/layout/ErrorBoundary/index.tsx
 msgid "页面出错啦~"
 msgstr "Something went wrong~"
+
+#: src/features/settings/index.tsx
+msgid "默认跟随系统，切换后立即生效。"
+msgstr "Follows the system. Applies instantly."

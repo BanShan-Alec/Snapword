@@ -21,6 +21,7 @@
     "ahooks": "^3.11.0",
     "antd": "^6.6.8",
     "clsx": "^2.1.1",
+    "paseo-antd-themes": "^0.2.2",
     "react": "catalog:",
     "react-dom": "catalog:",
     "wouter": "^3.13.0",
