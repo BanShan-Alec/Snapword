@@ -16,9 +16,6 @@ catalog:
 # pnpm 12 起非 auth/registry 设置只从本文件读取（.npmrc 仅剩 registry）
 nodeLinker: isolated
 autoInstallPeers: true
-publicHoistPattern:
-  - "@node-usb/*"
-  - "*usb*"
 
 # 供应链防护：发布不满 24 小时的依赖禁止安装（显式化默认值；临时豁免用 minimumReleaseAgeExclude）
 minimumReleaseAge: 1440

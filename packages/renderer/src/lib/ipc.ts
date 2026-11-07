@@ -70,15 +70,9 @@ const IPC_LOG_PREFIX = '[ipc]';
  * 仍能正确在 options 位置前填充 undefined 占位，避免 options 错位传递给业务参数。
  */
 const SINGLE_PAYLOAD_PATHS = new Set<IpcApiPath>([
-  'calculator.calculate',
   'config.update',
-  'counter.decrement',
-  'counter.increment',
   'diagnostics.log',
   'diagnostics.performAction',
-  'dialog.openDirectory',
-  'dialog.openFile',
-  'dialog.saveFile',
   'shell.openExternal',
   'shell.showItemInFolder',
   'window.closeRespond',

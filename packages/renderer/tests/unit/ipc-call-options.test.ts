@@ -62,22 +62,22 @@ describe('callIpc success logging options', () => {
   it('pads omitted optional business arguments so options stays in the options slot', async () => {
     const windowState = window as Window & { __APP_ENV__: { mode: string }; api: any };
     const received: unknown[][] = [];
-    const service = (input?: { step: number }, options?: { recordSuccess?: boolean }) => {
+    const service = (input?: string, options?: { recordSuccess?: boolean }) => {
       received.push([input, options]);
-      return Promise.resolve({ success: true as const, data: { count: 7 } });
+      return Promise.resolve({ success: true as const, data: { success: true } });
     };
     // vi.fn 包装后 length 会变成 0，这里用真实函数才能覆盖 service.length 占位逻辑
     expect(service.length).toBe(2);
 
     windowState.api = {
-      counter: {
-        increment: service,
+      shell: {
+        openExternal: service,
       },
     };
 
-    await expect(callIpc('counter.increment', [], { recordSuccess: false })).resolves.toEqual({
-      count: 7,
-    });
+    await expect(
+      callIpc('shell.openExternal', undefined, { recordSuccess: false }),
+    ).resolves.toEqual({ success: true });
     expect(received).toEqual([[undefined, { recordSuccess: false }]]);
   });
 
@@ -85,25 +85,21 @@ describe('callIpc success logging options', () => {
     const windowState = window as Window & { __APP_ENV__: { mode: string }; api: any };
     const received: unknown[][] = [];
     // 模拟 contextBridge 暴露的原生包装函数（length 为 0）
-    const service = vi.fn(
-      (...args: [input?: { step: number }, options?: { recordSuccess?: boolean }]) => {
-        received.push(args);
-        return Promise.resolve({ success: true as const, data: { count: 8 } });
-      },
-    );
+    const service = vi.fn((...args: [input?: string, options?: { recordSuccess?: boolean }]) => {
+      received.push(args);
+      return Promise.resolve({ success: true as const, data: { success: true } });
+    });
     expect(service.length).toBe(0);
 
     windowState.api = {
-      counter: {
-        increment: service,
+      shell: {
+        openExternal: service,
       },
     };
 
     await expect(
-      callIpc('counter.increment', undefined, { recordSuccess: false }),
-    ).resolves.toEqual({
-      count: 8,
-    });
+      callIpc('shell.openExternal', undefined, { recordSuccess: false }),
+    ).resolves.toEqual({ success: true });
     expect(received).toEqual([[undefined, { recordSuccess: false }]]);
   });
 
@@ -146,12 +142,12 @@ describe('callIpc success logging options', () => {
       code: 'INTERNAL_ERROR',
     }));
     windowState.api = {
-      counter: {
-        reset: service,
+      system: {
+        ping: service,
       },
     };
 
-    await expect(callIpc('counter.reset', undefined, { recordSuccess: false })).rejects.toThrow(
+    await expect(callIpc('system.ping', undefined, { recordSuccess: false })).rejects.toThrow(
       'not available',
     );
   });
@@ -160,8 +156,8 @@ describe('callIpc success logging options', () => {
     const windowState = window as Window & { api: any };
     windowState.api = {};
 
-    await expect(callIpc('counter.reset')).rejects.toThrow(
-      '[callIpc] Unknown IPC API method for path: "counter.reset"',
+    await expect(callIpc('system.ping')).rejects.toThrow(
+      '[callIpc] Unknown IPC API method for path: "system.ping"',
     );
   });
 });

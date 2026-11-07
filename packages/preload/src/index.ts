@@ -3,17 +3,13 @@
 import '@sentry/electron/preload';
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
 import { APP_STARTUP_MAIN_READY_EVENT } from '@app/shared/constants/startup';
-import type { CalculateInput } from '@app/shared/schemas/calculator';
 import type { CloseBehaviorChoice } from '@app/shared/schemas/close-behavior';
 import type { AppConfig, UpdateConfigInput } from '@app/shared/schemas/config';
-import type { StepInput } from '@app/shared/schemas/counter';
 import type { LogInput, PerformActionInput } from '@app/shared/schemas/diagnostics';
-import type { OpenDirectoryInput, OpenFileInput, SaveFileInput } from '@app/shared/schemas/dialog';
 import type { ShowItemInFolderInput } from '@app/shared/schemas/shell';
 import type { ElectronApi } from '@app/shared/types/api';
 import type { AppRuntimeEnv } from '@app/shared/types/env';
 import type { StartupGateSnapshot, StartupMainReadyPayload } from '@app/shared/types/startup';
-import type { IpcCallOptions } from '@app/shared/types/telemetry';
 import type { UpdaterProgress, UpdaterSnapshot } from '@app/shared/types/updater';
 import { APP_ENV_ARG_PREFIX, unpackRuntimeEnv } from '@app/shared/utils/env-packer';
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
@@ -46,25 +42,10 @@ ipcRenderer.on(
 );
 
 export const apiBridge: ElectronApi = {
-  usb: {
-    getDeviceList: (options) => invokeTraced(IPC_CHANNELS.USB_GET_DEVICE_LIST, undefined, options),
-  },
   system: {
     ping: (options) => invokeTraced(IPC_CHANNELS.SYSTEM_PING, undefined, options),
     getSystemInfo: (options) => invokeTraced(IPC_CHANNELS.SYSTEM_GET_INFO, undefined, options),
     getPlatform: () => process.platform,
-  },
-  counter: {
-    get: (options) => invokeTraced(IPC_CHANNELS.COUNTER_GET, undefined, options),
-    increment: (input: StepInput | undefined, options?: IpcCallOptions) =>
-      invokeTraced(IPC_CHANNELS.COUNTER_INCREMENT, input, options),
-    decrement: (input: StepInput | undefined, options?: IpcCallOptions) =>
-      invokeTraced(IPC_CHANNELS.COUNTER_DECREMENT, input, options),
-    reset: (options) => invokeTraced(IPC_CHANNELS.COUNTER_RESET, undefined, options),
-  },
-  calculator: {
-    calculate: (input: CalculateInput, options) =>
-      invokeTraced(IPC_CHANNELS.CALCULATOR_CALCULATE, input, options),
   },
   window: {
     onCloseRequested: (cb: () => void) => {
@@ -97,14 +78,6 @@ export const apiBridge: ElectronApi = {
       invokeTraced(IPC_CHANNELS.DIAGNOSTICS_OPEN_LOG_FOLDER, undefined, options),
     performAction: (input: PerformActionInput, options) =>
       invokeTraced(IPC_CHANNELS.DIAGNOSTICS_PERFORM_ACTION, input, options),
-  },
-  dialog: {
-    openFile: (input?: OpenFileInput, options?: IpcCallOptions) =>
-      invokeTraced(IPC_CHANNELS.DIALOG_OPEN_FILE, input, options),
-    openDirectory: (input?: OpenDirectoryInput, options?: IpcCallOptions) =>
-      invokeTraced(IPC_CHANNELS.DIALOG_OPEN_DIRECTORY, input, options),
-    saveFile: (input?: SaveFileInput, options?: IpcCallOptions) =>
-      invokeTraced(IPC_CHANNELS.DIALOG_SAVE_FILE, input, options),
   },
   shell: {
     showItemInFolder: (input: ShowItemInFolderInput, options) =>

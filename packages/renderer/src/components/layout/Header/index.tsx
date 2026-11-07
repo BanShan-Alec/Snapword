@@ -7,9 +7,8 @@ import logoCompact from '@/assets/logo-compact.svg?url';
 import { EllipsisText } from '@/components/ui/EllipsisText';
 
 // 可抽离的逻辑处理函数/组件
-function resolveActiveTab(location: string): HeaderTab {
-  if (location.startsWith('/architecture')) return '/architecture';
-  return '/dashboard';
+function resolveActiveTab(_location: string): HeaderTab | undefined {
+  return undefined;
 }
 
 const _Header = (props: HeaderProps) => {
@@ -25,10 +24,7 @@ const _Header = (props: HeaderProps) => {
 
   // 数据转换
   const appName = window.__APP_ENV__?.appName || 'Electron App';
-  const tabItems = [
-    { key: '/dashboard', label: t`总览看板` },
-    { key: '/architecture', label: t`架构全貌` },
-  ];
+  const tabItems: Array<{ key: HeaderTab; label: string }> = [];
 
   // 逻辑处理函数
   const handleTabChange = (key: string) => {
@@ -83,7 +79,7 @@ const _Header = (props: HeaderProps) => {
 };
 
 // props 类型定义
-export type HeaderTab = '/dashboard' | '/architecture';
+export type HeaderTab = string;
 
 export interface HeaderProps {
   onTabChange?: (tab: HeaderTab) => void;
