@@ -26,16 +26,13 @@ test.describe('本地遥测系统 (Mini-OTel) E2E 验证与日志捞取', () => 
     page.on('console', onConsole);
 
     try {
-      // 2. 模拟渲染进程发起带追踪的 IPC 请求（包含计数器、计算器和全局 logger 业务日志）
+      // 2. 模拟渲染进程发起带追踪的 IPC 请求（system.ping / config.update + 全局 logger 业务日志）
       const truncationProbeLength = RENDERER_LINE_MAX_LENGTH + 1000;
       const res = await page.evaluate(async (repeatCount) => {
         const { api, logger } = window as unknown as {
           api: {
-            counter: { increment: (args: unknown) => Promise<unknown> };
-            calculator: {
-              calculate: (
-                args: unknown,
-              ) => Promise<{ success: boolean; data: { result: number }; traceId?: string }>;
+            system: {
+              ping: () => Promise<{ success: boolean; data: unknown; traceId?: string }>;
             };
             config: { update: (input: unknown) => Promise<unknown> };
           };
@@ -47,8 +44,7 @@ test.describe('本地遥测系统 (Mini-OTel) E2E 验证与日志捞取', () => 
             ) => { info: (message: string, ...args: unknown[]) => void };
           };
         };
-        const counterRes = await api.counter.increment({ step: 1 });
-        const calcRes = await api.calculator.calculate({ a: 15, b: 27, op: 'add' });
+        const pingRes = await api.system.ping();
         // Handling 入口标记已降为 debug（test/生产不落盘）；用 config.update 内部的主进程
         // info 日志继续校验 main.log 的跨进程 trace 注入
         await api.config.update({ serverCounter: 1 });
@@ -58,13 +54,12 @@ test.describe('本地遥测系统 (Mini-OTel) E2E 验证与日志捞取', () => 
           .info('Business action executed in traced context');
         // D2：超长渲染行经主进程静默截断（超过 RENDERER_LINE_MAX_LENGTH）
         logger.info(`Truncation probe ${'x'.repeat(repeatCount)}`);
-        return { counterRes, calcRes };
+        return { pingRes };
       }, truncationProbeLength);
 
-      expect(res.calcRes.success).toBe(true);
-      expect(res.calcRes.data.result).toBe(42);
-      expect(res.calcRes.traceId).toBeDefined();
-      expect(res.calcRes.traceId).toMatch(/^[0-9a-f]{32}$/);
+      expect(res.pingRes.success).toBe(true);
+      expect(res.pingRes.traceId).toBeDefined();
+      expect(res.pingRes.traceId).toMatch(/^[0-9a-f]{32}$/);
 
       // 3. 轮询等待各 sink 真正落盘（替代固定 500ms 刷盘等待）
       await expect
@@ -75,7 +70,7 @@ test.describe('本地遥测系统 (Mini-OTel) E2E 验证与日志捞取', () => 
         .toContain('Business action executed in traced context');
       await expect.poll(() => readLog(rendererHomeLogPath)).toContain(' [truncated ');
       await expect.poll(() => readLog(mainLogPath)).toContain('===== App started');
-      await expect.poll(() => readLog(tracesPath)).toContain('ipc.receive:calculator:calculate');
+      await expect.poll(() => readLog(tracesPath)).toContain('ipc.receive:system:ping');
 
       const mainLogContent = readLog(mainLogPath);
       const rendererLogContent = readLog(rendererHomeLogPath);
@@ -94,8 +89,7 @@ test.describe('本地遥测系统 (Mini-OTel) E2E 验证与日志捞取', () => 
       const spanNames = records.map((record) => record.name);
 
       expect(spanNames).toContain('window.initialization');
-      expect(spanNames).toContain('ipc.receive:counter:increment');
-      expect(spanNames).toContain('ipc.receive:calculator:calculate');
+      expect(spanNames).toContain('ipc.receive:system:ping');
       // diagnostics:log 仅作为静默传输管道，不生成无意义伪 Span 污染拓扑
       expect(spanNames).not.toContain('ipc.receive:diagnostics:log');
 
@@ -132,10 +126,8 @@ test.describe('本地遥测系统 (Mini-OTel) E2E 验证与日志捞取', () => 
         expect(['OK', 'ERROR']).toContain(record.status);
       }
 
-      const calcRecord = records.find(
-        (record) => record.name === 'ipc.receive:calculator:calculate',
-      );
-      expect(calcRecord?.status).toBe('OK');
+      const pingRecord = records.find((record) => record.name === 'ipc.receive:system:ping');
+      expect(pingRecord?.status).toBe('OK');
 
       // 5. 验证真实 Electron 运行时中的日志轮转机制 (时间戳归档与主日志重置)
       const rotated = await electronApp.evaluate(() => {

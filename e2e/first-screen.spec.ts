@@ -93,7 +93,11 @@ test.describe('首屏渐进式加载 (First Screen Loading) E2E 验证', () => {
     if (!updaterPage) {
       const [win] = await Promise.all([
         electronApp.waitForEvent('window'),
-        page.getByRole('button', { name: /检查更新|Check for updates/ }).click(),
+        page.evaluate(() =>
+          (
+            window as unknown as { api: { updater: { openWindow: () => Promise<unknown> } } }
+          ).api.updater.openWindow(),
+        ),
       ]);
       await win.waitForLoadState('domcontentloaded');
       updaterPage = win;

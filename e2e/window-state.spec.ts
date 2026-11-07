@@ -75,7 +75,7 @@ test.describe('主窗口初始几何尺寸与工作区视觉居中 E2E 验证', 
 
     const first = await launchElectronApp({ userDataDir, cleanupUserData: false });
     try {
-      const targetBounds: Bounds = { x: 120, y: 90, width: 900, height: 620 };
+      const targetBounds: Bounds = { x: 120, y: 90, width: 1000, height: 680 };
       const readBounds = () =>
         first.electronApp.evaluate(({ BrowserWindow }) => {
           const homeWindow = BrowserWindow.getAllWindows().find(
