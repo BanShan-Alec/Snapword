@@ -1,0 +1,419 @@
+/* Tailwind v4：Vocs 已内置注册 Tailwind Vite 插件。限制扫描到 docs/src，避免扫到 monorepo 其它包。 */
+@import "tailwindcss" source(none);
+/* Vocs 设计令牌（surface / 文字 / 边框 / accent 等），使 text-heading、bg-surface、
+   border-primary 这类语义色可直接用。必须排在 tailwindcss 之后，且依赖 vocs ≥ 2.12：
+   旧版把 ./styles/* 导出映射到不存在的 .js，且 theme.css 会清空引入方的调色板与行高。 */
+@import "vocs/styles/theme.css";
+
+@source "../";
+
+/* Vocs 会在侧栏列顶部（data-v-gutter-logo）渲染默认品牌区：未配 logoUrl 时按
+   title 渲染大号站名文本，与 _slots.tsx 的 SidebarHeader 品牌行重复。Vocs 对
+   该区块无官方开关（showLogo 只管顶部导航），故按官方自定义出口 _root.css 隐藏；
+   移动端该区块本就 max-lg:hidden，顶部导航的站名展示不受影响。 */
+[data-v-gutter-logo] {
+  display: none;
+}
+
+/* 侧栏容器 padding-top 含 topNav 高度（给固定定位的默认品牌区让位），品牌区
+   隐藏后收回这条空带，让 SidebarHeader 品牌行顶到导航栏正下方。 */
+@media (width >= 1080px) {
+  [data-v-sidebar] > [data-v-gutter-left] {
+    padding-top: var(--vocs-spacing-banner);
+  }
+}
+
+/* 小屏顶部导航品牌文本：Logo 组件渲染 title 全文（text-2xl 固定 24px），
+   约 400px 以下容器放不下折成两行（64px），第二行溢出 48px 导航条压住页面。
+   改为 nowrap + 字号随视口收缩（5vw 在 480px 处恰为 24px，边界连续无跳变，
+   下限 15px 保证 320px 机型仍单行放得下）。仅作用顶部导航，≥748px 不受影响。 */
+@media (width < 480px) {
+  [data-v-gutter-top] [data-v-logo-text] {
+    white-space: nowrap;
+    font-size: clamp(15px, 5vw, 24px);
+  }
+}
+
+/* 滚动条：与 renderer 对齐（packages/renderer/src/styles/base.css 的全局
+   ::-webkit-scrollbar 规则）。几何 = 14px 总宽、轨道透明，3px 透明 border +
+   background-clip 收出视觉 8px 滑块与 4px 视觉圆角；三态取 antd 中性 alpha 梯度
+   （浅色 .15/.25/.45，深色 .18/.25/.45），light-dark 跟随站点主题（iframe 内跟随
+   nativeTheme）。
+
+   两个必须：① Vocs 核心在 vocs_base 给 * 设了 scrollbar-width: thin +
+   scrollbar-color，Chromium 里两者非 auto 会整体禁用 ::-webkit-scrollbar 伪元素，
+   故复位成 auto；规则入 components 层（晚于 vocs_base、早于 utilities），
+   vocs:scrollbar-none 这类工具类仍能正常隐藏滚动条。
+   ② markdown.css 的代码组滚动条规则是「层外裸样式」，压过任何 layer，故对
+   [data-v-code-group-list] 单独出层覆盖（同选择器、本文件靠后，源序取胜）。 */
+@layer components {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  *::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.18));
+    border: 3px solid transparent;
+    border-radius: 7px;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.25));
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background-color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.45));
+  }
+
+  /* Windows 自定义滚动条默认带步进箭头按钮，显式隐藏 */
+  *::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox 不认 ::-webkit-scrollbar：保留原有细条 + 灰阶作为兜底 */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: light-dark(var(--vocs-color-gray12), var(--vocs-color-gray5)) transparent;
+    }
+  }
+}
+
+/* 根滚动条：轨道铺内容区底色。
+   三个必须：
+   ① 根滚动条的伪元素规则用 `body::` 前缀——实测完整站点上 `html::-webkit-scrollbar-*`
+   匹配不上（原规则带 !important 也从未生效过，这正是轨道颜色一直不对的根因），
+   `body::` / `*::` 立即生效；最小合成页会让 `html::` 生效，别拿合成页验证。
+   `*::` 虽也生效但会波及所有元素滚动条，故用 `body::` 精确命中。
+   ② var() 与 light-dark() 在 ::-webkit-scrollbar-* 伪元素里可用（thumb 规则即先例），
+   轨道直接用语义令牌 --background-color-surface，不写死色值。
+   ③ Vocs 是双色调布局——侧栏 [data-v-gutter-left] 与顶部 Header [data-v-gutter-top]
+   露 :root 的 --background-color-primary（gray14/gray2），内容区由 [data-v-surface-bg]
+   定位层铺 --background-color-surface（white/gray4）。根滚动条贯穿整个视口，单色
+   轨道必与其中一段形成色差，故用硬断渐变分两段：Header 带（高度恰等于
+   --vocs-spacing-topNav，实测 56px / 48px 与断点一致、banner 恒 0）铺 primary 与
+   Header 同色，其余铺 surface——轨道在 Header 带内「消失」，视觉上滚动条从内容区
+   顶开始（滑块仍全高行走：原生滚动条无法只缩短滑块行程）。 */
+html {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+/* 渐变按 --vocs-spacing-topNav 硬断；background-color 兜底给不认渐变的环境 */
+body::-webkit-scrollbar-track {
+  background-color: var(--background-color-surface);
+  background-image: linear-gradient(
+    to bottom,
+    var(--background-color-primary) 0 var(--vocs-spacing-topNav),
+    var(--background-color-surface) var(--vocs-spacing-topNav)
+  );
+}
+
+body::-webkit-scrollbar-corner {
+  background-color: var(--background-color-surface);
+}
+
+/* minimal / blank 布局（如主页 index.mdx）没有 [data-v-surface-bg]：内容区就是
+   :root 的 primary 底色，整页不存在 surface 带，轨道整体跟随 primary、不做 Header
+   分段（否则 --vocs-spacing-topNav 以下会与 primary 内容形成 250 vs 255 色缝）。
+   仅 ≥md 生效：<md 时 :root 经 vocs:max-md:bg-surface 变成 surface 画布，minimal
+   页内容区即画布，此时应走默认的 Header 分段渐变。md = 748px 是 Vocs 的断点
+   （编译产物 @media (width>=748px)，与实测 :root 底色切换点一致）。
+   :has() 在滚动条伪元素规则里实测可用。 */
+@media (width >= 748px) {
+  body:not(:has([data-v-surface-bg]))::-webkit-scrollbar-track,
+  body:not(:has([data-v-surface-bg]))::-webkit-scrollbar-corner {
+    background-color: var(--background-color-primary);
+    background-image: none;
+  }
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: light-dark(var(--vocs-color-gray10), var(--vocs-color-gray6))
+      var(--background-color-surface);
+  }
+}
+
+/* 侧栏目录滚动条：彻底隐藏（不占宽度，滚轮/键盘仍可滚）。曾经「透明但占位
+   14px」的做法留下了幽灵槽（侧栏条目被截断后右侧一条空白带）；标准属性对
+   Chromium ≥121 生效，且卸载 ::-webkit-scrollbar 伪元素样式（与全站 14px 规则
+   互斥），Firefox 本就走同属性。app 内嵌（跨源 iframe）同样生效。 */
+aside[data-v-sidebar-container] {
+  scrollbar-width: none;
+}
+
+/* 代码组横向滚动条：与全局同几何（renderer 没有按组件开小灶的先例） */
+[data-v-code-group-list] {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+[data-v-code-group-list]::-webkit-scrollbar {
+  height: 14px;
+}
+
+[data-v-code-group-list]::-webkit-scrollbar-thumb {
+  background-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.18));
+  border: 3px solid transparent;
+  border-radius: 7px;
+  background-clip: padding-box;
+}
+
+[data-v-code-group-list]::-webkit-scrollbar-thumb:hover {
+  background-color: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.25));
+}
+
+[data-v-code-group-list]::-webkit-scrollbar-thumb:active {
+  background-color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.45));
+}
+
+/* 隐藏 Ask AI 浮动气泡（用户指定 CSS 隐藏、不改页面 frontmatter）：底部
+   「Ask AI...」触发栏。注意 Ctrl+I 的菜单锚定在这个触发器上，display:none
+   会把 --anchor-width 清零、菜单跑到视口左上角且宽度塌成 0（样式错乱）；
+   改用 visibility + pointer-events：气泡不可见不可点，占位还在，菜单照常
+   从原位向上弹出（Menu.Portal 渲染在 body，不受本规则影响）。 */
+[data-v-ask-ai-container] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* #region Mermaid */
+/* 1. 自然尺寸：Vocs 默认给 svg 设 max-w-full，1840px 宽的时序图会被压到 743px，
+   16px 字实际只剩 ~6px。改为保留 viewBox 自然宽度，宽图在容器内横向滚动；
+   同时给整张图加「点击放大」的可发现性。 */
+[data-v-mermaid-container] {
+  position: relative;
+}
+
+[data-v-mermaid] {
+  max-height: 320px;
+  overflow: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  cursor: zoom-in;
+}
+
+[data-v-mermaid] svg {
+  flex: none;
+  max-width: none !important;
+  height: auto;
+}
+
+/* 放大提示与底部渐隐放在 container 上，框内滚动时两者保持固定。 */
+[data-v-mermaid-container][data-mermaid-zoomable]::before {
+  content: "点击放大";
+  display: block;
+  width: fit-content;
+  margin: 0 0 6px auto;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 999px;
+  background: var(--background-color-surface);
+  color: var(--text-color-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.78;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+[data-v-mermaid-container][data-mermaid-zoomable]:hover::before {
+  opacity: 1;
+}
+
+[data-v-mermaid-container][data-mermaid-scrollable="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  height: 56px;
+  background: linear-gradient(to bottom, transparent, var(--background-color-primary));
+  pointer-events: none;
+}
+
+[data-v-mermaid]:focus-visible {
+  outline: 2px solid var(--vocs-color-accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* 2. 主题：mermaid 默认淡紫 #ECECFF / 紫边 #9370DB / 淡黄 cluster 与 Vocs 的中性色
+   冲突；统一换成站点令牌，深浅色由 light-dark 自动跟随。 */
+[data-v-mermaid] .node rect,
+[data-v-mermaid] .node circle,
+[data-v-mermaid] .node ellipse,
+[data-v-mermaid] .node polygon,
+[data-v-mermaid] .node path,
+[data-v-mermaid] .actor,
+[data-v-mermaid] .labelBox,
+[data-v-mermaid] .statediagram-state .basic.label-container,
+[data-v-mermaid] .statediagram-note .basic.label-container {
+  fill: var(--background-color-surface) !important;
+  stroke: var(--vocs-color-gray9) !important;
+}
+
+/* sequenceDiagram 的 box 背景是 rect.rect + fill="LightBlue/LightYellow/..." */
+[data-v-mermaid] rect.rect {
+  fill: var(--background-color-surfaceTint) !important;
+  stroke: var(--vocs-color-gray9) !important;
+}
+
+[data-v-mermaid] text {
+  fill: var(--text-color-primary) !important;
+  text-rendering: geometricPrecision;
+}
+
+[data-v-mermaid] .cluster rect {
+  fill: var(--background-color-surfaceTint) !important;
+  stroke: var(--vocs-color-gray9) !important;
+}
+
+[data-v-mermaid] .nodeLabel,
+[data-v-mermaid] .label,
+[data-v-mermaid] .labelText,
+[data-v-mermaid] .messageText,
+[data-v-mermaid] .loopText,
+[data-v-mermaid] .noteText,
+[data-v-mermaid] .cluster-label .nodeLabel,
+[data-v-mermaid] text.actor > tspan,
+[data-v-mermaid] .edgeLabel,
+[data-v-mermaid] .edgeLabel .label {
+  color: var(--text-color-primary) !important;
+  fill: var(--text-color-primary) !important;
+}
+
+[data-v-mermaid] .edgePath .path,
+[data-v-mermaid] .flowchart-link,
+[data-v-mermaid] .transition,
+[data-v-mermaid] .messageLine0,
+[data-v-mermaid] .messageLine1,
+[data-v-mermaid] .actor-line,
+[data-v-mermaid] .loopLine {
+  stroke: var(--vocs-color-gray9) !important;
+}
+
+[data-v-mermaid] .marker,
+[data-v-mermaid] .marker path {
+  fill: var(--vocs-color-gray9) !important;
+  stroke: var(--vocs-color-gray9) !important;
+}
+
+[data-v-mermaid] .edgeLabel rect,
+[data-v-mermaid] .labelBkg {
+  fill: var(--background-color-primary) !important;
+}
+
+[data-v-mermaid] .note,
+[data-v-mermaid] .note rect {
+  fill: var(--background-color-surfaceMuted) !important;
+  stroke: var(--vocs-color-gray9) !important;
+}
+
+[data-v-mermaid] .state-start,
+[data-v-mermaid] .state-end {
+  fill: var(--vocs-color-accent) !important;
+  stroke: var(--vocs-color-accent) !important;
+}
+
+/* 3. 点击放大：<dialog> 全屏预览，工具栏支持适应宽度 / 100% / 放大 / 缩小。 */
+/* 根滚动条在 ::backdrop 的绘制区域之外，遮罩盖不到；打开时锁住页面滚动，
+   滚动条不再渲染，关闭后移除 class 恢复。 */
+html.mermaid-zoom-open,
+html.mermaid-zoom-open body {
+  overflow: hidden;
+}
+
+.mermaid-zoom-dialog {
+  width: min(96vw, 1600px);
+  max-width: 96vw;
+  height: 90vh;
+  max-height: 90vh;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 12px;
+  background: var(--background-color-primary);
+  color: var(--text-color-primary);
+}
+
+.mermaid-zoom-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.mermaid-zoom-dialog:not([open]) {
+  display: none;
+}
+
+.mermaid-zoom-dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.mermaid-zoom-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color-primary);
+  background: var(--background-color-primary);
+}
+
+.mermaid-zoom-toolbar button {
+  padding: 4px 10px;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 6px;
+  background: var(--background-color-surface);
+  color: var(--text-color-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mermaid-zoom-toolbar button:hover {
+  background: var(--background-color-surfaceTint);
+}
+
+.mermaid-zoom-stage {
+  display: block !important;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+  padding: 16px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.mermaid-zoom-stage:active {
+  cursor: grabbing;
+}
+
+.mermaid-zoom-stage::after {
+  content: none !important;
+}
+
+.mermaid-zoom-stage svg {
+  max-width: none !important;
+  height: auto;
+}
+/* #endregion */

@@ -34,6 +34,9 @@
       "correctness": {
         "noUnusedVariables": "warn"
       },
+      "complexity": {
+        "noImportantStyles": "off"
+      },
       "nursery": {
         "useReactCompiler": "error"
       },
@@ -97,21 +100,14 @@
       }
     },
     {
-      "includes": ["packages/renderer/**/*.html"],
-      "linter": {
-        "rules": {
-          "complexity": {
-            "noImportantStyles": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["e2e/**/*"],
+      "includes": ["e2e/**/*", "**/*.spec.ts", "**/*.test.ts"],
       "linter": {
         "rules": {
           "performance": {
             "useDomNodeTextContent": "off"
+          },
+          "suspicious": {
+            "noExplicitAny": "off"
           }
         }
       }

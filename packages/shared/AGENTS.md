@@ -1,4 +1,4 @@
-# @app/shared AGENTS.md — 跨端契约层规则（AI 必读）
+# @app/shared AGENTS.md — 跨端契约层规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。本文件为该包规则唯一真源。
 
@@ -23,12 +23,12 @@
 
 ## 3. 命名规范
 
-| 类别                     | 规范                        | 示例                                                     |
-| :----------------------- | :-------------------------- | :------------------------------------------------------- |
-| **文件名**               | `kebab-case.ts`             | `error-codes.ts`, `ipc-channels.ts`                      |
-| **常量与枚举**           | `SCREAMING_SNAKE_CASE`      | `IPC_CHANNELS.SYSTEM_PING`, `ErrorCode.VALIDATION_ERROR` |
-| **Zod Schema**           | `camelCase` + 后缀 `Schema` | `systemPingInputSchema`, `startupSnapshotSchema`         |
-| **TypeScript 类型/接口** | `PascalCase`                | `Result<T>`, `SystemPingInput`, `ElectronApi`            |
+| 类别                     | 规范                        | 示例                                                              |
+| :----------------------- | :-------------------------- | :---------------------------------------------------------------- |
+| **文件名**               | `kebab-case.ts`             | `error-codes.ts`, `ipc-channels.ts`                               |
+| **常量与枚举**           | `SCREAMING_SNAKE_CASE`      | `IPC_CHANNELS.CALCULATOR_CALCULATE`, `ErrorCode.VALIDATION_ERROR` |
+| **Zod Schema**           | `camelCase` + 后缀 `Schema` | `calculateInputSchema`, `stepInputSchema`                         |
+| **TypeScript 类型/接口** | `PascalCase`                | `Result<T>`, `CalculateInput`, `CalculateResult`, `ElectronApi`   |
 
 ## 4. 新增业务领域开发范式 (SOP 骨架)
 

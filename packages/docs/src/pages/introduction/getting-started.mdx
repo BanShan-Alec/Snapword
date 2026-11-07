@@ -1,0 +1,60 @@
+---
+title: 快速上手（Getting Started）
+description: 环境基线、从零启动流程与 Monorepo 核心命令速查表
+---
+
+# 快速上手（Getting Started）
+
+## 环境基线
+
+在启动前，请确保本地宿主环境满足以下版本要求：
+
+- **Node.js**：`>= 24.0.0`（推荐使用 `.nvmrc` 钉死的大版本）
+- **pnpm**：`^12.0.0`（仓库根 `packageManager` 指定 `pnpm@12.15.0`，推荐使用 `corepack` 驱动）
+- **C++ 编译工具链**（仅在涉及本地重编译原生模块如 `usb` 时需要）：Windows 需安装 Visual Studio Build Tools（包含「使用 C++ 的桌面开发」工作负荷），macOS 需安装 Xcode Command Line Tools。若仅做常规业务开发，可直接跳过重编译。
+
+## 首次启动三步走
+
+::::steps
+
+### 1. 安装依赖（自动镜像劫持）
+
+```bash
+pnpm install
+```
+
+> **注意**：项目根目录已预配置国内镜像源，`postinstall` 会自动按需拉取匹配平台的 Electron 预编译二进制，无需手动指定系统环境变量。
+
+### 2. 启动开发态编排
+
+```bash
+pnpm dev
+```
+
+该命令会触发启动前端口/单实例预检，编程式启动 Vite 渲染层 Dev Server（默认 `5173` 端口），并为 Main 与 Preload 建立双路增量构建监听。
+
+### 3. 构建并预览生产行为
+
+```bash
+pnpm preview
+```
+
+一次性构建全量产物并以完整生产行为拉起真实 Electron 实例（加载本地 `file://` 静态包并生效生产级安全 CSP）。若已有编译产物，可追加 `-- --skip-build` 快速调起。
+
+::::
+
+## 常用命令速查表
+
+| 命令 | 行为与用途 |
+| :--- | :--- |
+| `pnpm dev` | 启动开发态（带单实例/端口自愈、Vite HMR、主进程变更自重启） |
+| `pnpm preview` | 一次性构建三包产物并在本地模拟生产形态启动应用 |
+| `pnpm typecheck` | 执行全仓 Monorepo 跨包类型一致性检查（`tsc -b --noEmit`） |
+| `pnpm lint` / `lint:fix` | Biome 架构红线扫描（拦截桶文件、循环依赖与违规导入）/ 自动修复 |
+| `pnpm test` | 运行 Main、Renderer、Shared 所有的 Vitest 单元测试 |
+| `pnpm test:e2e` | 驱动真实打包/预览环境运行 Playwright 端到端交互断言 |
+| `pnpm verify:prebuild` | 打包前硬性安全门禁（检查根依赖白名单、包命名规约与依赖拓扑） |
+| `pnpm build:win` | 构建 Windows 平台 NSIS 安装包与免安装产物 |
+| `pnpm build:mac` | 构建 macOS 平台 DMG / Zip 产物 |
+| `pnpm build:linux` | 构建 Linux 平台 DEB 安装包产物 |
+| `pnpm docs:dev` / `docs:build` | 启动本解法文档站本地热更开发 / 静态 SSG 构建 |

@@ -69,7 +69,7 @@ function verifyDesignSystem(rootDir: string): string[] {
  * 2. 根目录 package.json dependencies 边界校验（仅限 @app/main，防止 node_modules 卷入 asar 体积膨胀）
  * 3. renderer 样式门禁：禁止 text-[Npx] 离阶字号、--ant-* 越界与种子之外的 hex 颜色
  *
- * 主进程 external 为 packages/main/vite.config.ts 中的显式清单（electron），
+ * 主进程 external 为 packages/main/vite.config.ts 中的显式清单（electron / usb / electron-updater），
  * 新增运行时依赖需人工确认是否外置；原「dependencies 与 external 双向对齐」门禁已删除。
  */
 export async function verifyPrebuild(): Promise<VerificationResult> {
@@ -120,8 +120,7 @@ export async function verifyPrebuild(): Promise<VerificationResult> {
     console.log('  ✅ renderer 样式规范校验通过 (字号阶 / 颜色令牌)');
   }
 
-  // en 词条门禁不在此处：缺译由 `pnpm i18n:check`（lingui check missing）负责，
-  // 英文 40 字符上限由同命令追加的 scripts/check-i18n-length.mjs 负责
+  // en-US 词条门禁不在此处：缺译/空译由 CI 的 `pnpm i18n:check`（lingui check missing）负责
 
   const valid = errors.length === 0;
   if (!valid) {

@@ -43,8 +43,8 @@ export function clampDimension(value: number, minimum: number, available: number
 
 /**
  * 宽度优先自适应尺寸计算（用于冷启动无历史状态或历史尺寸超屏重置）
- * - 宽度优先满足 B-01 §10.2 的默认 1200×800，且不超过可用宽度 95%
- * - 高度在小屏幕或高缩放下动态压缩至工作区 85% 以内（不低于最小 960×640）
+ * - 宽度优先满足 1024px，为 Dashboard 卡片和头部导航保留横向空间（不超过可用宽度 95%）
+ * - 高度在小屏幕或 150% 缩放下动态压缩至工作区 85% 以内（如 1280x672 下约为 571px）
  * - 使用 clampDimension 确保尺寸在极小工作区下严格受控于 [MIN_WINDOW_*, workAreaSize.*]
  */
 export function calculateAdaptiveInitialSize(workAreaSize: Pick<Rectangle, 'width' | 'height'>): {
@@ -81,7 +81,7 @@ export function calculateCenteredCoordinates(
 
 /**
  * 纯函数：综合裁决窗口几何状态
- * 1. 历史超屏保护：若存留的大屏尺寸（如 4K 1600x1000）超出当前工作区，直接重置为自适应尺寸
+ * 1. 历史超屏保护：若存留的大屏尺寸（如 4K 1600x1000）超出当前工作区，直接重置为 85% 自适应尺寸
  * 2. 真实视觉居中：未记录坐标或坐标漂出有效工作区时，自动在目标显示器工作区居中
  * 3. 最大化状态独立记录
  */

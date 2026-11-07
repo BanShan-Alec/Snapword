@@ -7,5 +7,6 @@ export type AppInitConfig = {
 
   windows: {
     home: RendererEntry;
+    updater: RendererEntry;
   };
 };

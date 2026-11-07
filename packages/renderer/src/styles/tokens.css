@@ -1,18 +1,14 @@
 /*
- * 非 antd 令牌：color-scheme、滚动条、语法高亮，以及 React 渲染前的窗口画布。
- * 颜色由 paseo-antd-themes 注入（见 styles/index.css 与 antd-theme.ts）。
+ * 非 antd 令牌：color-scheme、滚动条、语法高亮（平台原语，无 antd 对应物）。
+ * 颜色由 antd cssVar 注入（见 styles/design-tokens.ts 与 index.css）。
  */
 :root {
   color-scheme: light;
 
-  /* React 渲染前的窗口画布；值必须与 claudeLightTheme 的 colorBgLayout / colorText 一致（单测校验） */
-  --window-bg: #f0ede2;
-  --window-fg: #3c3c2c;
-
-  /* 滚动条：中性色 alpha 梯度（对应主题 fill → textQuaternary → textTertiary 观感） */
-  --color-scrollbar-thumb: rgba(28, 11, 19, 0.15);
-  --color-scrollbar-thumb-hover: rgba(28, 11, 19, 0.25);
-  --color-scrollbar-thumb-active: rgba(28, 11, 19, 0.45);
+  /* 滚动条：antd 中性色 alpha 梯度 colorFill → colorTextQuaternary → colorTextTertiary */
+  --color-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --color-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --color-scrollbar-thumb-active: rgba(0, 0, 0, 0.45);
 
   /* CSS Custom Highlight 语法高亮令牌 (Light / VS Code 风格) */
   --hl-keyword: #0000ff;
@@ -28,14 +24,10 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* React 渲染前的窗口画布；值必须与 paseoDarkTheme 的 colorBgLayout / colorText 一致（单测校验） */
-  --window-bg: #181b1a;
-  --window-fg: #fafafa;
-
-  /* 滚动条：中性色 alpha 梯度（对应主题 fill → textQuaternary → textTertiary 观感） */
-  --color-scrollbar-thumb: rgba(219, 255, 254, 0.18);
-  --color-scrollbar-thumb-hover: rgba(219, 255, 254, 0.25);
-  --color-scrollbar-thumb-active: rgba(219, 255, 254, 0.45);
+  /* 滚动条：antd 中性色 alpha 梯度 colorFill → colorTextQuaternary → colorTextTertiary */
+  --color-scrollbar-thumb: rgba(255, 255, 255, 0.18);
+  --color-scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+  --color-scrollbar-thumb-active: rgba(255, 255, 255, 0.45);
 
   /* CSS Custom Highlight 语法高亮令牌 (Dark / VS Code Dark+ 风格) */
   --hl-keyword: #569cd6;

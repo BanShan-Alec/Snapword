@@ -1,0 +1,42 @@
+# 文档站部署:main 分支的 packages/docs 变更构建并发布到 GitHub Pages。
+# 依赖仓库 Pages 源为 GitHub Actions 模式(build_type: workflow,已启用)。
+# 产物路径来自 @app/docs 的 vocs build(renderStrategy: full-static → dist/public)。
+name: Docs Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/docs/**"
+      - ".github/workflows/docs-deploy.yml"
+  workflow_dispatch:
+
+# Pages 发布不能中途取消(取消已开始的发布会留下半更新站点),排队执行
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+      - run: pnpm --filter @app/docs run build
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/docs/dist/public
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

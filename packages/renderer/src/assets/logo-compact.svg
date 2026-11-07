@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 56 56">
+  <!-- 小尺寸光学变体（Header 16px / favicon 32px）：path 与 logo.svg（主源）同源，仅 transform 与圆角按小尺寸放大；改 path 时与 logo.svg、favicon.svg 同步 -->
+  <rect width="56" height="56" rx="14" fill="#1677ff"/>
+  <path transform="translate(7.92993 7.9651) scale(0.03917)" fill="#ffffff" d="M848 359.3H627.7L825.8 109c4.1-5.3.4-13-6.3-13H436c-2.8 0-5.5 1.5-6.9 4L170 547.5c-3.1 5.3.7 12 6.9 12h174.4l-89.4 357.6c-1.9 7.8 7.5 13.3 13.3 7.7L853.5 373c5.2-4.9 1.7-13.7-5.5-13.7z"/>
+</svg>

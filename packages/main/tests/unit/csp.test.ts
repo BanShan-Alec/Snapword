@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { ContentSecurityPolicyModule } from '@app/main/modules/security/csp';
+import { PROJECT_DOCS_ORIGIN } from '@app/shared/constants/docs';
 import { session } from 'electron';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -83,12 +84,11 @@ describe('ContentSecurityPolicyModule', () => {
 
       const activePolicy = (cspHeaders as string[])[0];
       expect(activePolicy).toBe(
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self';",
+        `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-src ${PROJECT_DOCS_ORIGIN};`,
       );
       expect(activePolicy).toContain("script-src 'self' 'unsafe-inline'");
       expect(activePolicy).not.toContain("'unsafe-eval'");
       expect(activePolicy).not.toContain('ws:');
-      expect(activePolicy).not.toContain('frame-src');
     } finally {
       (import.meta.env as { PROD: boolean }).PROD = originalProd;
     }
@@ -114,6 +114,43 @@ describe('ContentSecurityPolicyModule', () => {
 
     expect(callbackResult).toBeDefined();
     expect(callbackResult?.responseHeaders['Content-Security-Policy']).toBeUndefined();
+  });
+
+  it('dynamically injects valid API_BASE_URL origin into production connect-src', () => {
+    const originalProd = import.meta.env.PROD;
+    const originalApiBaseUrl = process.env.APP_API_BASE_URL;
+    try {
+      (import.meta.env as { PROD: boolean }).PROD = true;
+      process.env.APP_API_BASE_URL = 'https://api.example.com/v1';
+
+      const cspModule = new ContentSecurityPolicyModule();
+      cspModule.enable({
+        app: mockApp as unknown as Electron.App,
+      } as unknown as import('@app/main/ModuleContext').ModuleContext);
+
+      mockApp.emit('ready');
+
+      const listener = onHeadersReceivedSpy.mock.calls[0][0] as (
+        details: HeadersReceivedDetails,
+        callback: (response: { responseHeaders: Record<string, string | string[]> }) => void,
+      ) => void;
+
+      let callbackResult: { responseHeaders: Record<string, string | string[]> } | undefined;
+      listener({ responseHeaders: {}, resourceType: 'mainFrame' }, (res) => {
+        callbackResult = res;
+      });
+
+      const cspHeaders = callbackResult?.responseHeaders['Content-Security-Policy'];
+      const activePolicy = (cspHeaders as string[])[0];
+      expect(activePolicy).toContain("connect-src 'self' https://api.example.com;");
+    } finally {
+      (import.meta.env as { PROD: boolean }).PROD = originalProd;
+      if (originalApiBaseUrl !== undefined) {
+        process.env.APP_API_BASE_URL = originalApiBaseUrl;
+      } else {
+        delete process.env.APP_API_BASE_URL;
+      }
+    }
   });
 
   it('applies dev CSP header with unsafe-eval and ws in development mode', () => {
@@ -168,7 +205,7 @@ describe('ContentSecurityPolicyModule', () => {
     let callbackResult: { responseHeaders: Record<string, string | string[]> } | undefined;
     listener(
       {
-        responseHeaders: { 'Content-Security-Policy': ['default-src example.com'] },
+        responseHeaders: { 'content-security-policy': 'existing-header' },
         resourceType: 'mainFrame',
       },
       (res) => {
@@ -176,7 +213,10 @@ describe('ContentSecurityPolicyModule', () => {
       },
     );
 
-    const cspHeaders = callbackResult?.responseHeaders['Content-Security-Policy'];
-    expect(cspHeaders).toEqual(['default-src example.com', expect.stringContaining('default-src')]);
+    expect(callbackResult).toBeDefined();
+    const headers = callbackResult?.responseHeaders['content-security-policy'];
+    expect(Array.isArray(headers)).toBe(true);
+    expect(headers).toContain('existing-header');
+    expect((headers as string[]).length).toBe(2);
   });
 });

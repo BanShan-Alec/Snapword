@@ -6,6 +6,7 @@ import {
   type ThemeMode,
 } from '@app/shared/constants/preferences';
 import { create } from 'zustand';
+import type { ResolvedTheme } from '@/styles/design-tokens';
 
 /**
  * 全局轻量应用状态（对齐 renderer/hooks-and-state.md 第 2 章）。
@@ -14,7 +15,6 @@ import { create } from 'zustand';
 
 // 私有常量
 export type { ThemeMode };
-export type ResolvedTheme = 'light' | 'dark';
 
 // 可抽离的逻辑处理函数/组件
 function resolveTheme(mode: ThemeMode): ResolvedTheme {
@@ -33,9 +33,6 @@ interface AppState {
   setThemeMode: (mode: ThemeMode) => void;
   language: LanguageMode;
   setLanguage: (language: LanguageMode) => void;
-  /** 翻译页输入草稿：路由切换会卸载页面，草稿必须放在共享 store 里（RM-03） */
-  translateInput: string;
-  setTranslateInput: (value: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -44,6 +41,4 @@ export const useAppStore = create<AppState>((set) => ({
   setThemeMode: (themeMode) => set({ themeMode, resolvedTheme: resolveTheme(themeMode) }),
   language: DEFAULT_LANGUAGE,
   setLanguage: (language) => set({ language }),
-  translateInput: '',
-  setTranslateInput: (translateInput) => set({ translateInput }),
 }));

@@ -1,25 +1,22 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>__APP_TITLE__</title>
     <script>
+      // 首帧主题由主进程经 URL query 显式传入（window 模块 resolveNativeTheme → shared STARTUP_THEME_QUERY_KEY）。
+      // 不读 prefers-color-scheme：system 模式的运行时变化由 useTheme 的 matchMedia 监听负责。
+      const startupTheme = new URLSearchParams(window.location.search).get('theme');
+      if (startupTheme === 'dark' || startupTheme === 'light') {
+        document.documentElement.dataset.theme = startupTheme;
+      }
       if (window.location.search.includes('skip_animation')) {
         document.documentElement.classList.add('skip-startup-animation');
       }
     </script>
     <style>
-      html,
-      body,
-      #root {
-        margin: 0;
-        width: 100%;
-        height: 100%;
-        background: transparent !important;
-      }
-
       #root {
         opacity: 0;
         transition: opacity 0.16s ease;
@@ -111,7 +108,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <div id="loading" role="status" aria-busy="true">
+    <div id="loading" role="status" aria-busy="true" aria-label="Loading...">
       <div class="startup-logo-shell">
         <div class="startup-logo-slot">
           <!-- __APP_STARTUP_LOGO__ -->

@@ -12,7 +12,12 @@ const prefix = getRepoEnvValue(repoEnv, 'ENV_PREFIX') || 'APP_';
 const isDev = process.env.MODE === 'development';
 
 // 严格白名单过滤：仅暴露业务需要的默认配置，杜绝全量泄露风险
-const ALLOWED_ENV_KEYS = ['SYSTEM_CODE', 'DISTRIBUTION_CHANNEL', 'SENTRY_DSN'] as const;
+const ALLOWED_ENV_KEYS = [
+  'API_BASE_URL',
+  'SYSTEM_CODE',
+  'DISTRIBUTION_CHANNEL',
+  'SENTRY_DSN',
+] as const;
 
 const envDefaults = ALLOWED_ENV_KEYS.reduce(
   (acc, key) => {
@@ -37,7 +42,6 @@ export default defineConfig({
     __ENV_DEFAULTS__: JSON.stringify(envDefaults),
   },
   plugins: [
-    // SourceMap 上传仅在配置 SENTRY_AUTH_TOKEN 时生效；无 token 自动跳过（本地/PR 构建零副作用）
     sentryVitePlugin({
       org: sentryOptions.sentryOrg,
       project: sentryOptions.sentryProject,
@@ -61,22 +65,15 @@ export default defineConfig({
     assetsDir: '.',
     target: 'node24',
     lib: {
-      // 双入口：index.cjs = Electron 主进程；capture-service.cjs = 取词 utilityProcess
-      // 独立 bundle（B-01 §5.1：utilityProcess.fork 加载，B-02 §1）。
-      // 两个入口都不得 require 对方；shared 协议模块允许被提取为公共 chunk（同目录相对 require）。
-      entry: {
-        index: 'src/index.ts',
-        'capture-service': 'src/capture-service/index.ts',
-      },
+      entry: 'src/index.ts',
       formats: ['cjs'],
     },
     rolldownOptions: {
-      // 自动从 package.json 的 dependencies 提取运行时依赖设为 external（外加 electron）。
-      // P4 骨架无运行时依赖：electron-log / zod 等纯 JS 依赖装在 devDependencies 并内联进 bundle
+      // 自动从 package.json 的 dependencies 提取运行时依赖设为 external（外加 electron）
+      // 需要内联打进 bundle 的纯 JS 依赖（如 electron-log、zod）装在 devDependencies
       external: ['electron', ...runtimeDependencies],
       output: {
         entryFileNames: '[name].cjs',
-        chunkFileNames: '[name]-[hash].cjs',
         format: 'cjs',
       },
     },
@@ -84,7 +81,7 @@ export default defineConfig({
     reportCompressedSize: false,
   },
   ssr: {
-    // 除 external 列表外全部内联
+    // 除 external 列表外全部内联；electron-log 通过此策略进入 bundle
     noExternal: true,
   },
 });

@@ -1,4 +1,4 @@
-# @app/main AGENTS.md — 主进程规则（AI 必读）
+# @app/main AGENTS.md — 主进程架构与执行规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。本文件为该包规则唯一真源。
 
@@ -12,8 +12,6 @@
 | `services/`    | 纯业务逻辑与 Node.js / Electron 原生 API 调用                  | 纯数据输入/输出，**严禁**感知 IPC 协议细节     | 单例对象导出（`export const xxxService = new XxxService()`），保持无状态   |
 | `modules/`     | 实现 `AppModule` 接口的横切系统切片（窗口、托盘、CSP、单实例） | 由 `ModuleRunner` 在 `index.ts` 中统一按序装配 | 依赖生命周期时序，末窗口行为由 `lifecycle.ts` 裁决                         |
 | `telemetry/`   | 基于 AsyncLocalStorage 的 W3C Trace 全链路追踪                 | 提供 `handleTraced` IPC 包装原语               | 必须经 `handleTraced` 提取 `__trace_carrier` 创建 span，裸写会导致链路断裂 |
-
-其他切片：`capture-service/` 是取词 utilityProcess 的入口与协议处理（只允许 addon 与 parentPort，禁止网络）；`db/` 持有 Drizzle schema 与 `node:sqlite` 连接（仅主进程访问）；`net/` 封装 OpenAI 兼容接口客户端（API Key 只在此与配置模块可见）；`errors/` 为 `AppError` / `ErrorCode` 映射。
 
 ## 2. 核心架构铁律
 
@@ -48,7 +46,12 @@ export class NotesService {
       throw new AppError('Title is required', ErrorCode.VALIDATION_ERROR);
     }
     // 纯业务逻辑 / 文件持久化 / 系统 API 调用
-    return { id: 'note-1', title: input.title, content: input.content, createdAt: Date.now() };
+    return {
+      id: 'note-1',
+      title: input.title,
+      content: input.content,
+      createdAt: Date.now(),
+    };
   }
 }
 

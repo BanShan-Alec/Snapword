@@ -1,0 +1,76 @@
+---
+title: Electron React Template
+description: 常见 Electron 坑位的解法目录：每个解法都有本仓库经过发版验证的真实实现可抄
+layout: minimal
+showAskAi: false
+showLogo: false
+showFeedback: false
+showBanner: false
+---
+
+import { Link } from 'vocs';
+import { PageDirectory } from '../components/PageDirectory';
+
+<header className="mx-auto flex w-full max-w-[900px] items-center justify-between gap-6 px-8 pb-6 pt-8 max-[700px]:px-5 max-[700px]:pt-6">
+  <div className="inline-flex items-center gap-3">
+    <img
+      src="/electron-react-monorepo-template/icon.png"
+      alt="Electron React Template"
+      className="h-8 w-8"
+    />
+    <span className="text-[15px] font-semibold text-heading tracking-tight">
+      Electron React Template
+    </span>
+    <span className="text-[13px] font-medium text-muted">解法合集</span>
+  </div>
+</header>
+
+<section className="mx-auto w-full max-w-[900px] px-8 max-[700px]:px-5">
+
+  <h1 className="m-0 mb-[18px] text-[clamp(38px,5.6vw,64px)] font-semibold leading-[1.05] tracking-[-0.02em] text-heading">
+    <span className="block">Electron 桌面端</span>
+    <em className="block font-semibold not-italic text-heading">坑位解法合集。</em>
+  </h1>
+
+  <div className="m-0 mb-8 max-w-[620px] text-xl leading-[1.6] text-secondary max-[700px]:text-[17px]">
+    <p>每个解法都对应本仓库经过发版验证的真实实现<br/>模板使用者按图索骥，踩坑的人按问题搜解法、照代码抄作业。</p>
+  </div>
+
+  <div className="mb-10 flex flex-wrap gap-3">
+    <Link
+      to="/introduction/what-is-this"
+      className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-lg border border-solid border-accent bg-accent px-[22px] text-[15px] font-medium text-accentInvert no-underline transition-opacity duration-100 hover:opacity-90"
+    >
+      开始阅读
+    </Link>
+    <Link
+      to="https://github.com/BanShan-Alec/electron-react-monorepo-template"
+      className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-lg border border-solid border-primary bg-surface px-[22px] text-[15px] font-medium text-heading no-underline transition-colors duration-100 hover:border-secondary hover:bg-surfaceTint"
+    >
+      GitHub
+    </Link>
+  </div>
+
+  <details className="mb-12 w-[min(100%,620px)] overflow-hidden rounded-lg border border-solid border-primary bg-surface">
+    <summary className="cursor-pointer px-5 py-3 text-[13px] font-medium text-secondary">
+      Copy instructions for agent
+    </summary>
+    <div className="border-t border-solid border-primary px-5 py-4">
+
+```text
+本仓库是一套 Electron 桌面端模板（electron-react-monorepo-template），
+附带一份解法文档站（packages/docs）。
+
+请先读根目录 AGENTS.md 与所在包的 AGENTS.md 再动手；
+涉及工程决策时，到 packages/docs/src/pages/ 下按维度找对应解法页，
+解法页里的源码链接指向仓库真实实现，修改前先对照。
+
+文档与代码不一致时，以代码为准，并提示我更新文档。
+```
+
+    </div>
+  </details>
+
+</section>
+
+<PageDirectory />
