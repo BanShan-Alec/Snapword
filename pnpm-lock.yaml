@@ -233,9 +233,6 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
-      drizzle-kit:
-        specifier: 1.0.0-rc.5
-        version: 1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(@opentelemetry/api@1.9.1)(zod@4.6.7))
       electron:
         specifier: 45.2.1
         version: 45.2.1(supports-color@8.1.1)
@@ -288,6 +285,9 @@ importers:
       '@sentry/vite-plugin':
         specifier: ^5.4.0
         version: 5.4.0(rollup@4.65.0)(supports-color@8.1.1)(webpack@5.112.2(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.31))
+      drizzle-kit:
+        specifier: 1.0.0-rc.5
+        version: 1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(@opentelemetry/api@1.9.1)(zod@4.6.7))
       electron-log:
         specifier: ^5.4.4
         version: 5.4.4

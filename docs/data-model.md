@@ -865,7 +865,7 @@ word,phonetic_us,phonetic_uk,context_sense,context_snippet,senses_json,source_ti
 - v1 RC 的目录格式：**一迁移一目录、无 `_journal.json`**；`migrate()` 按目录名排序并匹配已应用记录。已实测确认。
 - 生成物提交入库；迁移是用户数据的契约，必须 code review。
 - 运行时绝不生成迁移；`drizzle-kit` 只作 devDependency。
-- `drizzle/` 随安装包分发（建议 `extraResources`）；开发期用 `app.getAppPath()` 定位，打包后用 `process.resourcesPath`。`migrate()` 用 `fs` 读盘，目录缺失会直接失败；asar 内也能读，但必须确保目录真的被拷进包。
+- `packages/main/drizzle/`（迁移产物归 main 包所有）随安装包分发（`extraResources`）；开发期用 `app.getAppPath()/packages/main/drizzle` 定位，打包后用 `process.resourcesPath/drizzle`。`migrate()` 用 `fs` 读盘，目录缺失会直接失败；asar 内也能读，但必须确保目录真的被拷进包。
 - **唯一允许手改生成 SQL 的场景**：rc.5 的 #6165 会让 `setting.key` 这种 TEXT 主键丢掉 `NOT NULL`。初始迁移生成后手工补 `NOT NULL`，并在迁移目录注释里记录原因；snapshot 会把两边归一化，不会产生漂移；CI 用 `PRAGMA table_info(setting)` 断言 `notnull=1`。除此之外禁止手改。
 
 ### 10.2 运行时
@@ -933,7 +933,7 @@ if (missing.length > 0) {
 
 ### 10.6 CI 检查
 
-- `drizzle-kit generate` 后 `git diff --exit-code drizzle`：schema 改了但迁移没提交 → 失败。
+- `drizzle-kit generate` 后 `git diff --exit-code packages/main/drizzle`：schema 改了但迁移没提交 → 失败。
 - 每个迁移目录必须有非空 `migration.sql`；禁止空文件（Drizzle 会向驱动传空语句导致崩溃）。
 - 禁止尾部 `--> statement-breakpoint` 或空白语句；手写/自定义迁移的每条语句之间必须有 `--> statement-breakpoint`，否则 `prepare()` 只执行第一条，后面的静默丢失。
 - 迁移目录名严格递增；禁止删除/重命名已提交的迁移目录。

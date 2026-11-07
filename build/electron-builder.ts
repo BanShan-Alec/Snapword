@@ -58,8 +58,9 @@ const config: Configuration = {
       filter: ['**/*'],
     },
     {
-      // B-03 §10.1：migrate() 运行时读盘；打包后定位 process.resourcesPath/drizzle
-      from: 'drizzle',
+      // B-03 §10.1：migrate() 运行时读盘；迁移产物归 main 包所有，
+      // 打包后定位 process.resourcesPath/drizzle
+      from: 'packages/main/drizzle',
       to: 'drizzle',
       filter: ['**/*'],
     },
