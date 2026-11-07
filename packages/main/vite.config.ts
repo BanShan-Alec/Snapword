@@ -65,15 +65,22 @@ export default defineConfig({
     assetsDir: '.',
     target: 'node24',
     lib: {
-      entry: 'src/index.ts',
+      // 双入口：index.cjs = Electron 主进程；capture-service.cjs = 取词 utilityProcess
+      // 独立 bundle（B-01 §5.1：utilityProcess.fork 加载，B-02 §1）。
+      // 两个入口都不得 require 对方；shared 协议模块允许被提取为公共 chunk（同目录相对 require）。
+      entry: {
+        index: 'src/index.ts',
+        'capture-service': 'src/capture-service/index.ts',
+      },
       formats: ['cjs'],
     },
     rolldownOptions: {
-      // 自动从 package.json 的 dependencies 提取运行时依赖设为 external（外加 electron）
-      // 需要内联打进 bundle 的纯 JS 依赖（如 electron-log、zod）装在 devDependencies
+      // 自动从 package.json 的 dependencies 提取运行时依赖设为 external（外加 electron）。
+      // drizzle-orm 是运行时依赖（node:sqlite 驱动层）；electron-log / zod 等纯 JS 依赖装在 devDependencies 并内联进 bundle
       external: ['electron', ...runtimeDependencies],
       output: {
         entryFileNames: '[name].cjs',
+        chunkFileNames: '[name]-[hash].cjs',
         format: 'cjs',
       },
     },

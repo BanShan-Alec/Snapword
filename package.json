@@ -65,6 +65,7 @@
     "@types/node": "catalog:",
     "changelogen": "^0.6.2",
     "cross-env": "^10.1.0",
+    "drizzle-kit": "1.0.0-rc.5",
     "electron": "45.2.1",
     "electron-builder": "26.18.0",
     "husky": "^9.1.7",

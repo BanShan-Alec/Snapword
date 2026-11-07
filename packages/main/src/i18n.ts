@@ -17,6 +17,8 @@ interface MainMessages {
   trayQuit: string;
   trayTooltipSuffix: string;
   notifDownloadReady: string;
+  captureServiceStartupFailed: string;
+  captureServiceCrashed: string;
 }
 
 const MAIN_MESSAGES: Record<SupportedLocale, MainMessages> = {
@@ -26,13 +28,17 @@ const MAIN_MESSAGES: Record<SupportedLocale, MainMessages> = {
     trayQuit: '退出应用',
     trayTooltipSuffix: '桌面客户端',
     notifDownloadReady: '新版本已下载完毕，点击立即安装。',
+    captureServiceStartupFailed: '取词服务未启动（已自动重试 3 次）',
+    captureServiceCrashed: '取词服务异常（已自动重试 3 次）',
   },
-  'en-US': {
+  en: {
     trayShowMainWindow: 'Show main window',
     trayCheckUpdates: 'Check for updates',
     trayQuit: 'Quit',
     trayTooltipSuffix: 'Desktop client',
     notifDownloadReady: 'Update downloaded. Click to install.',
+    captureServiceStartupFailed: 'Capture service failed to start (retried 3 times)',
+    captureServiceCrashed: 'Capture service keeps crashing (retried 3 times)',
   },
 };
 

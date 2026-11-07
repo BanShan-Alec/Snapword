@@ -16,6 +16,7 @@
     }
   },
   "dependencies": {
+    "drizzle-orm": "1.0.0-rc.5",
     "electron-updater": "^6.8.11"
   },
   "devDependencies": {
