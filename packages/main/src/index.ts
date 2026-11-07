@@ -91,7 +91,7 @@ export async function initApp(initConfig: AppInitConfig) {
  * 1. 停止接受新取词（captureEnabled=false）与 2. 注销全局热键 —— P5 接入热键/取词开关时补充；
  * 3. 取词服务 shutdown → shutdown_ack ≤1s → kill 兜底（CaptureServiceManager.stop，B-02 §8）；
  * 5. 窗口随 quit 自然关闭，销毁托盘；
- * 6. SQLite checkpoint 与 7. temp/ 清理 —— P5 接入云 TTS 时补充（checkpoint 由 better-sqlite 退出钩子承担）。
+ * 6. SQLite checkpoint（closeDatabase()，P5 接线 DB 后在此调用）与 7. temp/ 清理（P5 接入云 TTS 时补充）。
  *
  * 第 3 步必须等 shutdown_ack/超时 kill 完成后再放行退出：before-quit 先 preventDefault，
  * 待 stop() 的 1s 上限结束后再调用 app.quit()；第二次 before-quit 由 isQuitting 放行。
