@@ -1,4 +1,4 @@
-# @app/pr-review AGENTS.md — 评审工具包规则（AI 必读）
+# @app/pr-review AGENTS.md — 评审工具包规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。工具链契约唯一真源见 [.agents/skills/pr-review/SKILL.md](../../.agents/skills/pr-review/SKILL.md)。
 

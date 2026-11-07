@@ -1,4 +1,4 @@
-# @app/main AGENTS.md — 主进程规则（AI 必读）
+# @app/main AGENTS.md — 主进程架构与执行规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。本文件为该包规则唯一真源。
 
@@ -12,8 +12,6 @@
 | `services/`    | 纯业务逻辑与 Node.js / Electron 原生 API 调用                  | 纯数据输入/输出，**严禁**感知 IPC 协议细节     | 单例对象导出（`export const xxxService = new XxxService()`），保持无状态   |
 | `modules/`     | 实现 `AppModule` 接口的横切系统切片（窗口、托盘、CSP、单实例） | 由 `ModuleRunner` 在 `index.ts` 中统一按序装配 | 依赖生命周期时序，末窗口行为由 `lifecycle.ts` 裁决                         |
 | `telemetry/`   | 基于 AsyncLocalStorage 的 W3C Trace 全链路追踪                 | 提供 `handleTraced` IPC 包装原语               | 必须经 `handleTraced` 提取 `__trace_carrier` 创建 span，裸写会导致链路断裂 |
-
-其他切片：`capture-service/` 是取词 utilityProcess 的入口与协议处理（只允许 addon 与 parentPort，禁止网络）；`db/` 持有 Drizzle schema 与 `node:sqlite` 连接（仅主进程访问）；`net/` 封装 OpenAI 兼容接口客户端（API Key 只在此与配置模块可见）；`errors/` 为 `AppError` / `ErrorCode` 映射。
 
 ## 2. 核心架构铁律
 
@@ -48,7 +46,12 @@ export class NotesService {
       throw new AppError('Title is required', ErrorCode.VALIDATION_ERROR);
     }
     // 纯业务逻辑 / 文件持久化 / 系统 API 调用
-    return { id: 'note-1', title: input.title, content: input.content, createdAt: Date.now() };
+    return {
+      id: 'note-1',
+      title: input.title,
+      content: input.content,
+      createdAt: Date.now(),
+    };
   }
 }
 
@@ -103,7 +106,17 @@ export function registerAllControllers(): void {
 }
 ```
 
-## 5. 提交前门禁
+## 5. 数据库访问规则（Drizzle + node:sqlite）
+
+> 完整契约见 `docs/data-model.md`（B-03 v2.0）与 `docs/adr/0003-use-drizzle-orm.md`；此处只列编码硬规则。
+
+- **schema 唯一事实源**：`src/db/schema.ts`；迁移 SQL 由 `pnpm --filter @app/main db:generate`（即 `drizzle-kit generate`，配置在本包 `drizzle.config.ts`）生成并提交，**禁止手改生成 SQL**（唯一例外：B-03 §10.1 的 rc.5 #6165 NOT NULL 补丁）。
+- **初始化与退出**：`db/client.ts` 的 `initializeDatabase()`（迁移连接 FK off → `migrate()` → 运行时连接 FK on/WAL）在主进程启动序列接线（当前 P4 为未接线的库层，P5 落地）；退出前必须调用 `closeDatabase()` 做 checkpoint。
+- **访问方式**：Service 层经 `getDb()` 取实例；Controller 禁止触碰数据库（见 §3 Anti-Patterns）。
+- **迁移守卫**：`DbNewerThanAppError` / `MigrationIncompleteError` / `MigrationTableUnsupportedError` 必须映射为带 `ErrorCode` 的失败路径，不得静默吞掉。
+- **验证**：`pnpm db:smoke`（根目录，临时库真实走 `migrate()` + 三表/守卫/PRAGMA 断言）。
+
+## 6. 提交前门禁
 
 - 根目录执行：`pnpm typecheck` · `pnpm lint` · `pnpm test`。
 - 修改主进程生产依赖或 Vite 配置后，必须本地执行并通过：`pnpm verify:prebuild`。

@@ -7,6 +7,10 @@ msgstr ""
 msgid "English"
 msgstr "English"
 
+#: src/features/updater/components/ProgressCard/index.tsx
+msgid "下载进度"
+msgstr "下载进度"
+
 #: src/features/settings/index.tsx
 msgid "中文"
 msgstr "中文"
@@ -19,17 +23,61 @@ msgstr "主题"
 msgid "仅保留本次运行，退出后清空。"
 msgstr "仅保留本次运行，退出后清空。"
 
+#: src/features/updater/components/ProgressCard/index.tsx
+msgid "传输速率"
+msgstr "传输速率"
+
+#: src/features/updater/index.tsx
+msgid "关闭"
+msgstr "关闭"
+
+#: src/components/close-behavior/CloseBehaviorDialog/index.tsx
+msgid "关闭后应用留在托盘，点击图标可重新打开。"
+msgstr "关闭后应用留在托盘，点击图标可重新打开。"
+
+#: src/components/close-behavior/CloseBehaviorDialog/index.tsx
+msgid "关闭窗口还是退出应用？"
+msgstr "关闭窗口还是退出应用？"
+
 #: src/features/translate/index.tsx
 msgid "最近"
 msgstr "最近"
+
+#: src/components/layout/ErrorBoundary/index.tsx
+msgid "刷新重试"
+msgstr "刷新重试"
+
+#: src/features/updater/components/ChangelogCard/index.tsx
+msgid "包含常规稳定性改进与性能优化。"
+msgstr "包含常规稳定性改进与性能优化。"
 
 #: src/features/history/index.tsx
 msgid "去翻译"
 msgstr "去翻译"
 
+#: src/features/updater/index.tsx
+msgid "发现新版本"
+msgstr "发现新版本"
+
+#: src/features/updater/index.tsx
+msgid "取消下载"
+msgstr "取消下载"
+
 #: src/features/settings/index.tsx
 msgid "外观"
 msgstr "外观"
+
+#: src/features/updater/index.tsx
+msgid "安装包下载中，完成后即可进行安装升级。"
+msgstr "安装包下载中，完成后即可进行安装升级。"
+
+#: src/features/updater/components/ChangelogCard/index.tsx
+msgid "展开全部"
+msgstr "展开全部"
+
+#: src/features/updater/index.tsx
+msgid "已是最新版本"
+msgstr "已是最新版本"
 
 #: src/features/translate/index.tsx
 msgid "已超过 20000 字符上限，请删减后再翻译。"
@@ -40,17 +88,41 @@ msgstr "已超过 20000 字符上限，请删减后再翻译。"
 msgid "帮助与诊断"
 msgstr "帮助与诊断"
 
+#: src/features/updater/index.tsx
+msgid "当前安装的应用已包含所有最新功能与安全更新。"
+msgstr "当前安装的应用已包含所有最新功能与安全更新。"
+
 #: src/features/settings/index.tsx
 msgid "当前设置仅本次运行有效，后续版本将自动保存。"
 msgstr "当前设置仅本次运行有效，后续版本将自动保存。"
+
+#: src/features/updater/index.tsx
+msgid "您的应用已保持在最新版本，无需更新。"
+msgstr "您的应用已保持在最新版本，无需更新。"
 
 #: src/features/translate/index.tsx
 msgid "手动翻译文本，并回看最近结果。"
 msgstr "手动翻译文本，并回看最近结果。"
 
+#: src/components/close-behavior/CloseBehaviorDialog/index.tsx
+msgid "提交关闭选择失败"
+msgstr "提交关闭选择失败"
+
 #: src/features/vocabulary/index.tsx
 msgid "收藏的单词与语境片段，随时回看。"
 msgstr "收藏的单词与语境片段，随时回看。"
+
+#: src/features/updater/components/ChangelogCard/index.tsx
+msgid "收起"
+msgstr "收起"
+
+#: src/features/updater/index.tsx
+msgid "新版本已完成下载，重启应用后即可完成升级。"
+msgstr "新版本已完成下载，重启应用后即可完成升级。"
+
+#: src/features/updater/index.tsx
+msgid "新版本已经准备就绪，包含最新的功能与改进。"
+msgstr "新版本已经准备就绪，包含最新的功能与改进。"
 
 #: src/features/translate/index.tsx
 msgid "暂无最近翻译（将显示共享会话历史的前 5 条）"
@@ -60,10 +132,58 @@ msgstr "暂无最近翻译（将显示共享会话历史的前 5 条）"
 msgid "暂无可展示的诊断信息"
 msgstr "暂无可展示的诊断信息"
 
+#: src/features/updater/index.tsx
+msgid "暂无可用更新信息。"
+msgstr "暂无可用更新信息。"
+
+#: src/features/updater/index.tsx
+msgid "更新发生错误"
+msgstr "更新发生错误"
+
+#: src/features/updater/index.tsx
+msgid "更新失败"
+msgstr "更新失败"
+
+#: src/features/updater/index.tsx
+msgid "更新已准备就绪"
+msgstr "更新已准备就绪"
+
+#: src/features/updater/components/ChangelogCard/index.tsx
+msgid "更新日志"
+msgstr "更新日志"
+
+#: src/features/updater/index.tsx
+msgid "更新服务未配置。"
+msgstr "更新服务未配置。"
+
+#: src/features/updater/index.tsx
+msgid "更新过程中出现未知错误，请稍后重试。"
+msgstr "更新过程中出现未知错误，请稍后重试。"
+
 #: src/components/layout/AppShell/index.tsx
 #: src/features/glossary/index.tsx
 msgid "术语表"
 msgstr "术语表"
+
+#: src/features/updater/index.tsx
+msgid "检查或下载更新时发生异常，请检查网络后重试。"
+msgstr "检查或下载更新时发生异常，请检查网络后重试。"
+
+#: src/features/updater/index.tsx
+msgid "检查更新中"
+msgstr "检查更新中"
+
+#: src/features/updater/index.tsx
+msgid "正在下载更新"
+msgstr "正在下载更新"
+
+#: src/features/updater/index.tsx
+msgid "正在与更新服务器建立连接，请稍候..."
+msgstr "正在与更新服务器建立连接，请稍候..."
+
+#: src/features/updater/index.tsx
+msgid "正在检查更新..."
+msgstr "正在检查更新..."
 
 #: src/features/settings/index.tsx
 msgid "浅色"
@@ -90,6 +210,22 @@ msgstr "生词本"
 msgid "界面语言"
 msgstr "界面语言"
 
+#: src/components/close-behavior/CloseBehaviorDialog/index.tsx
+msgid "留在托盘"
+msgstr "留在托盘"
+
+#: src/features/updater/index.tsx
+msgid "稍后安装"
+msgstr "稍后安装"
+
+#: src/features/updater/index.tsx
+msgid "稍后提醒"
+msgstr "稍后提醒"
+
+#: src/features/updater/index.tsx
+msgid "立即更新"
+msgstr "立即更新"
+
 #: src/features/translate/index.tsx
 msgid "粘贴或输入英文，Ctrl+Enter 翻译"
 msgstr "粘贴或输入英文，Ctrl+Enter 翻译"
@@ -97,6 +233,10 @@ msgstr "粘贴或输入英文，Ctrl+Enter 翻译"
 #: src/features/glossary/index.tsx
 msgid "统一管理术语与固定译法，保持译名一致。"
 msgstr "统一管理术语与固定译法，保持译名一致。"
+
+#: src/features/updater/index.tsx
+msgid "网络连接失败或超时，请检查网络后重试。"
+msgstr "网络连接失败或超时，请检查网络后重试。"
 
 #: src/components/layout/AppShell/index.tsx
 #: src/features/translate/index.tsx
@@ -133,6 +273,10 @@ msgstr "语言"
 msgid "跟随系统"
 msgstr "跟随系统"
 
+#: src/features/updater/index.tsx
+msgid "软件更新"
+msgstr "软件更新"
+
 #: src/features/help/index.tsx
 msgid "运行自检、查看日志与排查常见问题。"
 msgstr "运行自检、查看日志与排查常见问题。"
@@ -149,13 +293,25 @@ msgstr "还没有术语"
 msgid "还没有翻译记录"
 msgstr "还没有翻译记录"
 
-#: src/components/layout/ErrorBoundary/index.tsx
-msgid "重新加载"
-msgstr "重新加载"
+#: src/components/close-behavior/CloseBehaviorDialog/index.tsx
+msgid "退出应用"
+msgstr "退出应用"
+
+#: src/features/updater/index.tsx
+msgid "重启并安装"
+msgstr "重启并安装"
+
+#: src/features/updater/index.tsx
+msgid "重试"
+msgstr "重试"
+
+#: src/features/updater/index.tsx
+msgid "隐藏到后台"
+msgstr "隐藏到后台"
 
 #: src/components/layout/ErrorBoundary/index.tsx
-msgid "页面出错了"
-msgstr "页面出错了"
+msgid "页面出错啦~"
+msgstr "页面出错啦~"
 
 #: src/features/settings/index.tsx
 msgid "默认跟随系统，切换后立即生效。"

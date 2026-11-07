@@ -2,7 +2,7 @@
 
 Preload 脚本运行在拥有部分 Node.js 能力的独立预加载环境中，充当渲染进程与主进程之间的**安全隔离网关**。
 
-> 🤖 **AI 协作者**：本包的目录结构 / 编写规则已收敛至 [AGENTS.md](./AGENTS.md)，动手前必读；全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。
+> 架构分层、核心铁律与 Bridge API 规范见 [AGENTS.md](./AGENTS.md)；全局红线与任务路由见 [根 AGENTS.md](../../AGENTS.md)。
 
 ---
 

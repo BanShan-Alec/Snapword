@@ -23,6 +23,8 @@ const { values } = parseArgs({
   options: {
     dir: { type: 'boolean', default: false },
     win: { type: 'boolean', default: false },
+    mac: { type: 'boolean', default: false },
+    linux: { type: 'boolean', default: false },
     x64: { type: 'boolean' },
     arm64: { type: 'boolean' },
     publish: { type: 'string', short: 'p', default: 'never' },
@@ -43,10 +45,9 @@ async function runBuild() {
     // --skip-build 语义：只打包现有产物。缺失即失败，绝不在配置层隐式补构建。
     const requiredArtifacts = [
       'packages/main/dist/index.cjs',
-      // 取词 utilityProcess 独立 bundle（B-01 §5.1，utilityProcess.fork 入口）
-      'packages/main/dist/capture-service.cjs',
       'packages/preload/dist/index.cjs',
       'packages/renderer/dist/src/entries/home/index.html',
+      'packages/renderer/dist/src/entries/updater/index.html',
     ];
     const missing = requiredArtifacts.filter(
       (artifact) => !fs.existsSync(join(ROOT_DIR, artifact)),
@@ -66,6 +67,8 @@ async function runBuild() {
   };
 
   if (values.win) buildOptions.win = [];
+  if (values.mac) buildOptions.mac = [];
+  if (values.linux) buildOptions.linux = [];
   if (values.x64) buildOptions.x64 = true;
   if (values.arm64) buildOptions.arm64 = true;
 

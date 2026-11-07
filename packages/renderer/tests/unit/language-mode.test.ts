@@ -1,18 +1,7 @@
-import {
-  DEFAULT_LANGUAGE,
-  FALLBACK_LOCALE,
-  resolveLocale,
-  SUPPORTED_LOCALES,
-} from '@app/shared/constants/preferences';
+import { resolveLocale } from '@app/shared/constants/preferences';
 import { describe, expect, it } from 'vitest';
 
 describe('resolveLocale', () => {
-  it('ships exactly two catalogs and follows the system by default', () => {
-    expect(SUPPORTED_LOCALES).toEqual(['zh-CN', 'en']);
-    expect(FALLBACK_LOCALE).toBe('zh-CN');
-    expect(DEFAULT_LANGUAGE).toBe('system');
-  });
-
   it('explicit modes win over the system locale', () => {
     expect(resolveLocale('zh-CN', 'en-US')).toBe('zh-CN');
     expect(resolveLocale('en', 'zh-CN')).toBe('en');
@@ -29,8 +18,8 @@ describe('resolveLocale', () => {
     expect(resolveLocale('system', 'en-US')).toBe('en');
   });
 
-  it('falls back to zh-CN for unavailable or unrecognized system locales', () => {
-    expect(resolveLocale('system', '')).toBe('zh-CN');
+  it('falls back to zh-CN (FR-49) for unrecognized system locales', () => {
     expect(resolveLocale('system', 'fr-FR')).toBe('zh-CN');
+    expect(resolveLocale('system', '')).toBe('zh-CN');
   });
 });

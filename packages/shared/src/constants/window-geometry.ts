@@ -1,7 +1,8 @@
 /**
  * 窗口几何契约（主进程窗口管理与单测共用的单一事实源）
  *
- * 数值对齐 docs/architecture.md（B-01）§10.2 主窗口约束。
+ * 数值对齐 docs/architecture.md（B-01）§10.2 主窗口约束；
+ * 更新窗口尺寸由 updater 窗口模块与 E2E 共用。
  */
 
 /** 主窗口默认尺寸 */
@@ -20,3 +21,7 @@ export const MAX_WORK_AREA_WIDTH_RATIO = 0.95;
 export const POSITION_TOLERANCE_X = 50;
 export const POSITION_TOLERANCE_Y_TOP = 10;
 export const POSITION_TOLERANCE_Y_BOTTOM = 50;
+
+/** 更新窗口固定尺寸（不可缩放/最大化/最小化） */
+export const UPDATER_WINDOW_WIDTH = 480;
+export const UPDATER_WINDOW_HEIGHT = 460;

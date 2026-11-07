@@ -227,7 +227,7 @@ async function runPreview(): Promise<void> {
 
   if (!skipBuild) {
     console.log(`${LOG_PREFIX} 📦 Building workspace packages (main / preload / renderer)...`);
-    // 只构建应用运行所需的三包(main / preload / renderer)
+    // 只构建应用运行所需的三包:pnpm build 会遍历全部工作区包,预览用不到
     execSync('pnpm -r --filter @app/main --filter @app/preload --filter @app/renderer run build', {
       stdio: 'inherit',
       cwd: ROOT_DIR,
@@ -235,14 +235,6 @@ async function runPreview(): Promise<void> {
   } else {
     // 检查核心产物完整性，缺失直接退出并输出清晰指引，杜绝启动僵尸进程
     const mainArtifact = path.join(ROOT_DIR, 'packages', 'main', 'dist', 'index.cjs');
-    // 取词 utilityProcess 独立 bundle（B-01 §5.1，utilityProcess.fork 入口）
-    const captureServiceArtifact = path.join(
-      ROOT_DIR,
-      'packages',
-      'main',
-      'dist',
-      'capture-service.cjs',
-    );
     const rendererArtifact = path.join(
       ROOT_DIR,
       'packages',
@@ -257,7 +249,6 @@ async function runPreview(): Promise<void> {
       console.error(
         `${LOG_PREFIX} ❌ --skip-build 失败: 运行所需构建产物缺失。\n` +
           `  - 主进程产物: ${fs.existsSync(mainArtifact) ? '✅ 存在' : `❌ 缺失 (${mainArtifact})`}\n` +
-          `  - 取词服务产物: ${fs.existsSync(captureServiceArtifact) ? '✅ 存在' : `❌ 缺失 (${captureServiceArtifact})`}\n` +
           `  - 渲染层产物: ${fs.existsSync(rendererArtifact) ? '✅ 存在' : `❌ 缺失 (${rendererArtifact})`}\n` +
           `  请先执行 \`pnpm preview\` (自动触发构建) 或 \`pnpm build\` 生成产物。`,
       );

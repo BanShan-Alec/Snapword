@@ -1,4 +1,4 @@
-# @app/preload AGENTS.md — 安全桥接层规则（AI 必读）
+# @app/preload AGENTS.md — 安全桥接层规则
 
 > 全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。本文件为该包规则唯一真源。
 

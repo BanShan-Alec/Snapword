@@ -10,7 +10,10 @@ describe('env-packer Codec', () => {
       appVersion: '1.2.0',
       appName: 'Electron React Template',
       channel: 'stable',
+      apiBaseUrl: 'https://api.example.com',
       systemCode: 'ERP-CORE',
+      sentryDsn: 'https://key@sentry.io/123',
+      releaseName: 'template@1.2.0',
     };
 
     const packed = packRuntimeEnv(original);
@@ -18,8 +21,8 @@ describe('env-packer Codec', () => {
     expect(packed.length).toBeGreaterThan(0);
     // 确保没有明文字段泄露
     expect(packed).not.toContain('production');
-    expect(packed).not.toContain('ERP-CORE');
-    expect(packed).not.toContain('systemCode');
+    expect(packed).not.toContain('https://api.example.com');
+    expect(packed).not.toContain('apiBaseUrl');
 
     const unpacked = unpackRuntimeEnv(packed);
     expect(unpacked).toEqual(original);
@@ -58,7 +61,10 @@ describe('env-packer Codec', () => {
       appVersion: '3.1.0-beta.1',
       appName: '企业级桌面客户端 🚀',
       channel: '测试渠道 #01',
+      apiBaseUrl: 'https://api.example.com/v1?token=xyz&debug=true#section',
       systemCode: 'SYS-中文-001',
+      sentryDsn: 'https://key@sentry.example.org/456?env=prod&lang=zh_CN',
+      releaseName: 'template-v3.1.0-🚀',
     };
 
     const packed = packRuntimeEnv(unicodeEnv);

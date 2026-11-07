@@ -12,7 +12,12 @@ const prefix = getRepoEnvValue(repoEnv, 'ENV_PREFIX') || 'APP_';
 const isDev = process.env.MODE === 'development';
 
 // 严格白名单过滤：仅暴露业务需要的默认配置，杜绝全量泄露风险
-const ALLOWED_ENV_KEYS = ['SYSTEM_CODE', 'DISTRIBUTION_CHANNEL', 'SENTRY_DSN'] as const;
+const ALLOWED_ENV_KEYS = [
+  'API_BASE_URL',
+  'SYSTEM_CODE',
+  'DISTRIBUTION_CHANNEL',
+  'SENTRY_DSN',
+] as const;
 
 const envDefaults = ALLOWED_ENV_KEYS.reduce(
   (acc, key) => {
@@ -37,7 +42,6 @@ export default defineConfig({
     __ENV_DEFAULTS__: JSON.stringify(envDefaults),
   },
   plugins: [
-    // SourceMap 上传仅在配置 SENTRY_AUTH_TOKEN 时生效；无 token 自动跳过（本地/PR 构建零副作用）
     sentryVitePlugin({
       org: sentryOptions.sentryOrg,
       project: sentryOptions.sentryProject,
@@ -72,7 +76,7 @@ export default defineConfig({
     },
     rolldownOptions: {
       // 自动从 package.json 的 dependencies 提取运行时依赖设为 external（外加 electron）。
-      // P4 骨架无运行时依赖：electron-log / zod 等纯 JS 依赖装在 devDependencies 并内联进 bundle
+      // drizzle-orm 是运行时依赖（node:sqlite 驱动层）；electron-log / zod 等纯 JS 依赖装在 devDependencies 并内联进 bundle
       external: ['electron', ...runtimeDependencies],
       output: {
         entryFileNames: '[name].cjs',
@@ -84,7 +88,7 @@ export default defineConfig({
     reportCompressedSize: false,
   },
   ssr: {
-    // 除 external 列表外全部内联
+    // 除 external 列表外全部内联；electron-log 通过此策略进入 bundle
     noExternal: true,
   },
 });

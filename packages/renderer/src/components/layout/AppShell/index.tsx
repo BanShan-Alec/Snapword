@@ -54,7 +54,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, [navigate]);
 
   return (
-    <div className="flex h-screen bg-surface-0 text-text">
+    <div className="flex min-h-0 flex-1 bg-surface-0 text-text">
       <aside className="flex w-[200px] shrink-0 flex-col border-r border-split bg-surface-sidebar">
         <div className="flex items-center gap-2 px-4 pt-4 pb-1">
           <img src={logo} alt="" className="size-5" />

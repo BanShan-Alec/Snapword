@@ -57,7 +57,7 @@ function tableNames(client: DatabaseSync): string[] {
 }
 
 const repoRoot = findRepoRoot(__dirname);
-const migrationsFolder = path.join(repoRoot, 'drizzle');
+const migrationsFolder = path.join(repoRoot, 'packages', 'main', 'drizzle');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'snapword-db-smoke-'));
 const dbPath = path.join(tempDir, 'vocab.db');
 

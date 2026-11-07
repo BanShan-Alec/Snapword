@@ -57,7 +57,8 @@ export interface MigrationsFolderContext {
 }
 
 /**
- * 计算迁移目录（B-03 §10.1）：开发期 `app.getAppPath()/drizzle`，
+ * 计算迁移目录（B-03 §10.1）：迁移产物归 main 包所有——
+ * 开发期 `app.getAppPath()/packages/main/drizzle`，
  * 打包后 `process.resourcesPath/drizzle`（electron-builder extraResources）。
  */
 export function resolveMigrationsFolder({
@@ -65,7 +66,9 @@ export function resolveMigrationsFolder({
   appPath,
   resourcesPath,
 }: MigrationsFolderContext): string {
-  return path.join(isPackaged ? resourcesPath : appPath, 'drizzle');
+  return isPackaged
+    ? path.join(resourcesPath, 'drizzle')
+    : path.join(appPath, 'packages', 'main', 'drizzle');
 }
 
 /** 本地迁移目录名（升序）；目录不存在时直接抛错，避免 migrate() 读到空目录。 */

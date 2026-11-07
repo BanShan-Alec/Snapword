@@ -1,146 +1,130 @@
-# DESIGN.md — 设计令牌与视觉规范（C-05）
+# DESIGN.md — renderer 视觉规范
 
-> 状态：已落地（P4 骨架）。本文件替代视觉稿，作为颜色 / 字号 / 间距的单一事实源清单。
-> 关联：docs/PRD-v2.md RC-16、RM-13；docs/interaction-spec-v2.md §3.6、§6.2；docs/progress-checklist.md §6 C-05。
+AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：唯一来源是 `src/styles/design-tokens.ts` 的 `BRAND_PRIMARY`，浅/深两套由 antd 算法派生并经 cssVar 暴露为 `--ant-*`。
 
-## 1. 来源与铁律
+## 0. 基线
 
-- 主题包：`paseo-antd-themes@0.2.2`（MIT，BanShan-Alec），浅色槽 **Claude Light**，深色槽 **Paseo Dark**（README 默认配对）。
-- 两条出口，同一条 token 管线：
-  1. **antd 组件**：`ConfigProvider theme={getAntdThemeConfig(resolvedTheme)}`，在 `claudeLightTheme` / `paseoDarkTheme` 间切换（`packages/renderer/src/styles/antd-theme.ts`）；
-  2. **自绘标记（Tailwind）**：`@import "paseo-antd-themes/tailwind.css"`（`packages/renderer/src/styles/index.css`），`@theme inline` 把 `--color-*` 工具类映射到 `var(--paseo-*)`；变量实体 `:root`（浅）+ `.dark` / `@media (prefers-color-scheme: dark)`（深）。
-     显式模式（light/dark）由 `applyColorScheme` 把当前模式的 123 个 `--paseo-*` 变量内联写到 `<html>`，优先级高于包内 media 块——否则「系统深色 + 手动浅色」会继续命中 `@media` 的深色值；system 模式由 `useTheme` 监听 `prefers-color-scheme` 后重新解析。
-- 同源性由单测锁定：`packages/renderer/tests/unit/design-tokens.test.ts` 断言包产物 CSS 变量与 `theme.getDesignToken(…)` 派生值一致；内联变量表与包产物 CSS 逐项相等。
-- **禁止散落硬编码色**：任何 `#` 开头的字面量都是 bug（paseo DESIGN.md 规则 1）；组件配色一律走变量 / 工具类。改色走包的 `extendTheme`，不要在 `ConfigProvider` 上叠 seed token（包的 algorithm 会剥掉覆盖层）。
+- 组件库：antd v6 官方默认算法；布局壳：Tailwind v4 语义类。
+- 视觉基线 = antd 默认。偏离 antd 的地方必须在本文件登记，不允许“顺手改一下”。
+- 2026-10-29 决策：**不承诺 WCAG 2.2 AA**，不为对比度改品牌主色；已知例外见 §6。
 
-## 2. 语义色（取自包发布产物 `dist/tailwind.css` 实际值）
+## 1. 五条纪律
 
-### 表面（三层 + 定点槽，浅 / 深成对）
+1. **禁硬编码**：颜色只用 `var(--color-*)` / Tailwind 语义类；字号不进任意值；间距走 4px 阶。
+2. **层级秩序**：`index.css` 首行 `@layer theme, base, antd, components, utilities`，`AppProviders` 用 `<StyleProvider layer>` 收 antd 样式。覆盖只看层：utilities 压 antd；自有组件类进 `components`；**不写层外裸样式**。唯一豁免：`tokens.css` 的 `:root` 平台原语令牌（color-scheme / 滚动条 / 语法高亮——无 antd 对应物）。
+3. **改品牌 = 改一个种子**：`BRAND_PRIMARY` → `ConfigProvider.theme.cssVar = { key: 'css-var-app' }` → antd 注入 `--ant-*`；`index.css` 的 `:root` 再映射成项目语义 `--color-*`。
+4. **antd 组件样式只经 `antd-theme.ts` / `ConfigProvider`**：不在组件里写 `:global`、不覆盖 `.ant-*` 内部类；需要固定形态时封装组件（见 §4）。
+5. **深浅色**：`applyColorScheme()` 统一切换 `data-theme` 与 `css-var-app` 作用域类；antd 算法由 `ConfigProvider` 随 `resolvedTheme` 切换。组件内不读 `prefers-color-scheme`。
 
-| 语义   | 变量                                 | Tailwind 类          | 浅色（Claude Light）  | 深色（Paseo Dark）    | 用途                             |
-| ------ | ------------------------------------ | -------------------- | --------------------- | --------------------- | -------------------------------- |
-| 页面底 | `--paseo-bg-layout` / `surface-0`    | `bg-surface-0`       | `#F0EDE2`             | `#181B1A`             | 窗口画布、页面空白区             |
-| 容器   | `--paseo-bg-container` / `surface-1` | `bg-surface-1`       | `#F5F4EC`             | `#1E2120`             | 卡片、输入框、面板、表格底       |
-| 浮层   | `--paseo-bg-elevated` / `surface-2`  | `bg-surface-2`       | `#FFFFFF`             | `#272A29`             | 弹层、下拉、Modal、菜单浮层      |
-| 侧栏   | `--paseo-surface-sidebar`            | `bg-surface-sidebar` | `#E2E0D6`             | `#141716`             | 主窗口左侧导航（RM-02）          |
-| 面板头 | `--paseo-surface-head`               | `bg-surface-head`    | `#E0DDD0`             | `#1E2120`             | Card 头                          |
-| hover  | `--paseo-surface-hover`              | `bg-surface-hover`   | `#DDD9CE`             | `#1E2120`             | 卡片 / 行 hover                  |
-| 强填充 | `--paseo-surface-3` / `surface-4`    | `bg-surface-3/4`     | `#D7D2C7` / `#D1CCBF` | `#434645` / `#595B5B` | 菜单选中、进度轨道（不承载文字） |
+## 2. 十二个系统
 
-### 文字四档
+| 系统             | 取值                                                    | 规则                                              |
+| ---------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| font-size        | 12 / 14 / 16 / 24 / 36（`text-xs/sm/base/2xl/4xl`）     | 禁止 `text-[Npx]`；UI 最小 12px                   |
+| font-weight      | 400 / 500 / 600                                         | 700 只出现在 antd 组件内部；正文不加粗            |
+| line-height      | 默认；标题 `leading-tight`；长文/代码 `leading-relaxed` | 不逐处手调                                        |
+| color            | 文字三档 + 语义四色（§3）                               | 语义色不做正文前景                                |
+| margin / padding | Tailwind 4px 阶（Tabs 底边对缝允许 `-mb-px`）           | 组间距 > 组内距                                   |
+| width            | 看板 `max-w-7xl`；架构 `max-w-5xl`                      | 同页不混用两种内容列宽                            |
+| height           | 控件 28（SM）/ 32；卡片随内容                           | 行内等高由 `AppCard` body flex 承担               |
+| box-shadow       | `.app-card` 一组三级投影，hover 时加深                  | 不另写自定义阴影                                  |
+| border-radius    | 4（logo）/ 6（图标块）/ 8（卡片、面板）/ full（圆点）   | 内层半径 = 外层 − padding                         |
+| border-width     | 统一 1px                                                | 更弱的分隔用透明度（`/40`、`/60`），不用更细的 px |
+| opacity          | 表面/描边只用 10/20/30/40/60/80                         | 文字不用 alpha 造灰，取三档文字色                 |
+| z-index          | 30（sticky header）/ 50（overlay）                      | 新增层级先登记，禁止 9999                         |
 
-| 档位      | 变量                       | Tailwind 类             | 浅色      | 深色      | 用途                                   |
-| --------- | -------------------------- | ----------------------- | --------- | --------- | -------------------------------------- |
-| 一 · 正文 | `--paseo-text`             | `text-text`             | `#3C3C2C` | `#fafafa` | 正文、标题、菜单选中                   |
-| 二 · 次要 | `--paseo-text-secondary`   | `text-text-secondary`   | `#55554B` | `#A1A5A4` | 说明、副标题、未选中菜单               |
-| 三 · 三级 | `--paseo-text-tertiary`    | `text-text-tertiary`    | `#65635E` | `#8A8E8D` | 元信息、时间戳、帮助文本、图标         |
-| 四 · 四级 | `--paseo-text-quaternary`  | `text-text-quaternary`  | `#98978F` | `#595B5B` | **仅禁用态与占位符**（不参与正文判读） |
-| 反白      | `--paseo-text-light-solid` | `text-text-light-solid` | `#FFFFFF` | `#fff`    | 实心按钮 / 状态标签文字                |
+### 文案与膨胀
 
-规则：降级强调用二级档，**不要用 `opacity`**（会在不同表面落进对比度盲区）；标题用 `text-text` + 字重 600，不另设色。
+界面文案按 [国际化文案规范（Copy）](../../docs/src/pages/ui/i18n-copy.md) 的四条原则与长度预算写；布局侧守四条：
 
-### 主色、链接与状态
+1. 不给文本容器写死宽度（`w-[...]`、`w-16` 只用于图标/圆点/Logo），按钮靠 `px` 与内容撑开。
+2. 截断必须有兜底：文本一律单行 `truncate`（或 `line-clamp-*`），**仅在实际被截断时**用 `Tooltip` / 原生 `title` 显示全文；不靠放开换行把内容顶成两行（会破坏卡片头高度节奏）。
+3. `justify-between` 行允许换行（`flex-wrap` + `gap-y`），不靠挤压文本维持单行。
+4. 长 token（路径、型号、URL）必须有 `break-words` 或 `break-all`；诊断输出优先 `statusBoxClass({ breakAll: true })`。
 
-| 语义                             | 浅色                                          | 深色                                          | 用途                                                        |
-| -------------------------------- | --------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
-| 主色（填充 / 按钮 / 焦点环）     | `#BA5B37`（clay）                             | `#20744A`（paseo 绿）                         | `bg-primary`、`border-primary`；**深色下禁作前景**（见 §3） |
-| 主色文字 / 链接（同值）          | `#A34E2D`                                     | `#7ccba0`                                     | `text-link`、`text-primary-text`：可点击文字、主色图标前景  |
-| success / warning / error / info | `#467650` / `#806340` / `#a14b43` / `#436c96` | `#6cb17b` / `#c09664` / `#d8847b` / `#5caaf6` | 状态色（各族 10 槽随包导出）                                |
-| 边框 / 分隔                      | `#DBD9D0` / `rgba(28,11,19,0.06)`             | `#252B2A` / `rgba(219,255,254,0.09)`          | `border-border`、`border-split`                             |
+## 3. 颜色与文字
 
-完整清单（diff、状态点、身份色、选区、`--paseo-*` 全量）见包内 `MAPPING.md` 与 `preview.html`（`packages/renderer/node_modules/paseo-antd-themes/`）。
+- 三档文字：`text-foreground`（主）/ `text-foreground-secondary`（辅助）/ `text-foreground-muted`（仅 placeholder、disabled）。
+- 主色实心块上的文字用 `text-on-primary`（antd `colorTextLightSolid`），不写 `text-white`。
+- 颜色链路：`--ant-*`（antd cssVar，作用域 `.css-var-app` 必须挂在 `<html>`）→ `--color-*`（项目语义，`index.css` 的 `:root`）→ Tailwind 类。组件只消费最后一层。
+- React 渲染前的窗口画布由原生 `BrowserWindow.backgroundColor` 独家承担（窗口创建链 `resolveNativeTheme` 解析，与 WCO overlay 同源同时点）；renderer 的 `html, body` 恒透明叠于其上，首帧 `data-theme` 由主进程经 URL query 显式传入。React 根必须不透明满幅，否则切换主题后原生底色会从缝隙透出。
+- 语义色（success / warning / danger / primary）**只做图标、圆点、描边、表面**；承载信息的文字用中性色。
+- 语义状态用 `StatusTag`（§4）。antd 的 `Tag color="warning|success|error"` 文字色是基色，浅色下 1.83–3.68:1，禁止承载信息。
+- 代码文字用 `font-mono`；数字与版本号同理。
 
-## 3. 对比度实测（WCAG 2.1，node 脚本）
+## 4. 组件 recipes
 
-**命令：`node scripts/contrast-check.mjs`**（数据源为包发布产物 CSS，即 §2 的实际值；公式 = 相对亮度 L = 0.2126·R + 0.7152·G + 0.0722·B，sRGB 线性化，比值 = (L亮 + 0.05) / (L暗 + 0.05)）。门槛：正文/次要 ≥4.5:1（RC-16），图标 ≥3:1（RC-16），三级在侧栏等非正文表面 ≥4.0:1（包规则）。2026-11-05 实测输出：
+### 卡片：`AppCard`
 
-| 主题  | 档位                        | 前景（--paseo-*）          | 背景                              | 实测        | 门槛   | 判定                            |
-| ----- | --------------------------- | -------------------------- | --------------------------------- | ----------- | ------ | ------------------------------- |
-| light | 正文                        | text `#3C3C2C`             | 页面底（bg-layout `#F0EDE2`）     | **9.56:1**  | ≥4.5:1 | 通过                            |
-| light | 正文                        | text `#3C3C2C`             | 容器（bg-container `#F5F4EC`）    | **10.15:1** | ≥4.5:1 | 通过                            |
-| light | 正文                        | text `#3C3C2C`             | 侧栏（surface-sidebar `#E2E0D6`） | **8.46:1**  | ≥4.5:1 | 通过                            |
-| light | 次要                        | text-secondary `#55554B`   | 页面底（bg-layout `#F0EDE2`）     | **6.43:1**  | ≥4.5:1 | 通过                            |
-| light | 次要                        | text-secondary `#55554B`   | 容器（bg-container `#F5F4EC`）    | **6.83:1**  | ≥4.5:1 | 通过                            |
-| light | 次要                        | text-secondary `#55554B`   | 侧栏（surface-sidebar `#E2E0D6`） | **5.69:1**  | ≥4.5:1 | 通过                            |
-| light | 三级（元信息）              | text-tertiary `#65635E`    | 页面底（bg-layout `#F0EDE2`）     | **5.12:1**  | ≥4.5:1 | 通过                            |
-| light | 三级（元信息）              | text-tertiary `#65635E`    | 容器（bg-container `#F5F4EC`）    | **5.44:1**  | ≥4.5:1 | 通过                            |
-| light | 三级（元信息）              | text-tertiary `#65635E`    | 侧栏（surface-sidebar `#E2E0D6`） | **4.53:1**  | ≥4:1   | 通过                            |
-| light | 图标 · 主色文字（= link）   | primary-text `#A34E2D`     | 容器（bg-container `#F5F4EC`）    | **5.17:1**  | ≥3:1   | 通过                            |
-| light | 图标 · primary 本体（禁用） | primary `#BA5B37`          | 容器（bg-container `#F5F4EC`）    | **4.10:1**  | ≥3:1   | 通过                            |
-| light | 主按钮文字                  | text-light-solid `#FFFFFF` | 主色底（primary `#BA5B37`）       | **4.53:1**  | ≥4.5:1 | 通过                            |
-| dark  | 正文                        | text `#fafafa`             | 页面底（bg-layout `#181B1A`）     | **16.62:1** | ≥4.5:1 | 通过                            |
-| dark  | 正文                        | text `#fafafa`             | 容器（bg-container `#1E2120`）    | **15.55:1** | ≥4.5:1 | 通过                            |
-| dark  | 正文                        | text `#fafafa`             | 侧栏（surface-sidebar `#141716`） | **17.29:1** | ≥4.5:1 | 通过                            |
-| dark  | 次要                        | text-secondary `#A1A5A4`   | 页面底（bg-layout `#181B1A`）     | **6.97:1**  | ≥4.5:1 | 通过                            |
-| dark  | 次要                        | text-secondary `#A1A5A4`   | 容器（bg-container `#1E2120`）    | **6.52:1**  | ≥4.5:1 | 通过                            |
-| dark  | 次要                        | text-secondary `#A1A5A4`   | 侧栏（surface-sidebar `#141716`） | **7.25:1**  | ≥4.5:1 | 通过                            |
-| dark  | 三级（元信息）              | text-tertiary `#8A8E8D`    | 页面底（bg-layout `#181B1A`）     | **5.23:1**  | ≥4.5:1 | 通过                            |
-| dark  | 三级（元信息）              | text-tertiary `#8A8E8D`    | 容器（bg-container `#1E2120`）    | **4.90:1**  | ≥4.5:1 | 通过                            |
-| dark  | 三级（元信息）              | text-tertiary `#8A8E8D`    | 侧栏（surface-sidebar `#141716`） | **5.44:1**  | ≥4:1   | 通过                            |
-| dark  | 图标 · 主色文字（= link）   | primary-text `#7ccba0`     | 容器（bg-container `#1E2120`）    | **8.43:1**  | ≥3:1   | 通过                            |
-| dark  | 图标 · primary 本体（禁用） | primary `#20744A`          | 容器（bg-container `#1E2120`）    | **2.83:1**  | ≥3:1   | 按规则禁用（改用 primary-text） |
-| dark  | 主按钮文字                  | text-light-solid `#fff`    | 主色底（primary `#20744A`）       | **5.74:1**  | ≥4.5:1 | 通过                            |
+- 一律 `AppCard`，不直接用 antd `Card`，不再引入 `glass-card`。
+- 卡片只有一个内容块时，给它 `flex-1`（body 已是 flex column），避免行内等高留下空白。
+- 卡片头右侧动作（`extra`）与标题之间由 `AppCard` 统一留 12px，不在各卡片里手写 `ml-*`。
+- hover 由 `AppCard` 提供（保持描边颜色、加深投影），组件内不再写 `hover:border-*`。
+- 卡内凹槽用 `bg-background-sunken`；页面上的浮起卡片用 `bg-background-elevated`。
 
-**结论：无低于 4.5:1 的正文/次要组合。** 数值与主题包 `DESIGN.md` 公布的实测矩阵一致（9.56/10.15、16.62/15.55、6.43/6.83、6.97/6.52、5.12/5.44、5.23/4.90、白字 on clay 4.53），交叉验证了计算公式。低于门槛的组合有一条，按使用规则处理：
+### 状态标签：`StatusTag`
 
-- **深色下 `primary` 本体不得用作前景/图形**（2.83:1 < 3:1）：主色在深色里是填充色（按钮底、选中底、焦点环），主色系前景一律用 `primary-text` / `link`（`#7ccba0`，8.43:1）。脚本把该组合标为「按规则禁用」而非硬失败。
-- 四级档（占位符/禁用）对容器 2.66:1（浅）/ 2.37:1（深），属 antd `colorTextPlaceholder` 派生的库行为，**知情接受**，不承载需要阅读的内容。
+```tsx
+<StatusTag tone="warning">延迟稍高</StatusTag>;
+```
 
-## 4. 字号与行高（对齐 antd 组件行高，同一屏不混用两套刻度）
+中性文字 + 6px 语义色圆点；颜色只是辅助，文字本身能读。
 
-包发布两条出口同名规则：`text-body` 等增量命名不覆盖 Tailwind 自带 `text-sm` 刻度；**同一屏不要混用**（字号可能相同但行高不同）。
+### 截断文本：`EllipsisText`
 
-| Token        | 字号 / 行高     | Tailwind 类       | 用途（RC-16 映射）                    |
-| ------------ | --------------- | ----------------- | ------------------------------------- |
-| `caption`    | 12px / 20px     | `text-caption`    | 角标、辅助说明                        |
-| `body`       | **14px / 22px** | `text-body`       | **正文基准 14px**（RC-16）；义项 14px |
-| `subtitle`   | 16px / 24px     | `text-subtitle`   | 音标 16px                             |
-| `heading-sm` | 20px / 28px     | `text-heading-sm` | 页面标题（主窗口）                    |
-| `heading`    | 24px / 32px     | `text-heading`    | **单词 24px**（RC-16）                |
-| `heading-lg` | 30px / 38px     | `text-heading-lg` | 大标题                                |
-| `display`    | 38px / 46px     | `text-display`    | 展示型数字/超大标题                   |
+- 单行省略一律用它，不手写原生 `title`：只有真正溢出时才弹 antd Tooltip。
+- 作为 flex 子项时组件自带 `min-w-0`（否则省略由外层容器裁出，自身检测不到溢出）。
+- 多行截断仍用 `line-clamp-*`，不在本组件职责内。
 
-- RC-16 的「语境义 15px」「例句 13px」**没有对应档位**（刻度只有 12/14/16/20/24/30/38），卡片接入时以任意值（`text-[15px]`）或扩展刻度落定，见 §7。
-- 字体栈：`--paseo-font`（system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif）、`--paseo-font-mono`（SFMono-Regular, Menlo, Monaco, Consolas, …）；`base.css` 的 body 与 antd 组件同一栈。
+### 表单行
 
-## 5. 间距刻度
+- 标签 12px `text-foreground-secondary`；控件高度 28（small）；行内 `gap-1.5`。
+- 开关/下拉与说明同排时，说明用 12px secondary，不抢标签权重。
 
-- 4px 基准栅格，直接使用 Tailwind 默认间距刻度（`p-4` = 16px）：1=4，2=8，3=12，4=16，6=24，8=32，12=48 px。
-- 包形态规范（DESIGN.md）：工作间距落在 **8 / 12 / 16**；页面内容区 `px-6 py-6`（24px）。
-- 布局刻度（interaction-spec-v2 §6.2）：侧栏定宽 **200px**；内容区自适应、最大宽度 **1100px** 宽屏居中；页面切换 120ms 交叉淡入（`.app-page`，无位移）。
+### 诊断输出
 
-## 6. 形态：圆角 / 阴影 / 控件高度
+- 统一 `statusBoxClass()`（`lib/classNames.ts`）：凹槽底 + 1px 描边 + 等宽字 + `select-text`。
+- 系统信息、VID/PID、日志路径、错误原文必须可选中复制。
 
-| 维度     | 值                                                                                  | 说明                                                                           |
-| -------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 圆角     | `radius-xs/sm/md/lg` = 4 / 8 / 12 / 12 px                                           | antd `borderRadius` = 12；覆盖 Tailwind `--radius-*` 刻度                      |
-| 阴影     | `shadow-raised`（hoverable 卡片/按钮悬停）、`shadow-overlay`（Dropdown/Modal 浮层） | 仅两级；静止区块不加阴影，靠表面色与边框分层                                   |
-| 控件高度 | 40 / 32 / 48 px（SM）                                                               | antd `controlHeight/SM/LG`；Select 行高 44                                     |
-| 窗口画布 | `--window-bg` / `--window-fg`（tokens.css）                                         | React 渲染前兜底，必须等于两套主题的 `colorBgLayout` / `colorText`（单测校验） |
+### 空态 / 加载 / 错误
 
-## 7. Deviations（与 RC-16 / 既定决策的偏差记录）
+- 内容依赖视图必须有空态；不能用禁用控件假装空态。
+- 首次加载用 `Skeleton`；异步动作的进行中用按钮 `loading`，不整卡 Spin。
+- 错误用 `Alert` 给语义结论，原始报文降级为 secondary 文案。
 
-1. **RC-16 字号档缺口**：「语境义 15px」「例句 13px」不在 12/14/16/20/24/30/38 刻度内；420px 卡片接入时用任意值或补刻度，本步不预设。
-2. **RC-16 卡片圆角 16px**：包圆角形态止步 12px；卡片 16px 圆角在卡片步骤用局部值落定，不改全局刻度。
-3. **深色主色作前景 2.83:1 < 3:1**（RC-16 图标线）：已定为使用规则——深色下主色系前景用 `primary-text`/`link`；主题色板本身不调整。
-4. **控件密度变化**：P4 骨架原设 `controlHeightSM=28`（密度决策），接入 paseo 形态后统一为 40/32/48、圆角 12/8——旧决策作废。
-5. **`src/assets/logo.svg` 仍为旧品牌蓝 `#1677ff`**：属应用图标/启动壳素材（主源），非组件配色；品牌素材更新不在本步范围。
-6. **组件级行为未接入**：`PaseoThemeProvider` 的 loadingIcon / Segmented / Select 间隙行为随 provider 才生效；本步按契约用裸 `ConfigProvider` + 自管 zustand（RC-16 的 system 解析由渲染层 store 完成），上述行为留待需要时启用。
-7. **四级文字（占位符/禁用）低于 4.5:1**：`text-quaternary` 对容器实测 2.66:1（浅）/ 2.37:1（深），属 antd `colorTextPlaceholder` 派生行为；仅用于占位符与禁用态，不承载需要阅读的内容，知情接受。正文/次要档无低于 4.5:1 的组合。
+## 5. 动作层级
 
-## 8. 项目别名（存量词汇 → 包变量）
+- 每张卡最多一个 `type="primary"`；刷新、导出、打开目录类工具动作一律 default。
+- 破坏性动作不因“危险”就变主色；危险靠文案与二次确认表达。
+- 一屏 primary 目标 ≤3；新增 primary 前先问“它是不是这张卡唯一该做的事”。
 
-存量组件继续可用旧语义名（`packages/renderer/src/styles/index.css` `@theme inline` 别名块）；**新代码优先用包的规范类名**（`bg-surface-1`、`text-text-secondary`、`border-split`）：
+## 6. 可访问性基线（不承诺 AA）
 
-| 项目别名                       | 指向                       | 包规范名                        |
-| ------------------------------ | -------------------------- | ------------------------------- |
-| `--color-background`           | `--paseo-bg-layout`        | `bg-surface-0` / `bg-layout`    |
-| `--color-background-container` | `--paseo-bg-container`     | `bg-surface-1` / `bg-container` |
-| `--color-background-elevated`  | `--paseo-bg-elevated`      | `bg-surface-2` / `bg-elevated`  |
-| `--color-foreground`           | `--paseo-text`             | `text-text`                     |
-| `--color-foreground-secondary` | `--paseo-text-secondary`   | `text-text-secondary`           |
-| `--color-foreground-muted`     | `--paseo-text-tertiary`    | `text-text-tertiary`            |
-| `--color-on-primary`           | `--paseo-text-light-solid` | `text-text-light-solid`         |
-| `--color-danger`               | `--paseo-error`            | `bg-error` / `text-error`       |
+- UI 文字 ≥12px；项目自有正文/数据文字 ≥4.5:1（当前均满足）。
+- 已知例外（记录在案，不作为缺陷上报）：
+  - 主按钮白字 / 浅色主色链接 4.10:1；
+  - 暗色主色链接 3.55:1；
+  - `colorTextTertiary` 3.36:1（仅限 placeholder / disabled / 非文本次要图标）；
+- 自定义可点元素必须有 `focus-visible` 焦点环（2px + offset）；禁止 `focus:outline-none` 无替代。
+- 纯图标按钮必须有 `aria-label`，文案走 `t` 宏，不硬编码英文。
 
-主题模式（RC-16）：`system / light / dark`，默认跟随系统；选择存 zustand 占位 store（`packages/renderer/src/stores/useAppStore.ts`），P5 配置层落地后迁 setting 表。`light/dark` 手动切换由 `applyColorScheme` 同步 `.dark` 类并把当前模式的 `--paseo-*` 变量内联到 `<html>`（压过包内 `@media (prefers-color-scheme: dark)`，保证「系统深色 + 手动浅色」正确），`system` 监听 `prefers-color-scheme` 变化即时生效。
+## 7. 动效
+
+- 交互过渡 150–200ms；只过渡具体属性（`transition-colors` / `box-shadow`），禁止 `transition-all`。
+- 动效只确认状态变化，不做入场表演。豁免：启动壳 logo 入场（实现位于入口内联 HTML，品牌时刻）。
+
+## 8. 提交前清单
+
+1. `pnpm typecheck`、`pnpm lint`、`pnpm test` 全绿。
+2. 无 `text-[Npx]`、无 tsx 内 hex 颜色、无未定义语义类（`verify:prebuild` 会拦前两项）。
+3. 浅/深各看一眼：文字可读、卡片无空洞、hover 不削弱描边。
+4. 新组件先查 `components/ui`（`AppCard` / `StatusTag` / `CardTitle` / `CodeHighlight` / `EllipsisText`）再动手。
+5. 颜色链路改动后确认 `<html>` 有 `css-var-app` 类且 `--color-primary` 非空（e2e `settings.spec` 已断言）。
+6. 改文案后跑 `pnpm i18n:extract` + `pnpm i18n:check`；英文按长度预算自查，并在中英两种语言下各看一眼标题是否被截断。
+
+## 指针
+
+- 品牌色唯一真源：`src/styles/design-tokens.ts` 的 `BRAND_PRIMARY`。
+- cssVar 作用域类：同文件的 `CSS_VAR_KEY`；`applyColorScheme()` 负责挂到 `<html>`。
+- 详细设计链路与合规说明：[设计规范与令牌（Design Tokens）](../../docs/src/pages/ui/design-tokens.md)。
+- 品牌定制（换 logo / 主色 / 应用名）：[配置项归属（Configuration-map）](../../docs/src/pages/dx/configuration-map.md)。

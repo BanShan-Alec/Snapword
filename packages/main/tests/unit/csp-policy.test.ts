@@ -1,18 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { buildCspPolicy, shouldInjectCsp } from '../../src/modules/security/csp-policy';
 
-const DOCS_ORIGIN = 'https://docs.example.com';
-
 describe('CSP policy', () => {
-  it('allows the docs origin in frame-src in production', () => {
-    const policy = buildCspPolicy({ isDev: false, apiOrigin: null, docsOrigin: DOCS_ORIGIN });
+  it('tightens the policy in production without unsafe-eval', () => {
+    const policy = buildCspPolicy({ isDev: false, apiOrigin: null });
 
-    expect(policy).toContain(`frame-src ${DOCS_ORIGIN};`);
     expect(policy).not.toContain('unsafe-eval');
+    expect(policy).not.toContain('frame-src');
   });
 
   it('keeps unsafe-eval and broad https in development', () => {
-    const policy = buildCspPolicy({ isDev: true, apiOrigin: null, docsOrigin: DOCS_ORIGIN });
+    const policy = buildCspPolicy({ isDev: true, apiOrigin: null });
 
     expect(policy).toContain('unsafe-eval');
     expect(policy).toContain('https:');
@@ -22,7 +20,6 @@ describe('CSP policy', () => {
     const policy = buildCspPolicy({
       isDev: false,
       apiOrigin: 'https://api.example.com',
-      docsOrigin: DOCS_ORIGIN,
     });
 
     expect(policy).toContain("connect-src 'self' https://api.example.com;");

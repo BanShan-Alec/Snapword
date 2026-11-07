@@ -1,14 +1,13 @@
-# AGENTS.md — AI 协作者目录与全局守则
+# AGENTS.md — 全局架构守则与全仓任务路由
 
-> 本文件是 AI 编程助手（ZCode / Cursor / Claude Code 等）的项目入口：全局红线 + 全仓导航。
-> 进入任何 `packages/` 目录工作前，先读该包的 `AGENTS.md`——cwd 在包内时它会自动注入；
-> cwd 在根目录时按下方包索引主动读取。人类向产品总览见 [README.md](README.md)。
+> 本文件是全仓架构红线与任务路由入口：全局硬红线 + 包级规则索引 + 开发流门禁。
+> 进入任何 `packages/` 目录工作前，以该包的 `AGENTS.md` 为唯一真源。项目总览与架构见 [README.md](README.md)。
 
 ## 1. 技术栈速览
 
-Electron 45（`contextIsolation` + `sandbox`）· React 19 + TypeScript 6 · Vite 8（Rolldown 内核）·
+Electron 45（`contextIsolation` + `sandbox`）· React 19 + TypeScript · Vite 8（Rolldown 内核）·
 Biome 2（格式化 + Lint）· LinguiJS 6（中文优先 Source-as-Key）· Vitest（单元）+
-Playwright（E2E，真实 Electron 窗口）· Drizzle ORM + `node:sqlite` · pnpm 12 monorepo · Node >= 24
+Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 
 ## 2. 全局红线（包无关，一句话可判定）
 
@@ -42,18 +41,17 @@ Playwright（E2E，真实 Electron 窗口）· Drizzle ORM + `node:sqlite` · pn
 | 研发任务 / 关注点                              | 核心规则指引（唯一真源）                                                                                                                           |
 | :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 新增跨端业务域 (全栈 SOP)                      | 四包各自的 `AGENTS.md`（按上述 4.1 流水线顺序落地）                                                                                                |
-| 主进程模块装配 / 生命周期 / 托盘 / 窗口        | [packages/main/AGENTS.md](packages/main/AGENTS.md) · [docs/architecture.md](docs/architecture.md)                                                  |
-| 安全桥接 / contextBridge / IPC 追踪            | [packages/preload/AGENTS.md](packages/preload/AGENTS.md) · [docs/ipc-contract.md](docs/ipc-contract.md)                                            |
+| 主进程模块装配 / 生命周期 / 托盘 / 窗口        | [packages/main/AGENTS.md](packages/main/AGENTS.md)                                                                                                 |
+| 安全桥接 / contextBridge / IPC 追踪            | [packages/preload/AGENTS.md](packages/preload/AGENTS.md)                                                                                           |
 | 渲染层 Feature 划分 / manual-only / 组件七段式 | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md)                                                                                         |
-| 跨端契约 / Zod Schema / MODE 环境流转          | [packages/shared/AGENTS.md](packages/shared/AGENTS.md) · [docs/ipc-contract.md](docs/ipc-contract.md)                                              |
-| 取词 / 翻译 / 提示词                           | [docs/PRD-v2.md](docs/PRD-v2.md) · [docs/prompt-contract.md](docs/prompt-contract.md) · [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md) |
-| 数据模型 / 迁移 / 同步                         | [docs/data-model.md](docs/data-model.md) · [docs/adr/](docs/adr/)                                                                                  |
+| 跨端契约 / Zod Schema / MODE 环境流转          | [packages/shared/AGENTS.md](packages/shared/AGENTS.md)                                                                                             |
 | 视觉 / 设计 Token / 品牌定制                   | [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                                               |
 | 多语言词条与国际化 (LinguiJS)                  | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md) §6                                                                                      |
+| 取词 / 翻译 / 提示词                           | [docs/PRD-v2.md](docs/PRD-v2.md) · [docs/prompt-contract.md](docs/prompt-contract.md) · [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md) |
+| 数据模型 / 迁移 / 同步                         | [docs/data-model.md](docs/data-model.md) · [docs/adr/](docs/adr/)                                                                                  |
 | 日志输出 / 异常处理 / 链路追踪规范             | [.agents/rules/logging-specification.md](.agents/rules/logging-specification.md)                                                                   |
 | PR 审查 / OpenCodeReview 工作流                | [.agents/skills/pr-review/SKILL.md](.agents/skills/pr-review/SKILL.md)                                                                             |
 | 工程规范 / Commit 纪律 / 路径推导              | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                                                 |
-| 发版流程 / tag / changelogen                   | [.github/CICD.md](.github/CICD.md) · [CONTRIBUTING.md](CONTRIBUTING.md) §四                                                                        |
 
 ## 5. 开发流与验证门禁矩阵（根目录执行）
 
@@ -68,8 +66,7 @@ Playwright（E2E，真实 Electron 窗口）· Drizzle ORM + `node:sqlite` · pn
 
 ## 6. 指针
 
-- 人类向全局工程规范（Biome 细节 / commit / husky / changelogen / .config / pnpm / CJS 脚本）：[CONTRIBUTING.md](CONTRIBUTING.md)
-- 发版流水线与仓库 Secrets：[.github/CICD.md](.github/CICD.md)
+- 全局工程规范与协作基础设施（Git 规范 / PR 闭环 / 发版 SOP / pnpm 12 机制 / build/lib）：[CONTRIBUTING.md](CONTRIBUTING.md)
 - 横切规则（globs 触发，落盘日志英文）：[.agents/rules/logging-specification.md](.agents/rules/logging-specification.md)
 
 ## 7. 模块系统与脚本执行约定
@@ -77,17 +74,3 @@ Playwright（E2E，真实 Electron 窗口）· Drizzle ORM + `node:sqlite` · pn
 - **全仓 ESM-only**：包源码统一 ES Module；`.ts` 脚本用 `tsx` 直接执行（`scripts/*.ts`、pr-review CLI），不引入 ts-node/CJS 包装。
 - **main / preload 产物是 CJS**：Vite 以 lib 形式输出 `dist/index.cjs`，`package.json` 的 `main`/`exports` 指向它；源码仍是 ESM，由构建器转译。
 - **renderer 的 Node 隔离是约定、未机械 enforce**：靠 `packages/tsconfig/react.json` 的 `types: ["vite/client"]` 白名单约束，但 `vite.config.ts` 与 `src` 同属一个 program，Node 类型会经 `vite` 传递进来。不要在 renderer 里 `import 'node:fs'` 或使用 `__dirname` / `process`，typecheck 不会拦。
-
-## 8. Agent skills
-
-### Issue tracker
-
-GitHub Issues; use the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context layout: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.
