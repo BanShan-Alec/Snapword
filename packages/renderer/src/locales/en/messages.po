@@ -37,7 +37,7 @@ msgstr "Close"
 
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "关闭后应用留在托盘，点击图标可重新打开。"
-msgstr "The app stays in the tray; click its icon to reopen."
+msgstr "Stays in tray; click icon to reopen."
 
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "关闭窗口还是退出应用？"
@@ -53,7 +53,7 @@ msgstr "Reload and retry"
 
 #: src/features/updater/components/ChangelogCard/index.tsx
 msgid "包含常规稳定性改进与性能优化。"
-msgstr "Includes stability and performance fixes."
+msgstr "Stability and performance fixes."
 
 #: src/features/history/index.tsx
 msgid "去翻译"
@@ -73,7 +73,7 @@ msgstr "Appearance"
 
 #: src/features/updater/index.tsx
 msgid "安装包下载中，完成后即可进行安装升级。"
-msgstr "Downloading the update. Install when it finishes."
+msgstr "Downloading; install when it finishes."
 
 #: src/features/updater/components/ChangelogCard/index.tsx
 msgid "展开全部"
@@ -126,7 +126,7 @@ msgstr "Update downloaded. Restart to install."
 
 #: src/features/updater/index.tsx
 msgid "新版本已经准备就绪，包含最新的功能与改进。"
-msgstr "A new version is ready with the latest features."
+msgstr "New version ready with latest fixes."
 
 #: src/features/translate/index.tsx
 msgid "暂无最近翻译（将显示共享会话历史的前 5 条）"
@@ -162,7 +162,7 @@ msgstr "Update service is not configured."
 
 #: src/features/updater/index.tsx
 msgid "更新过程中出现未知错误，请稍后重试。"
-msgstr "Something went wrong during the update. Try again."
+msgstr "Update failed. Please try again."
 
 #: src/components/layout/AppShell/index.tsx
 #: src/features/glossary/index.tsx
@@ -171,7 +171,7 @@ msgstr "Glossary"
 
 #: src/features/updater/index.tsx
 msgid "检查或下载更新时发生异常，请检查网络后重试。"
-msgstr "Couldn't check or download the update. Check your network."
+msgstr "Update check failed. Check network."
 
 #: src/features/updater/index.tsx
 msgid "检查更新中"
@@ -240,7 +240,7 @@ msgstr "Keep terms and translations consistent."
 
 #: src/features/updater/index.tsx
 msgid "网络连接失败或超时，请检查网络后重试。"
-msgstr "Network failed or timed out. Check your connection."
+msgstr "Network failed or timed out."
 
 #: src/components/layout/AppShell/index.tsx
 #: src/features/translate/index.tsx

@@ -38,18 +38,20 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 
 ### 4.2 任务路由导航
 
-| 研发任务 / 关注点                              | 核心规则指引（唯一真源）                                                         |
-| :--------------------------------------------- | :------------------------------------------------------------------------------- |
-| 新增跨端业务域 (全栈 SOP)                      | 四包各自的 `AGENTS.md`（按上述 4.1 流水线顺序落地）                              |
-| 主进程模块装配 / 生命周期 / 托盘 / 窗口        | [packages/main/AGENTS.md](packages/main/AGENTS.md)                               |
-| 安全桥接 / contextBridge / IPC 追踪            | [packages/preload/AGENTS.md](packages/preload/AGENTS.md)                         |
-| 渲染层 Feature 划分 / manual-only / 组件七段式 | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md)                       |
-| 跨端契约 / Zod Schema / MODE 环境流转          | [packages/shared/AGENTS.md](packages/shared/AGENTS.md)                           |
-| 视觉 / 设计 Token / 品牌定制                   | [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)             |
-| 多语言词条与国际化 (LinguiJS)                  | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md) §6                    |
-| 日志输出 / 异常处理 / 链路追踪规范             | [.agents/rules/logging-specification.md](.agents/rules/logging-specification.md) |
-| PR 审查 / OpenCodeReview 工作流                | [.agents/skills/pr-review/SKILL.md](.agents/skills/pr-review/SKILL.md)           |
-| 工程规范 / Commit 纪律 / 路径推导              | [CONTRIBUTING.md](CONTRIBUTING.md)                                               |
+| 研发任务 / 关注点                              | 核心规则指引（唯一真源）                                                                                                                           |
+| :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 新增跨端业务域 (全栈 SOP)                      | 四包各自的 `AGENTS.md`（按上述 4.1 流水线顺序落地）                                                                                                |
+| 主进程模块装配 / 生命周期 / 托盘 / 窗口        | [packages/main/AGENTS.md](packages/main/AGENTS.md)                                                                                                 |
+| 安全桥接 / contextBridge / IPC 追踪            | [packages/preload/AGENTS.md](packages/preload/AGENTS.md)                                                                                           |
+| 渲染层 Feature 划分 / manual-only / 组件七段式 | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md)                                                                                         |
+| 跨端契约 / Zod Schema / MODE 环境流转          | [packages/shared/AGENTS.md](packages/shared/AGENTS.md)                                                                                             |
+| 视觉 / 设计 Token / 品牌定制                   | [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                                               |
+| 多语言词条与国际化 (LinguiJS)                  | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md) §6                                                                                      |
+| 取词 / 翻译 / 提示词                           | [docs/PRD-v2.md](docs/PRD-v2.md) · [docs/prompt-contract.md](docs/prompt-contract.md) · [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md) |
+| 数据模型 / 迁移 / 同步                         | [docs/data-model.md](docs/data-model.md) · [docs/adr/](docs/adr/)                                                                                  |
+| 日志输出 / 异常处理 / 链路追踪规范             | [.agents/rules/logging-specification.md](.agents/rules/logging-specification.md)                                                                   |
+| PR 审查 / OpenCodeReview 工作流                | [.agents/skills/pr-review/SKILL.md](.agents/skills/pr-review/SKILL.md)                                                                             |
+| 工程规范 / Commit 纪律 / 路径推导              | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                                                 |
 
 ## 5. 开发流与验证门禁矩阵（根目录执行）
 

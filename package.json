@@ -28,7 +28,7 @@
     "start": "pnpm preview",
     "pr-review": "pnpm --filter @app/pr-review run cli",
     "i18n:extract": "pnpm --filter @app/renderer exec lingui extract --clean",
-    "i18n:check": "pnpm --filter @app/renderer exec lingui check missing",
+    "i18n:check": "pnpm --filter @app/renderer exec lingui check missing && node scripts/check-i18n-length.mjs",
     "test": "vitest run -c .config/vitest.config.ts",
     "test:pr-review": "pnpm --filter @app/pr-review run test",
     "test:watch": "vitest -c .config/vitest.config.ts",
