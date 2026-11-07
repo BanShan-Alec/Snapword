@@ -227,7 +227,7 @@ async function runPreview(): Promise<void> {
 
   if (!skipBuild) {
     console.log(`${LOG_PREFIX} 📦 Building workspace packages (main / preload / renderer)...`);
-    // 只构建应用运行所需的三包:pnpm build 会连带构建 @app/docs,预览用不到
+    // 只构建应用运行所需的三包:pnpm build 会遍历全部工作区包,预览用不到
     execSync('pnpm -r --filter @app/main --filter @app/preload --filter @app/renderer run build', {
       stdio: 'inherit',
       cwd: ROOT_DIR,

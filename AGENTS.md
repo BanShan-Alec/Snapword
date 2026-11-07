@@ -25,7 +25,6 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 | `@app/renderer`  | React 界面层：Feature 驱动 + LinguiJS               | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md)（视觉另见 [DESIGN.md](packages/renderer/docs/DESIGN.md)） |
 | `@app/shared`    | 跨端契约单一事实源：Schema / 通道 / 类型            | [packages/shared/AGENTS.md](packages/shared/AGENTS.md)                                                               |
 | `@app/pr-review` | PR 生命周期与 OCR 审查工具链                        | [packages/pr-review/AGENTS.md](packages/pr-review/AGENTS.md)                                                         |
-| `@app/docs`      | 解决方案合集文档站（Vocs，GitHub Pages 部署）       | [packages/docs/AGENTS.md](packages/docs/AGENTS.md)                                                                   |
 
 ## 4. 全栈流转范式与任务路由
 
@@ -61,7 +60,6 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 | **PR 生命周期管理**    | `pnpm pr-review <create\|status\|pull\|trigger\|merge>`            | 统一收敛命令，严禁手写散装 gh 命令；实现审阅与合并闭环                 |
 | **pr-review 模块改动** | `pnpm test:pr-review`                                              | ⚠️ **关键判据**：根 `pnpm test` 排除了本包，改动后必须单独执行此命令！ |
 | **多语言文案变动**     | `pnpm i18n:extract` ➔ 补译 ➔ `pnpm i18n:check`                     | `messages.po` 缺少英译将直接导致 CI 失败                               |
-| **文档站内容变动**     | `pnpm docs:dev`（本地预览）· `pnpm docs:build`（静态构建）         | 构建包含死链检测与 SSG 静态生成                                        |
 | **发版与分发预检**     | `pnpm verify:prebuild` · `pnpm build:unpack`                       | 检查主进程 external 依赖隔离，验证打包产物完整性                       |
 
 ## 6. 指针

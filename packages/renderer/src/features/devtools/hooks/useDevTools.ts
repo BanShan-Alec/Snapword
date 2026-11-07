@@ -1,5 +1,4 @@
 import { t } from '@lingui/core/macro';
-import { PROJECT_DOCS_URL } from '@shared/constants/docs';
 import type { PerformActionInput } from '@shared/schemas/diagnostics';
 import { App } from 'antd';
 import { useState } from 'react';
@@ -14,7 +13,7 @@ type DevToolsAction = { kind: 'toggleDevTools' } | { kind: 'openUrl'; url: strin
 // 可抽离的逻辑处理函数/组件
 
 /**
- * 开发者工具域：切换 DevTools、打开外部文档与非白名单拦截测试（过期响应自动丢弃）。
+ * 开发者工具域：切换 DevTools、打开外部链接与非白名单拦截测试（过期响应自动丢弃）。
  */
 export function useDevTools() {
   const { message } = App.useApp();
@@ -65,10 +64,6 @@ export function useDevTools() {
     });
   };
 
-  const handleOpenDocs = () => {
-    void runDevToolsAction({ kind: 'openUrl', url: PROJECT_DOCS_URL }).catch(() => {});
-  };
-
   const handleOpenGithub = () => {
     void runDevToolsAction({ kind: 'openUrl', url: GITHUB_URL }).catch(() => {});
   };
@@ -80,7 +75,6 @@ export function useDevTools() {
   return {
     actionMessage,
     handleToggleDevTools,
-    handleOpenDocs,
     handleOpenGithub,
     handleOpenBlockedUrl,
   };

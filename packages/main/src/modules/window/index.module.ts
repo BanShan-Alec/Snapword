@@ -11,7 +11,6 @@ import { updaterService } from '../../services/updater.service';
 import { getAppConfigStore } from '../config.module';
 import { getLogManager } from '../log.module';
 import { applyTitleBarOverlay, resolveNativeTheme } from '../native-theme.module';
-import { attachDocsEmbedStyle } from './docs-embed';
 import { getTitleBarOverlayOptions, getWindowBackgroundColor } from './titlebar-overlay';
 import { getUpdaterWindowModule } from './updater-window.module';
 import {
@@ -135,9 +134,6 @@ export class WindowManager implements AppModule {
 
     // WCO overlay 初刷：与 backgroundColor 同源同时点（本模块只负责运行时 updated 重刷）
     applyTitleBarOverlay();
-
-    // 文档站 iframe 主题切换器隐藏：只挂 home 窗口，按 frame URL 精确匹配
-    attachDocsEmbedStyle(browserWindow.webContents);
 
     browserWindow.on('closed', () => {
       this.closeRequestPending = false;

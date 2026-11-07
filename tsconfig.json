@@ -8,7 +8,6 @@
     { "path": "./packages/renderer" },
     { "path": "./packages/shared" },
     { "path": "./packages/pr-review" },
-    { "path": "./packages/docs" },
     { "path": "./scripts" },
     { "path": "./build" },
     { "path": "./e2e" }

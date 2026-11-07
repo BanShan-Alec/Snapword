@@ -1,6 +1,5 @@
 import { EventEmitter } from 'node:events';
 import { ContentSecurityPolicyModule } from '@app/main/modules/security/csp';
-import { PROJECT_DOCS_ORIGIN } from '@app/shared/constants/docs';
 import { session } from 'electron';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -84,7 +83,7 @@ describe('ContentSecurityPolicyModule', () => {
 
       const activePolicy = (cspHeaders as string[])[0];
       expect(activePolicy).toBe(
-        `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-src ${PROJECT_DOCS_ORIGIN};`,
+        `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self';`,
       );
       expect(activePolicy).toContain("script-src 'self' 'unsafe-inline'");
       expect(activePolicy).not.toContain("'unsafe-eval'");

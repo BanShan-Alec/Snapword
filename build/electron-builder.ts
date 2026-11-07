@@ -26,8 +26,17 @@ const config: Configuration = {
         target: 'nsis',
         arch: ['x64'],
       },
+      {
+        target: 'portable',
+        arch: ['x64'],
+      },
     ],
     icon: 'build/resources/icon.ico',
+  },
+  portable: {
+    // 与 NSIS 安装包同为目标 exe，必须区分产物名避免互相覆盖
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder placeholder template
+    artifactName: '${name}-${version}-${os}-${arch}-portable.${ext}',
   },
   nsis: {
     oneClick: false,
@@ -42,14 +51,6 @@ const config: Configuration = {
     installerHeaderIcon: 'build/resources/icon.ico',
     deleteAppDataOnUninstall: false,
   },
-  mac: {
-    target: ['dmg', 'zip'],
-    icon: 'build/resources/icon.icns',
-  },
-  linux: {
-    target: ['deb'],
-    icon: 'build/resources/icon.png',
-  },
   extraResources: [
     {
       from: 'build/resources',
@@ -58,7 +59,7 @@ const config: Configuration = {
     },
   ],
   /**
-   * 采用 package.json 的 name (electron-react-monorepo-template)，零空格小写规范
+   * 采用 package.json 的 name (snapword)，零空格小写规范
    * 杜绝 GitHub Releases 上传时被自动转换为点号 (.) 导致 latest.yml 校验与下载 404
    */
   // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder placeholder template

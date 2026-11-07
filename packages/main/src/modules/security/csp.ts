@@ -1,4 +1,3 @@
-import { PROJECT_DOCS_ORIGIN } from '@app/shared/constants/docs';
 import { session } from 'electron';
 import type { AppModule } from '../../AppModule';
 import { getEnv } from '../../env';
@@ -48,18 +47,16 @@ export class ContentSecurityPolicyModule implements AppModule {
 
     // 开发态：允许自身、内联脚本/样式、eval、data/blob 协议、https/http 与 ws:（支持 Vite HMR 和本地开发服务器）；
     // 生产态：收紧策略，移除 unsafe-eval，放行必要自身源、首屏协调器内联脚本 ('unsafe-inline')、内联样式与静态媒体，
-    // 动态放行 apiBaseUrl，并显式放行文档站 origin 的 frame-src（否则跨源 iframe 被 default-src 'self' 拦掉）
+    // 动态放行 apiBaseUrl
     const cspPolicy = buildCspPolicy({
       isDev,
       apiOrigin,
-      docsOrigin: PROJECT_DOCS_ORIGIN,
     });
 
     defaultSession.webRequest.onHeadersReceived((details, callback) => {
       const responseHeaders = { ...details.responseHeaders };
 
-      // CSP 是文档级策略：只注入主框架。子框架（文档站 iframe）不能被套上应用 CSP，
-      // 其运行时依赖 eval，套上后会 EvalError 白屏
+      // CSP 是文档级策略：只注入主框架，子框架不被套上应用 CSP
       if (!shouldInjectCsp(details.resourceType)) {
         callback({ responseHeaders });
         return;

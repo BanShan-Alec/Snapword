@@ -1,4 +1,3 @@
-import { PROJECT_DOCS_URL } from '@app/shared/constants/docs';
 import { ALLOWED_EXTERNAL_URLS } from '@app/shared/constants/security';
 import { describe, expect, it } from 'vitest';
 import { ExternalUrls, isAllowedExternalUrl } from '../../src/modules/security/external-urls';
@@ -7,9 +6,6 @@ describe('external-urls security policy', () => {
   it('allows URLs from allowed origins in ALLOWED_EXTERNAL_URLS', () => {
     // 实例化模块以注入全局白名单
     new ExternalUrls(new Set(ALLOWED_EXTERNAL_URLS));
-
-    // 项目文档站白名单
-    expect(isAllowedExternalUrl(PROJECT_DOCS_URL)).toBe(true);
 
     // 已有的 GitHub / Vite / React 白名单
     expect(isAllowedExternalUrl('https://github.com/BanShan-Alec')).toBe(true);

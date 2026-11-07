@@ -1,19 +1,18 @@
 {
-  "name": "electron-react-monorepo-template",
-  "productName": "Electron React Template",
-  "appId": "com.template.electron-react-monorepo",
-  "description": "Type-safe Electron monorepo template powered by Vite, React and ContextBridge IPC",
-  "version": "1.13.2",
+  "name": "snapword",
+  "productName": "Snapword",
+  "appId": "com.snapword.app",
+  "description": "Snapword:划词取词翻译桌面应用(Electron + utilityProcess + Native Addon)",
+  "version": "0.1.0",
   "author": {
-    "name": "BanShan-Alec",
-    "email": "627649674@qq.com"
+    "name": "BanShan-Alec"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/BanShan-Alec/electron-react-monorepo-template.git"
+    "url": "https://github.com/BanShan-Alec/Snapword.git"
   },
   "private": true,
-  "license": "Unlicense",
+  "license": "MIT",
   "packageManager": "pnpm@12.15.0",
   "main": "node_modules/@app/main/dist/index.cjs",
   "engines": {
@@ -24,16 +23,12 @@
     "build": "pnpm -r run build",
     "build:unpack": "tsx scripts/build.ts --dir",
     "build:win": "tsx scripts/build.ts --win",
-    "build:mac": "tsx scripts/build.ts --mac",
-    "build:linux": "tsx scripts/build.ts --linux",
     "dev": "cross-env MODE=development tsx scripts/dev.ts",
     "preview": "cross-env MODE=production tsx scripts/dev.ts",
     "start": "pnpm preview",
     "pr-review": "pnpm --filter @app/pr-review run cli",
     "i18n:extract": "pnpm --filter @app/renderer exec lingui extract --clean",
     "i18n:check": "pnpm --filter @app/renderer exec lingui check missing",
-    "docs:dev": "pnpm --filter @app/docs run dev",
-    "docs:build": "pnpm --filter @app/docs run build",
     "test": "vitest run -c .config/vitest.config.ts",
     "test:pr-review": "pnpm --filter @app/pr-review run test",
     "test:watch": "vitest -c .config/vitest.config.ts",

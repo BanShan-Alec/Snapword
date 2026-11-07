@@ -1,10 +1,4 @@
-import {
-  BookOutlined,
-  CodeOutlined,
-  GithubOutlined,
-  StopOutlined,
-  ToolOutlined,
-} from '@ant-design/icons';
+import { CodeOutlined, GithubOutlined, StopOutlined, ToolOutlined } from '@ant-design/icons';
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Button } from 'antd';
@@ -21,7 +15,7 @@ import { statusBoxClass } from '@/lib/classNames';
 const _DevToolsCard = (props: DevToolsCardProps) => {
   useLingui();
   // ① 变量声明、解构
-  const { actionMessage, onToggleDevTools, onOpenDocs, onOpenGithub, onOpenBlockedUrl } = props;
+  const { actionMessage, onToggleDevTools, onOpenGithub, onOpenBlockedUrl } = props;
 
   // ② 组件状态
 
@@ -49,9 +43,6 @@ const _DevToolsCard = (props: DevToolsCardProps) => {
           <Button type="primary" size="small" icon={<CodeOutlined />} onClick={onToggleDevTools}>
             {t`开关 DevTools`}
           </Button>
-          <Button size="small" icon={<BookOutlined />} onClick={onOpenDocs}>
-            {t`打开项目文档站`}
-          </Button>
           <Button size="small" icon={<GithubOutlined />} onClick={onOpenGithub}>
             {t`打开 GitHub 页面`}
           </Button>
@@ -74,7 +65,6 @@ const _DevToolsCard = (props: DevToolsCardProps) => {
 export interface DevToolsCardProps {
   actionMessage: string;
   onToggleDevTools: () => void;
-  onOpenDocs: () => void;
   onOpenGithub: () => void;
   onOpenBlockedUrl: () => void;
 }

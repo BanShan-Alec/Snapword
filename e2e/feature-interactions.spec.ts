@@ -185,35 +185,4 @@ test.describe('Feature interactions', () => {
       await page.getByRole('tab', { name: '总览看板' }).click();
     }
   });
-
-  test('docs tab embeds the documentation site and keeps the iframe mounted', async ({ page }) => {
-    try {
-      const docsTab = page.getByRole('tab', { name: '文档站' });
-      await expect(docsTab).toBeVisible();
-
-      await docsTab.click();
-      await expect(page).toHaveURL(/#\/docs/);
-
-      const iframe = page.locator('iframe[title="项目文档站"]');
-      await expect(iframe).toHaveCount(1);
-      await expect(iframe).toHaveAttribute(
-        'src',
-        'https://banshan-alec.github.io/electron-react-monorepo-template/',
-      );
-      await expect(iframe).toHaveAttribute('sandbox', /allow-scripts/);
-
-      // 切回看板后 iframe 仍挂载（keep-alive），只是被隐藏
-      await page.getByRole('tab', { name: '总览看板' }).click();
-      await expect(page).toHaveURL(/#\/dashboard/);
-      await expect(iframe).toHaveCount(1);
-
-      // 再切回文档站，仍是同一个 iframe（没有因路由切换被卸载重建）
-      await docsTab.click();
-      await expect(page).toHaveURL(/#\/docs/);
-      await expect(iframe).toHaveCount(1);
-    } finally {
-      // 跨文件共用同一个 Electron 实例：收尾必须回到看板，避免后续 spec 找不到看板按钮
-      await page.getByRole('tab', { name: '总览看板' }).click();
-    }
-  });
 });

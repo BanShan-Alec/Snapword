@@ -1,5 +1,5 @@
-# PR / main 分支门禁:类型检查、代码规范、单元测试、Electron e2e、文档站构建。
-# 五个 job 并行,均为分支保护的 required checks。
+# PR / main 分支门禁:类型检查、代码规范、单元测试、Electron e2e。
+# 四个 job 并行,均为分支保护的 required checks。
 name: CI
 
 on:
@@ -58,13 +58,3 @@ jobs:
       # electron.launch 以 package.json main 为入口,需要先产出各包的构建产物
       - run: pnpm run build
       - run: pnpm run test:e2e
-
-  docs:
-    name: docs
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-env
-      # 文档站门禁:vocs full-static 构建成功即通过(死链/格式问题在此暴露)
-      - run: pnpm --filter @app/docs run build
