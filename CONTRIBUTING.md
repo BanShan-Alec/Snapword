@@ -14,7 +14,7 @@
 校验规则真源：[`.config/biome.json`](.config/biome.json)，提交时自动执行。
 
 - **桶文件**：只做重导出的 `index.ts` 禁止新增（Biome 硬拦截）。组件目录里的 `Xxx/index.tsx` 是组件本体，不算桶文件；确实需要桶时，走评审 + 单条 override 豁免 + 显式命名导出。
-- **构建期转换**：用 Vite 8 / Rolldown / Oxc 原生 API，不引 esbuild / babel；现有实现见 [`packages/renderer/plugins/startup/`](packages/renderer/plugins/startup/)。
+- **构建期转换**（需要自己写转译/插件时）：只用 Vite 8 / Rolldown / Oxc 原生 API，不引 esbuild / babel。两种用法的取舍（`transformWithOxc` 单文件转译 vs 程序化 `build()` 打包带 import 的代码）见 [`shell-plugin.ts`](packages/renderer/plugins/startup/shell-plugin.ts) 头注释。
 
 ## 二、提交与 PR
 
