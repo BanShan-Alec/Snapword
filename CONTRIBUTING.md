@@ -144,6 +144,14 @@ Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合�
   - [`build/lib/repo-paths.ts`](build/lib/repo-paths.ts)：仓库根目录与产物目录唯一解析器（严禁使用 `process.cwd()`）。
   - [`build/lib/sentry-options.ts`](build/lib/sentry-options.ts)：Sentry 构建期参数与 DSN 注入器。
 
+### 新配置文件的放置判定（按序执行，前者优先）
+
+1. **机制强制**：工具只能从约定路径发现配置时，放它要求的位置，并在此备案。根目录仅允许以下"机制强制"项（新增须走评审）：`package.json`、`tsconfig.json`（tsc solution 入口）、`pnpm-workspace.yaml`、`pnpm-lock.yaml`、`.npmrc`、`.nvmrc`、`.env` / `.env.example`（`build/lib/env.ts` 统一加载）、`.gitignore`、`.gitattributes`、`.editorconfig`、`.husky/`（钩子目录）。**清单外的根级配置一律拒绝**。
+2. **有归属包**：配置随消费方进包。判例：Drizzle 迁移生成归属 `@app/main`——`drizzle.config.ts` 与 `drizzle/` 迁移产物都在 `packages/main/`，命令收敛为 `pnpm --filter @app/main db:generate`。
+3. **跨包编排工具**：无单一归属包、服务全仓的工具（Biome / Vitest / Playwright / commitlint / changelogen）→ 配置进 `.config/`，依赖进根 `devDependencies`。
+
+> 教训：`drizzle.config.ts` 曾放在根目录并连带 `drizzle-kit` 进根 devDeps（2026-11-09 已收编回 `packages/main/`）。机制不强制时，根目录不是默认位置。
+
 ---
 
 ## 六、依赖管理与安装规范 (pnpm Workspace)
@@ -165,6 +173,13 @@ Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合�
 `-w`（`--workspace-root`，装到 workspace 根）、`-D`（`--save-dev`）、`-P`（`--save-prod`，默认）、`-E`（`--save-exact`，锁精确版本）、`-O`（`--save-optional`）、`-F`（`--filter`，指定子包，如 `-F @app/renderer`）、`-r`（`--recursive`）。
 
 `pnpm add` 默认写入**当前目录所属**的 `package.json`：装到根统一加 `-w`，装到子包统一 `pnpm -F <包名> add`，无需 cd 进子包。
+
+**依赖归属判定（按序执行）**：
+
+1. **包的运行时依赖 → 该包 `dependencies`**：进入 Vite `external`，打包后从 `node_modules` 运行时解析（判例：`drizzle-orm`、`electron-updater`）。
+2. **刻意内联进 bundle 的纯 JS 依赖 → 该包 `devDependencies`**：经 `ssr.noExternal` 内联，运行时零外部依赖（判例：`electron-log`、`electron-store`、`zod`、`@sentry/electron`）。判断标准是「是否需要运行时从 node_modules 解析」，不是「代码里有没有 import」——放错会改变打包产物的解析方式。
+3. **跨包编排工具 → 根 `devDependencies`**（Biome / Vitest / Playwright / electron / electron-builder / tsx 等）；根 `dependencies` 永远只有 `@app/main`。
+4. **版本口径**：≥2 包共享或必须版本联动的框架族（React 全家桶）→ `pnpm-workspace.yaml` 的 `catalog:`；单包工具 → 包内显式 pin；`rc` 版本必须精确锁（`1.0.0-rc.5`，不带 `^`）。
 
 ### 3. catalog 版本收敛
 
