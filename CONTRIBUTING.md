@@ -102,9 +102,9 @@ pnpm changelog
 pnpm release
 
 # 3. 显式指定版本步长进行 Release：
-pnpm release:patch   # 补丁升级（如 3.1.0 -> 3.1.1）
-pnpm release:minor   # 次版本升级（如 3.1.0 -> 3.2.0）
-pnpm release:major   # 主版本升级（如 3.1.0 -> 4.0.0）
+pnpm release:patch   # 补丁升级（如 0.1.0 -> 0.1.1）
+pnpm release:minor   # 次版本升级（如 0.1.0 -> 0.2.0）
+pnpm release:major   # 主版本升级（如 0.1.0 -> 1.0.0）
 ```
 
 ### 2. 发布流程规范（PR 化 SOP）
@@ -186,7 +186,7 @@ Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合�
 安装的包命中 `pnpm-workspace.yaml` 的 `catalog:`（如 `typescript` / `vite` / `vitest` / `zod` / `react` / `@types/react` / `tailwindcss`）时，`pnpm add` 自动使用 `catalog:` 协议，真实版本收敛到 workspace 根。需在 `package.json` 写死版本、不跟随 catalog 时，指定与 catalog 不同的版本即可：
 
 ```bash
-pnpm add -Dw zod@4.7.1
+pnpm add -Dw zod@4.5.4
 ```
 
 ### 4. 升级与卸载
@@ -202,7 +202,7 @@ pnpm -F @app/renderer remove <包名>
 ### 5. pnpm 12 构建审批与缓存设置机制
 
 - **构建脚本审批**：`strictDepBuilds` 默认开启，未列入 `allowBuilds` 且带构建脚本的依赖会直接让安装失败（`ERR_PNPM_IGNORED_BUILDS`）——故意快速失败，避免重演「electron 二进制静默缺失」。处置 SOP：`pnpm ignored-builds` 查看全部待审批包 → `pnpm approve-builds <包名>` 审批，决策自动写入 `pnpm-workspace.yaml` 的 `allowBuilds`。
-- **electron 二进制兜底**：electron 42+ 起 npm 包无 install 生命周期脚本，二进制惰性下载——全新工作区装完不带 dist，`require('electron')` 直接报错。根 `postinstall` 用 `cross-env ELECTRON_MIRROR=… install-electron` 在每次安装后调用官方安装器（内部自带版本/dist 判定：就绪时约 100ms 空转，缺失时命中机器级 zip 缓存约 2 秒）；二进制损坏或 electron 升级后同样自动重装。CI 侧由 setup-env 的 `actions/cache` 预热三平台 electron 缓存目录，e2e job 另留一步显式安装作保险冗余。国内镜像就写在这个 postinstall 命令里（npmmirror，开箱即走），**只作用于这一次二进制安装**：`@electron/get` 的镜像查找顺序把 npm 注入的 `npm_package_config_electron_mirror` / `npm_config_electron_mirror` 排在调用方显式 URL 之前，所以镜像绝不能写成根 `package.json` 的 `config.electron_mirror`——那会让 electron-builder 打 macOS DMG 时把 dmgbuild 辅助包也改写到 electron 镜像路径下，直接 404；同理也别挪进 `.npmrc`。换源改 postinstall 这一处即可。
+- **electron 二进制兜底**：electron 42+ 起 npm 包无 install 生命周期脚本，二进制惰性下载——全新工作区装完不带 dist，`require('electron')` 直接报错。根 `postinstall` 用 `cross-env ELECTRON_MIRROR=… install-electron` 在每次安装后调用官方安装器（内部自带版本/dist 判定：就绪时约 100ms 空转，缺失时命中机器级 zip 缓存约 2 秒）；二进制损坏或 electron 升级后同样自动重装。CI 侧由 setup-env 的 `actions/cache` 预热三平台 electron 缓存目录，e2e job 另留一步显式安装作保险冗余。国内镜像就写在这个 postinstall 命令里（npmmirror，开箱即走），**只作用于这一次二进制安装**：`@electron/get` 的镜像查找顺序把 npm 注入的 `npm_package_config_electron_mirror` / `npm_config_electron_mirror` 排在调用方显式 URL 之前，所以镜像绝不能写成根 `package.json` 的 `config.electron_mirror`——那会让 electron-builder 打包期经 `@electron/get` 拉取的辅助包也被改写到 electron 镜像路径下，直接 404；同理也别挪进 `.npmrc`。换源改 postinstall 这一处即可。
 - **minimumReleaseAge: 1440**：发布不满 24 小时的依赖禁止安装（供应链投毒防护）。确需安装全新冠名版本时，用 `minimumReleaseAgeExclude` 按包临时豁免，不要全局关闭。
 
 ---
@@ -232,4 +232,5 @@ pnpm -F @app/renderer remove <包名>
 - 新增跨端业务领域（新 IPC 域、新契约类型）时，严格遵循全栈 SOP，同步更新 `packages/shared/AGENTS.md` 的契约速览与 `packages/main/AGENTS.md` 的骨架模板；
 - 包级 `README.md` 仅承载高层定位与导航索引，严禁反向复制 `AGENTS.md` 的规则细节造成双重事实源；
 - 规范类表述（铁律 / 禁令）与代码现实冲突时，先改文档使其可执行，再评估是否值得改代码；
-- 根 `README.md` 特性区的每条论断以源码为准，行为变更后同步核对。
+- 根 `README.md` 特性区的每条论断以源码为准，行为变更后同步核对；
+- **会变事实只写一处**：门禁项、命令、平台范围、版本示例等随代码演进的事实，仅在 CONTRIBUTING（或对应包 `AGENTS.md`）保留唯一真源；其余文档只写指针、不复述细节，避免双写漂移（2026-11-09 修正 5 处模板时代过时断言即为实例）。
