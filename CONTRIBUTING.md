@@ -34,7 +34,7 @@ pnpm format
 
 ### 3. 构建工具链时代规则（Vite 8 / Rolldown / Oxc）
 
-本仓已进入 Vite 8（rolldown 内核）时代：**新增构建期转换、插件与编译能力一律使用 Vite 8 / Rolldown / Oxc 原生 API**，禁止引入 esbuild、babel 等旧工具链依赖。存量 `@rolldown/plugin-babel` 仅限 lingui 既有用途，不扩用。选型参照 ADR-0002（启动壳构建期内联决策）：单文件转译用 `transformWithOxc`（注意不打包 import），需打包时用程序化 `build()`（`configFile:false` + `write:false`）内存产出。
+本仓已进入 Vite 8（rolldown 内核）时代：**新增构建期转换、插件与编译能力一律使用 Vite 8 / Rolldown / Oxc 原生 API**，禁止引入 esbuild、babel 等旧工具链依赖。构建期内联（如首屏启动协调器）参照现有实现 [`packages/renderer/plugins/startup/`](packages/renderer/plugins/startup/)：单文件转译用 `transformWithOxc`（注意不打包 import），需打包时用程序化 `build()`（`configFile:false` + `write:false`）内存产出。
 
 ---
 
@@ -63,7 +63,7 @@ pnpm format
 
 ### 2. PR 工作流（`pnpm pr-review`）
 
-feature 分支一律经 PR 合入 `main`：分支保护锁死五个 required checks（typecheck / lint / test / e2e / docs）与 squash-only、拒绝直推。使 `main` 上每个提交都对应一个完整 PR——历史可回溯、回滚粒度为一个功能、CHANGELOG 也能按 PR 逐条生成。完整流程见 [.github/CICD.md](.github/CICD.md) 与 [packages/pr-review/README.md](packages/pr-review/README.md)。
+feature 分支一律经 PR 合入 `main`：分支保护锁死四个 required checks（typecheck / lint / test / e2e）与 squash-only、拒绝直推。使 `main` 上每个提交都对应一个完整 PR——历史可回溯、回滚粒度为一个功能、CHANGELOG 也能按 PR 逐条生成。完整流程见 [.github/CICD.md](.github/CICD.md) 与 [packages/pr-review/README.md](packages/pr-review/README.md)。
 
 | 命令                    | 用途                                                      |
 | :---------------------- | :-------------------------------------------------------- |
@@ -118,7 +118,7 @@ main 受分支保护禁直推，发版走 PR 形态：
    ```bash
    git pull && git tag vX.Y.Z && git push origin vX.Y.Z
    ```
-4. GitHub Actions 将监听推送到远端的版本 Tag（如 `v1.1.0`），自动构建 Windows、macOS 与 Linux 原生安装包并发布到 GitHub Releases。
+4. GitHub Actions 将监听推送到远端的版本 Tag（如 `v0.2.0`），自动构建 Windows 原生安装包（NSIS + portable）并发布到 GitHub Releases。
 
 ### 3. GitHub Release 正文机制
 
@@ -137,7 +137,7 @@ Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合�
 为保持项目根目录极致清爽，配置与构建资产收拢存放：
 
 - **`.config/`**：收拢 Lint、测试与版本发布工具链配置（[`.config/biome.json`](.config/biome.json)、[`.config/commitlint.config.ts`](.config/commitlint.config.ts)、[`.config/changelog.config.ts`](.config/changelog.config.ts)、[`.config/vitest.config.ts`](.config/vitest.config.ts)、[`.config/playwright.config.ts`](.config/playwright.config.ts)）。
-- **`build/`**：Electron 打包配置 [`build/electron-builder.ts`](build/electron-builder.ts) 与应用图标、entitlements 等原生资源（[`build/resources/`](build/resources)）。
+- **`build/`**：Electron 打包配置 [`build/electron-builder.ts`](build/electron-builder.ts) 与应用图标等原生资源（[`build/resources/`](build/resources)）。
 - **`build/lib/`**：可复用构建期基础设施库（安全纯函数模块，禁止顶层副作用、不启动子进程）：
   - [`build/lib/app-identity.ts`](build/lib/app-identity.ts)：应用身份与 OTA 仓库坐标解析（从根 `package.json` 读取）。
   - [`build/lib/env.ts`](build/lib/env.ts)：构建期环境变量统一加载器（外部注入优先于 `.env`）。
@@ -156,17 +156,17 @@ Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合�
 
 ## 六、依赖管理与安装规范 (pnpm Workspace)
 
-本项目为 pnpm 12 monorepo（`packageManager: pnpm@12.15.0`），子包位于 `packages/{main,preload,renderer,shared,tsconfig}`，`pnpm-workspace.yaml` 统一收敛跨包共享依赖版本（`catalog:`）与全部非 auth/registry 设置（`nodeLinker` / `allowBuilds` 等；v12 起 `.npmrc` 只读 registry 与 auth），依赖实体统一落在根 `node_modules/.pnpm`。以下命令均在**根目录**执行。
+本项目为 pnpm 12 monorepo（`packageManager: pnpm@12.15.0`），子包位于 `packages/{main,preload,renderer,shared,pr-review,tsconfig}`，`pnpm-workspace.yaml` 统一收敛跨包共享依赖版本（`catalog:`）与全部非 auth/registry 设置（`nodeLinker` / `allowBuilds` 等；v12 起 `.npmrc` 只读 registry 与 auth），依赖实体统一落在根 `node_modules/.pnpm`。以下命令均在**根目录**执行。
 
 ### 1. 常用命令速查
 
-| 场景                        | 命令                               |
-| :-------------------------- | :--------------------------------- |
-| 全量安装 / 同步 lockfile    | `pnpm install`                     |
-| 根 package.json 加 dev 依赖 | `pnpm add -Dw <包名>`              |
-| 根 package.json 加生产依赖  | `pnpm add -w <包名>`               |
-| 指定子包装依赖              | `pnpm -F @app/renderer add <包名>` |
-| 写死版本、不走 catalog      | `pnpm add -Dw <包名>@<版本>`       |
+| 场景                                                       | 命令                               |
+| :--------------------------------------------------------- | :--------------------------------- |
+| 全量安装 / 同步 lockfile                                   | `pnpm install`                     |
+| 根 package.json 加 dev 依赖                                | `pnpm add -Dw <包名>`              |
+| 根 package.json 加生产依赖（仅 `@app/main`，业务依赖进包） | `pnpm add -w <包名>`               |
+| 指定子包装依赖                                             | `pnpm -F @app/renderer add <包名>` |
+| 写死版本、不走 catalog                                     | `pnpm add -Dw <包名>@<版本>`       |
 
 ### 2. 常用缩写与安装位置规则
 
@@ -183,7 +183,7 @@ Release 正文首行是 CHANGELOG 导航链接，其余由 GitHub 按本版合�
 
 ### 3. catalog 版本收敛
 
-安装的包命中 `pnpm-workspace.yaml` 的 `catalog:`（如 `typescript` / `vite` / `zod` / `react` / `@types/react` / `tailwindcss`）时，`pnpm add` 自动使用 `catalog:` 协议，真实版本收敛到 workspace 根。需在 `package.json` 写死版本、不跟随 catalog 时，指定与 catalog 不同的版本即可：
+安装的包命中 `pnpm-workspace.yaml` 的 `catalog:`（如 `typescript` / `vite` / `vitest` / `zod` / `react` / `@types/react` / `tailwindcss`）时，`pnpm add` 自动使用 `catalog:` 协议，真实版本收敛到 workspace 根。需在 `package.json` 写死版本、不跟随 catalog 时，指定与 catalog 不同的版本即可：
 
 ```bash
 pnpm add -Dw zod@4.7.1

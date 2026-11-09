@@ -13,7 +13,7 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 
 1. **根目录禁增业务依赖**：根 `package.json` 的 `dependencies` 只能包含 `@app/main`。（门禁：CI `verify:prebuild`）
 2. **禁止桶文件**：不得新增只做重导出的 `index.ts`，严禁 `export *`；Biome `noBarrelFile` /
-   `noReExportAll` 为 error，不设白名单。组件 `Xxx/index.tsx`（一组件一文件夹的本体实现）不是桶文件，除外。（例外澄清见 [CONTRIBUTING.md](CONTRIBUTING.md) §一.3）
+   `noReExportAll` 为 error，不设白名单。组件 `Xxx/index.tsx`（一组件一文件夹的本体实现）不是桶文件，除外。（例外澄清见 [CONTRIBUTING.md](CONTRIBUTING.md) §一.1）
 3. **路径推导最佳实践（非阻断门禁）**：Node 脚本与构建配置推荐优先基于 `__dirname` / `import.meta.dirname` 推导绝对路径，避免依赖 `process.cwd()` 产生工作目录偏移风险；作为工程指导原则遵循，非硬性机械阻断门禁。（事由：桌面快捷方式启动时工作目录偏移；规范见 [CONTRIBUTING.md](CONTRIBUTING.md) §七）
 4. **配置与依赖归属（所有权原则）**：有归属包的配置与运行时依赖进该包；跨包编排工具进 `.config/` 与根 `devDependencies`；只有工具解析机制强制才能留在根，且须在 CONTRIBUTING 的机制强制清单内备案。判定序与判例见 [CONTRIBUTING.md](CONTRIBUTING.md) §五、§六。
 
