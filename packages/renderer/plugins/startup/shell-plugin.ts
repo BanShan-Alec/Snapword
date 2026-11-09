@@ -15,7 +15,7 @@ import { build, normalizePath } from 'vite';
  * 压缩策略：dev（ctx.server 在场）不压缩，内联脚本可读便于排查；
  * build 开 minify，剥除产物内的 JSDoc/region 注释。
  *
- * 工具链红线（D10 / CONTRIBUTING §一.5）：仅用 Vite 8 / Rolldown / Oxc 原生能力。
+ * 工具链红线（D10 / CONTRIBUTING「代码风格与工具链」）：仅用 Vite 8 / Rolldown / Oxc 原生能力。
  * transformWithOxc 为单文件转译、不打包 import，故协调器用程序化 build() 内存打包：
  * configFile:false + write:false + format:'iife'，零新增依赖。
  * 不做打包缓存：实测该迷你构建仅 10~36ms（2026-10-06 基准），缓存属过度设计。

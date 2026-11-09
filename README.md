@@ -89,7 +89,7 @@ pnpm dev       # 开发模式：Vite DevServer + Electron 双进程热重载
 | `pnpm i18n:check`        | 校验英译完整性（CI 门禁）                                       |
 | `pnpm pr-review <cmd>`   | PR 生命周期：`create` / `status` / `pull` / `trigger` / `merge` |
 
-完整命令清单见 [CONTRIBUTING.md](CONTRIBUTING.md) 与根 `package.json` 的 `scripts`。
+完整命令清单见根 `package.json` 的 `scripts`。
 
 ## 文档
 
