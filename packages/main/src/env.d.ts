@@ -18,14 +18,11 @@ interface ImportMeta {
 /**
  * 主进程业务与运行时所使用的环境配置键名
  */
-export type EnvKey = 'SYSTEM_CODE' | 'DISTRIBUTION_CHANNEL' | 'SENTRY_DSN';
+export type EnvKey = 'API_BASE_URL' | 'SYSTEM_CODE' | 'DISTRIBUTION_CHANNEL' | 'SENTRY_DSN';
 
 declare global {
-  /** 编译期从根 package.json 的 version 注入的应用版本号 */
   const __APP_VERSION__: string;
-  /** 构建期从 env / CI secret 注入的 Sentry DSN（未配置时为空串） */
   const __SENTRY_DSN__: string;
-  /** 构建期注入的 Sentry Release 标识名称 */
   const __RELEASE_NAME__: string;
   /** 编译期从根 package.json 的 repository.url 解析出的 GitHub 发布源 owner */
   const __GITHUB_OWNER__: string;

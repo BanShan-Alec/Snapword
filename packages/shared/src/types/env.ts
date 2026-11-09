@@ -22,10 +22,12 @@ export interface AppRuntimeEnv {
   readonly appName: string;
   /** 发布与分发渠道 (如 'stable' | 'beta') */
   readonly channel?: string;
+  /** 基础 API 网关 URL */
+  readonly apiBaseUrl?: string;
+  /** 是否处于已打包二进制分发形态（Sentry 生产门控依据，preview 不启用） */
+  readonly isPackaged?: boolean;
   /** 系统编号 / 业务标识 */
   readonly systemCode?: string;
-  /** 是否处于已打包二进制分发形态（Sentry 生产门控依据） */
-  readonly isPackaged?: boolean;
   /** 生产监控 Sentry DSN (仅生产打包且显式配置时存在) */
   readonly sentryDsn?: string;
   /** 生产监控 Sentry Release 标识名称 */

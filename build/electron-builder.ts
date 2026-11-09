@@ -6,21 +6,6 @@ import { APP_IDENTITY } from './lib/app-identity';
 // 基于当前构建脚本目录确定全局确定的根目录
 const ROOT_DIR = join(__dirname, '..');
 
-// 应用身份与 OTA 仓库坐标唯一事实源：根目录 package.json（不接受 .env 覆盖）
-// repository.url 缺失时使用 'local' / 'app' 占位，保证更新元数据生成且绝不阻断打包
-const resolvedOwner = APP_IDENTITY.repositoryOwner || 'local';
-const resolvedRepo = APP_IDENTITY.repositoryName || 'app';
-
-/**
- * 品牌图标主源：packages/renderer/src/assets/logo.svg
- * 低频变更，不引入生成脚本；Snapword 仅发布 Windows，改主源后手工同步：
- * 1. 从 SVG 逐尺寸导出 16/20/24/32/40/48/64/128/256 PNG，打包为 build/resources/icon.ico
- *    （Windows 应用图标 + NSIS installer/uninstaller/header + Windows 托盘）
- * 2. 从 SVG 导出 512×512 PNG → build/resources/icon.png（Windows 托盘回退图标）
- * 3. favicon.svg 只同步 path，不重新导出
- * 工具不限：resvg / Inkscape 导出 PNG，png-to-ico / ImageMagick 生成 ICO。
- */
-
 const config: Configuration = {
   appId: APP_IDENTITY.appId,
   productName: APP_IDENTITY.productName,
@@ -31,8 +16,8 @@ const config: Configuration = {
   generateUpdatesFilesForAllChannels: true,
   publish: {
     provider: 'github',
-    owner: resolvedOwner,
-    repo: resolvedRepo,
+    owner: APP_IDENTITY.repositoryOwner,
+    repo: APP_IDENTITY.repositoryName,
     releaseType: 'release',
   },
   win: {
@@ -48,6 +33,11 @@ const config: Configuration = {
     ],
     icon: 'build/resources/icon.ico',
   },
+  portable: {
+    // 与 NSIS 安装包同为目标 exe，必须区分产物名避免互相覆盖
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder placeholder template
+    artifactName: '${name}-${version}-${os}-${arch}-portable.${ext}',
+  },
   nsis: {
     oneClick: false,
     perMachine: true,
@@ -61,11 +51,6 @@ const config: Configuration = {
     installerHeaderIcon: 'build/resources/icon.ico',
     deleteAppDataOnUninstall: false,
   },
-  portable: {
-    // 与 NSIS 安装包同为目标 exe，必须区分产物名避免互相覆盖
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder placeholder template
-    artifactName: '${name}-${version}-${os}-${arch}-portable.${ext}',
-  },
   extraResources: [
     {
       from: 'build/resources',
@@ -73,8 +58,9 @@ const config: Configuration = {
       filter: ['**/*'],
     },
     {
-      // B-03 §10.1：migrate() 运行时读盘；打包后定位 process.resourcesPath/drizzle
-      from: 'drizzle',
+      // B-03 §10.1：migrate() 运行时读盘；迁移产物归 main 包所有，
+      // 打包后定位 process.resourcesPath/drizzle
+      from: 'packages/main/drizzle',
       to: 'drizzle',
       filter: ['**/*'],
     },

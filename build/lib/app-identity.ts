@@ -3,8 +3,9 @@ import packageJson from '../../package.json';
 /**
  * 应用身份单一事实源解析（根目录 package.json）
  *
- * 构建期基础设施模块，服务两处消费方：
- * - build/electron-builder.ts：安装包命名、快捷方式名、appId、发布源
+ * 构建期基础设施模块，服务三处消费方：
+ * - build/electron-builder.ts：安装包命名、快捷方式名、appId、OTA 发布源
+ * - packages/main：编译期注入 GitHub 仓库坐标，供未打包形态手动 setFeedURL
  * - packages/renderer：构建期注入窗口标题（productName）
  *
  * .env 不参与身份与仓库坐标——应用名/标识/发布源属于产品身份，跟随代码仓库而非部署环境。
@@ -13,7 +14,7 @@ import packageJson from '../../package.json';
 export interface AppIdentity {
   /** package.json name：OTA 产物与小写命名规范 */
   name: string;
-  /** package.json version：安装包版本与构建期注入 */
+  /** package.json version：Sentry release 与构建期注入 */
   version: string;
   /** 桌面展示名：窗口标题、托盘、快捷方式 */
   productName: string;

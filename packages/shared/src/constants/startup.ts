@@ -2,7 +2,7 @@
  * 启动就绪契约常量 (Startup Readiness Contract)
  *
  * 四端耦合的单一事实源：主进程就绪源（startup-readiness.module）、preload 桥
- * （apiBridge.startup）、渲染端引导层（src/startup/coordinator.ts，构建期内联）
+ * （apiBridge.startup）、渲染端引导层（plugins/startup/coordinator.ts，构建期内联）
  * 与 React 通知器（StartupReadyNotifier）。改名必须跨端同步，唯一定义在本文件。
  */
 

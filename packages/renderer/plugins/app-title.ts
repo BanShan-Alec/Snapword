@@ -5,7 +5,7 @@ import { normalizePath } from 'vite';
 /**
  * 窗口标题构建期注入插件
  *
- * home 入口的 `<title>` 只写占位符 `__APP_TITLE__`，
+ * home / updater 两个 html 入口的 `<title>` 只写占位符 `__APP_TITLE__`，
  * dev 与 build 走同一 transformIndexHtml，用根 package.json 的 productName 替换。
  *
  * 事实链：productName → 构建期注入 document.title → Electron 加载后同步为窗口标题。
@@ -25,7 +25,7 @@ export interface AppTitlePluginOptions {
   appName: string;
 }
 
-/** 标题是 HTML 文本节点，转义产品名中的特殊字符 */
+/** 标题是 HTML 文本节点，转义产品名中的特殊字符（如模板使用者写成 "R&D"） */
 const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, '&amp;')
@@ -41,16 +41,17 @@ export function appTitlePlugin(options: AppTitlePluginOptions): Plugin {
     throw new Error('[app-title] 根 package.json 缺少 productName，无法注入窗口标题');
   }
 
-  const entryFiles = [path.resolve(root, 'src/entries/home/index.html')].map((file) =>
-    normalizePath(file).toLowerCase(),
-  );
+  const entryFiles = [
+    path.resolve(root, 'src/entries/home/index.html'),
+    path.resolve(root, 'src/entries/updater/index.html'),
+  ].map((file) => normalizePath(file).toLowerCase());
 
   return {
     name: 'app-title',
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
-        // 入口隔离：仅应用窗口接标题占位符，其它 html 原样放行。
+        // 入口隔离：仅两个应用窗口接标题占位符，其它 html 原样放行。
         // build 的 ctx.filename 经 normalizePath 为正斜杠，统一小写消除 Windows 大小写漂移
         const isAppEntry = entryFiles.includes((ctx.filename ?? '').toLowerCase());
         if (!isAppEntry) {

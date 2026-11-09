@@ -54,7 +54,7 @@ import type { EnvKey } from './env.d';
 
 /**
  * 读取动态环境配置：
- * 优先级 1：外部动态注入的带前缀环境变量 process.env[`${__ENV_PREFIX__}${key}`] (如 APP_SYSTEM_CODE)
+ * 优先级 1：外部动态注入的带前缀环境变量 process.env[`${__ENV_PREFIX__}${key}`] (如 APP_API_BASE_URL)
  * 优先级 2：调用处传入的显式 fallback (若提供)
  * 优先级 3：编译期 Vite define 注入的静态默认值快照 __ENV_DEFAULTS__[key]
  */
@@ -98,8 +98,9 @@ export function getRuntimeEnvSnapshot(): AppRuntimeEnv {
     appVersion: app.getVersion(),
     appName: app.getName(),
     channel: getEnv('DISTRIBUTION_CHANNEL') || undefined,
+    apiBaseUrl: getEnv('API_BASE_URL') || undefined,
+    isPackaged: app.isPackaged,
     systemCode: getEnv('SYSTEM_CODE') || undefined,
-    isPackaged,
     sentryDsn:
       getEnv('SENTRY_DSN') ||
       (typeof __SENTRY_DSN__ !== 'undefined' && __SENTRY_DSN__ ? __SENTRY_DSN__ : undefined),

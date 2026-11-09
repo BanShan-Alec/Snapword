@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__APP_TITLE__</title>
+    <script>
+      // 首帧主题由主进程经 URL query 显式传入（window 模块 resolveNativeTheme → shared STARTUP_THEME_QUERY_KEY）。
+      // 不读 prefers-color-scheme：system 模式的运行时变化由 useTheme 的 matchMedia 监听负责。
+      const startupTheme = new URLSearchParams(window.location.search).get('theme');
+      if (startupTheme === 'dark' || startupTheme === 'light') {
+        document.documentElement.dataset.theme = startupTheme;
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>

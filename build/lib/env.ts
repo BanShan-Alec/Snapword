@@ -4,7 +4,7 @@ import { findRepoRoot } from './repo-paths';
 /**
  * 构建期环境变量统一加载器
  *
- * 全仓构建脚本 / Vite 配置只允许经此加载根 .env，避免：
+ * 全仓构建脚本 / Vite 配置 / Sentry 配置只允许经此加载根 .env，避免：
  * - 多处 loadEnv 各自推导根目录与 mode 默认值（构建默认 production、dev 默认 development）
  * - `Object.assign(process.env, loadEnv(...))` 把 .env 的 MODE 反向覆盖 cross-env 注入值
  *

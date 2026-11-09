@@ -30,7 +30,7 @@ function FallbackView({ error, resetError }: FallbackProps) {
 
   const description = (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-base font-medium text-foreground">{t`页面出错了`}</span>
+      <span className="text-base font-medium text-foreground">{t`页面出错啦~`}</span>
       {isDev && errorMessage ? (
         <span className="text-xs text-foreground-secondary font-mono max-w-lg break-all text-center">
           {errorMessage}
@@ -52,7 +52,7 @@ function FallbackView({ error, resetError }: FallbackProps) {
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 p-6 bg-background text-foreground">
       <Empty image={Empty.PRESENTED_IMAGE_DEFAULT} description={description} />
       <Button type="primary" onClick={handleReload}>
-        {t`重新加载`}
+        {t`刷新重试`}
       </Button>
     </div>
   );
@@ -76,7 +76,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // 1. 生产打包且配置 DSN 时上报至 Sentry；未初始化时 captureException 为 no-op
+    // 1. 渲染进程崩溃捕获并上报至 Sentry
     Sentry.captureException(error, {
       tags: buildSentryTags(APP_FEATURES.RENDERER_HOME, {
         [SENTRY_TAGS.LOGGER]: this.constructor.name,
@@ -87,8 +87,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       },
     });
 
-    // 2. 本地落盘：Sentry 未激活（dev/测试/无 DSN）时这是渲染崩溃的唯一磁盘痕迹；
-    //    组件名取 componentStack 首帧（即崩溃组件本身），免翻长栈定位。
+    // 2. 落盘：Sentry 未激活（dev/无 DSN）时这是渲染崩溃的唯一磁盘痕迹；
+    //    组件名取 componentStack 首帧（即崩溃组件本身），免翻长栈定位
     const crashedComponent =
       /^\s*at\s+([A-Za-z0-9_$]+)/m.exec(errorInfo.componentStack ?? '')?.[1] ?? 'unknown';
     logger.error(`React component crashed in <${crashedComponent}>:`, error, {

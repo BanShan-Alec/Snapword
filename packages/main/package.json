@@ -2,6 +2,7 @@
   "name": "@app/main",
   "scripts": {
     "build": "vite build",
+    "db:generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit"
   },
   "main": "./dist/index.cjs",
@@ -16,7 +17,8 @@
     }
   },
   "dependencies": {
-    "drizzle-orm": "1.0.0-rc.5"
+    "drizzle-orm": "1.0.0-rc.5",
+    "electron-updater": "^6.8.11"
   },
   "devDependencies": {
     "@app/preload": "workspace:*",
@@ -25,7 +27,9 @@
     "@app/tsconfig": "workspace:*",
     "@sentry/electron": "^8.3.0",
     "@sentry/vite-plugin": "^5.4.0",
+    "drizzle-kit": "1.0.0-rc.5",
     "electron-log": "^5.4.4",
+    "electron-store": "^12.0.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:",

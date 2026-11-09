@@ -16,19 +16,9 @@ catalog:
 # pnpm 12 起非 auth/registry 设置只从本文件读取（.npmrc 仅剩 registry）
 nodeLinker: isolated
 autoInstallPeers: true
-publicHoistPattern:
-  - "@node-usb/*"
-  - "*usb*"
 
 # 供应链防护：发布不满 24 小时的依赖禁止安装（显式化默认值；临时豁免用 minimumReleaseAgeExclude）
 minimumReleaseAge: 1440
-
-# 豁免清单（精确到包名，勿用通配）：
-# - electron：B-01 §5.2 契约锁定 45.2.2；官方 release 渠道自带签名校验，且发版后常在 24h 内
-#   就需要进工程（2026-11-04 安装即被 1440 分钟窗拦下 ERR_PNPM_NO_MATURE_MATCHING_VERSION）。
-#   新版本 electron 到位后若长期无恙，可评估收窄或移除本豁免。
-minimumReleaseAgeExclude:
-  - electron
 
 # 构建脚本审批（strictDepBuilds 默认 true：未审批=安装失败 ERR_PNPM_IGNORED_BUILDS）。
 # 新增依赖撞该错误时：`pnpm ignored-builds` 查列表 → `pnpm approve-builds <包名>` 审批后决策落到此。
@@ -37,3 +27,5 @@ allowBuilds:
   "@sentry/cli": true
   "electron-winstaller": true
   esbuild: true
+  es5-ext: true
+  vue-demi: true

@@ -6,6 +6,7 @@ import {
   type ThemeMode,
 } from '@app/shared/constants/preferences';
 import { create } from 'zustand';
+import type { ResolvedTheme } from '@/styles/design-tokens';
 
 /**
  * 全局轻量应用状态（对齐 renderer/hooks-and-state.md 第 2 章）。
@@ -14,7 +15,6 @@ import { create } from 'zustand';
 
 // 私有常量
 export type { ThemeMode };
-export type ResolvedTheme = 'light' | 'dark';
 
 // 可抽离的逻辑处理函数/组件
 function resolveTheme(mode: ThemeMode): ResolvedTheme {

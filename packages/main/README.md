@@ -1,8 +1,8 @@
-# @app/main 主进程架构与 AI 开发指南
+# @app/main 主进程架构
 
 主进程充当运行在 Node.js 环境下的**本地微型后端**，负责操作系统底层交互、窗口生命周期管理以及对渲染进程提供强契约的 IPC 接口。
 
-> 🤖 **AI 协作者**：本包的目录结构 / 铁律 / 严禁清单 / 开发 SOP 已收敛至 [AGENTS.md](./AGENTS.md)，动手前必读；全局红线与全仓任务路由见 [根 AGENTS.md](../../AGENTS.md)。
+> 架构分层、核心铁律与业务开发 SOP 见 [AGENTS.md](./AGENTS.md)；全局红线与任务路由见 [根 AGENTS.md](../../AGENTS.md)。
 
 ---
 
