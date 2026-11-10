@@ -34,10 +34,19 @@ async function setChineseLanguage(page: import('@playwright/test').Page) {
 async function homeWindowExists(
   electronApp: Awaited<ReturnType<typeof launchElectronApp>>['electronApp'],
 ) {
+  // 防御竞态：窗口销毁与 getAllWindows 快照之间可能交错，
+  // 已销毁窗口再读 webContents 会抛 "Object has been destroyed"（CI 上必现）
   return electronApp.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows().some(
-      (window) => !window.isDestroyed() && !window.webContents.getURL().includes('updater'),
-    ),
+    BrowserWindow.getAllWindows().some((window) => {
+      if (window.isDestroyed()) {
+        return false;
+      }
+      try {
+        return !window.webContents.getURL().includes('updater');
+      } catch {
+        return false;
+      }
+    }),
   );
 }
 
