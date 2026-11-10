@@ -13,8 +13,10 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 
 1. **根目录禁增业务依赖**：根 `package.json` 的 `dependencies` 只能包含 `@app/main`。（门禁：CI `verify:prebuild`）
 2. **禁止桶文件**：不得新增只做重导出的 `index.ts`，严禁 `export *`；Biome `noBarrelFile` /
-   `noReExportAll` 为 error，不设白名单。组件 `Xxx/index.tsx`（一组件一文件夹的本体实现）不是桶文件，除外。（例外澄清见 [CONTRIBUTING.md](CONTRIBUTING.md) §一.3）
-3. **路径推导最佳实践（非阻断门禁）**：Node 脚本与构建配置推荐优先基于 `__dirname` / `import.meta.dirname` 推导绝对路径，避免依赖 `process.cwd()` 产生工作目录偏移风险；作为工程指导原则遵循，非硬性机械阻断门禁。（事由：桌面快捷方式启动时工作目录偏移；规范见 [CONTRIBUTING.md](CONTRIBUTING.md) §七）
+   `noReExportAll` 为 error，不设白名单。组件 `Xxx/index.tsx`（一组件一文件夹的本体实现）不是桶文件，除外。（例外澄清见 [CONTRIBUTING.md](CONTRIBUTING.md) §一「代码风格与工具链」）
+3. **路径推导最佳实践（非阻断门禁）**：Node 脚本与构建配置推荐优先基于 `__dirname` / `import.meta.dirname` 推导绝对路径，避免依赖 `process.cwd()` 产生工作目录偏移风险；作为工程指导原则遵循，非硬性机械阻断门禁。（事由：桌面快捷方式启动时工作目录偏移；规范见 [CONTRIBUTING.md](CONTRIBUTING.md) §五「Node 脚本与构建配置」）
+4. **配置与依赖归属（所有权原则）**：有归属包的配置与运行时依赖进该包；跨包编排工具进 `.config/` 与根 `devDependencies`；只有工具解析机制强制才能留在根，且须在 CONTRIBUTING 的机制强制清单内备案。判定序与判例见 [CONTRIBUTING.md](CONTRIBUTING.md) §三「配置与依赖归属」。
+5. **文档与代码同 PR 同步**：新增 / 删除目录、模块、导出、脚本或依赖时，同一 PR 内更新对应包 `AGENTS.md`；规则表述与代码冲突时先改文档使其可执行。（细则见 [CONTRIBUTING.md](CONTRIBUTING.md) §六「文档同步纪律」）
 
 ## 3. 包索引（规则真源在各包 AGENTS.md）
 
@@ -38,18 +40,20 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 
 ### 4.2 任务路由导航
 
-| 研发任务 / 关注点                              | 核心规则指引（唯一真源）                                                         |
-| :--------------------------------------------- | :------------------------------------------------------------------------------- |
-| 新增跨端业务域 (全栈 SOP)                      | 四包各自的 `AGENTS.md`（按上述 4.1 流水线顺序落地）                              |
-| 主进程模块装配 / 生命周期 / 托盘 / 窗口        | [packages/main/AGENTS.md](packages/main/AGENTS.md)                               |
-| 安全桥接 / contextBridge / IPC 追踪            | [packages/preload/AGENTS.md](packages/preload/AGENTS.md)                         |
-| 渲染层 Feature 划分 / manual-only / 组件七段式 | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md)                       |
-| 跨端契约 / Zod Schema / MODE 环境流转          | [packages/shared/AGENTS.md](packages/shared/AGENTS.md)                           |
-| 视觉 / 设计 Token / 品牌定制                   | [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)             |
-| 多语言词条与国际化 (LinguiJS)                  | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md) §6                    |
-| 日志输出 / 异常处理 / 链路追踪规范             | [.agents/rules/logging-specification.md](.agents/rules/logging-specification.md) |
-| PR 审查 / OpenCodeReview 工作流                | [.agents/skills/pr-review/SKILL.md](.agents/skills/pr-review/SKILL.md)           |
-| 工程规范 / Commit 纪律 / 路径推导              | [CONTRIBUTING.md](CONTRIBUTING.md)                                               |
+| 研发任务 / 关注点                              | 核心规则指引（唯一真源）                                                                                                                           |
+| :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 新增跨端业务域 (全栈 SOP)                      | 四包各自的 `AGENTS.md`（按上述 4.1 流水线顺序落地）                                                                                                |
+| 主进程模块装配 / 生命周期 / 托盘 / 窗口        | [packages/main/AGENTS.md](packages/main/AGENTS.md)                                                                                                 |
+| 安全桥接 / contextBridge / IPC 追踪            | [packages/preload/AGENTS.md](packages/preload/AGENTS.md)                                                                                           |
+| 渲染层 Feature 划分 / manual-only / 组件七段式 | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md)                                                                                         |
+| 跨端契约 / Zod Schema / MODE 环境流转          | [packages/shared/AGENTS.md](packages/shared/AGENTS.md)                                                                                             |
+| 视觉 / 设计 Token / 品牌定制                   | [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                                               |
+| 多语言词条与国际化 (LinguiJS)                  | [packages/renderer/AGENTS.md](packages/renderer/AGENTS.md) §6                                                                                      |
+| 取词 / 翻译 / 提示词                           | [docs/PRD-v2.md](docs/PRD-v2.md) · [docs/prompt-contract.md](docs/prompt-contract.md) · [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md) |
+| 数据模型 / 迁移 / 同步                         | [docs/data-model.md](docs/data-model.md) · [docs/adr/](docs/adr/)                                                                                  |
+| 日志输出 / 异常处理 / 链路追踪规范             | [.agents/rules/logging-specification.md](.agents/rules/logging-specification.md)                                                                   |
+| PR 审查 / OpenCodeReview 工作流                | [.agents/skills/pr-review/SKILL.md](.agents/skills/pr-review/SKILL.md)                                                                             |
+| 工程规范 / Commit 纪律 / 路径推导              | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                                                                 |
 
 ## 5. 开发流与验证门禁矩阵（根目录执行）
 
@@ -64,7 +68,8 @@ Playwright（E2E，真实 Electron 窗口）· pnpm 12 monorepo · Node >= 24
 
 ## 6. 指针
 
-- 全局工程规范与协作基础设施（Git 规范 / PR 闭环 / 发版 SOP / pnpm 12 机制 / build/lib）：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 全局工程规范与协作基础设施（Git 规范 / PR 闭环 / pnpm 12 机制 / build/lib）：[CONTRIBUTING.md](CONTRIBUTING.md)
+- PR / CI 门禁清单与发版 SOP：[.github/CICD.md](.github/CICD.md)
 - 横切规则（globs 触发，落盘日志英文）：[.agents/rules/logging-specification.md](.agents/rules/logging-specification.md)
 
 ## 7. 模块系统与脚本执行约定

@@ -1,4 +1,4 @@
-# AI CI/CD 与 PR 标准作业程序 (AI SOP)
+# Snapword CI/CD 与 PR 标准作业程序 (AI SOP)
 
 > 本文档专为协同编程 AI Agent 与开发者编写。定义了本仓库在代码提交、验证、创建 PR、合并与发版过程中的**硬性规范、权限边界与标准化步骤**。
 
@@ -94,7 +94,22 @@ GitHub Actions 流水线（`.github/workflows/ci.yml`）：
 - **`lint`**（**Required**）：Biome 格式与规则扫描。
 - **`test`**（**Required**）：Vitest 快速单元测试。
 - **`e2e`**（**Required**）：Playwright + Electron 完整回归测试。
-- **`docs`**（**Required**）：Vocs 文档站构建（含站内死链校验）。
 - _CodeQL_ 与 _OpenCodeReview_（信息性）：安全漏洞与 AI 增量代码审查（详见 [packages/pr-review/README.md](../packages/pr-review/README.md)）。新开 PR 自动审查；后续提交可在 PR 评论回复 `/review` 手动触发增量复查，不阻塞合入。
 
-分支保护要求所有变更经 PR、squash 合并、以上五个 check 全绿才可合入——`main` 上每个提交都对应一个完整 PR，回滚与 changelog 都以 PR 为单位。
+分支保护要求所有变更经 PR、squash 合并、以上四个 check 全绿才可合入——`main` 上每个提交都对应一个完整 PR，回滚与 changelog 都以 PR 为单位。
+
+---
+
+## 🚀 4. 发版 SOP（changelogen + tag 驱动）
+
+发版命令与版本推导规则以根 `package.json` scripts 与 `.config/changelog.config.ts` 为准。流程：
+
+1. 从 main 切 `chore/release-vX.Y.Z` 分支；确认 lint / typecheck 为 0 错误后运行 Release 命令（如 `pnpm release:minor`，生成版本号与 CHANGELOG 提交）；
+2. `pnpm pr-review create` 开 PR；**删除分支上的本地 tag**（`git tag -d vX.Y.Z`，squash 合并会改变提交 SHA，旧 tag 作废）；
+3. PR 合并后在 main 上重新打 tag 并推送：
+
+   ```bash
+   git pull && git tag vX.Y.Z && git push origin vX.Y.Z
+   ```
+
+4. Actions 监听 tag 推送（`.github/workflows/release.yml`），构建 Windows 原生安装包（NSIS + portable）并发布 GitHub Release（标题 = productName + tag；正文首行 CHANGELOG 导航，其余由 GitHub 按本版合并的 PR 自动生成）。
