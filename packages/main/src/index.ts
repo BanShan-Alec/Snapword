@@ -104,7 +104,7 @@ app.on('before-quit', (event) => {
   appLifecycle.isQuitting = true;
   event.preventDefault();
   const logger = getLogManager().scoped('App Lifecycle');
-  logger.info('App quitting: begin ordered shutdown (B-01 §8)');
+  logger.info('App quitting: begin ordered shutdown');
 
   void (async () => {
     try {

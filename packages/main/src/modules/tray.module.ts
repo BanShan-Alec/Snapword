@@ -68,7 +68,8 @@ export class TrayManager implements AppModule {
 
   /**
    * 取词服务故障托盘提示（B-01 §7/§9.1 失败表）。
-   * 文案随 config 语言偏好走 mainMessage 解析；点击跳转诊断入口待 P5 接线。
+   * UI balloon 随 config 语言偏好走 mainMessage 解析；落盘日志固定英文
+   * （logging-spec §1 强制纯英文）。点击跳转诊断入口待 P5 接线。
    */
   public notifyCaptureServiceIssue(kind: 'startup' | 'crash'): void {
     const lang = getAppConfigStore().get('language');
@@ -76,7 +77,9 @@ export class TrayManager implements AppModule {
       kind === 'crash'
         ? mainMessage(lang, 'captureServiceCrashed')
         : mainMessage(lang, 'captureServiceStartupFailed');
-    this.logger.warn(`[capture-service] ${content}`);
+    this.logger.warn(
+      `[capture-service] ${kind === 'crash' ? 'capture service crashed' : 'capture service failed to start'}`,
+    );
     if (process.platform === 'win32' && this.tray) {
       this.tray.displayBalloon({
         iconType: 'warning',
