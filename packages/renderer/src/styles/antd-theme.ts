@@ -1,19 +1,20 @@
-import { theme } from 'antd';
-import { BRAND_PRIMARY, CSS_VAR_KEY, type ResolvedTheme } from './design-tokens';
+import type { ThemeConfig } from 'antd';
+import { claudeLightTheme, paseoDarkTheme } from 'paseo-antd-themes';
 
 /**
- * antd 主题配置：官方算法 + 一个品牌种子 + cssVar 作用域。
- * cssVar.key 会被 antd 原样用作类名；applyColorScheme 负责把它挂到 <html>。
- * controlHeightSM=28 是刻意的密度选择（antd 默认 24）。
+ * antd 主题配置（C-05）：浅色槽 = Claude Light，深色槽 = Paseo Dark。
+ * 两套是 paseo-antd-themes 的完整 ThemeConfig（algorithm 钉死调色板 +
+ * 形态 token：40/32/48 控件、12/8 圆角、14px 正文），不要在这里再叠 token ——
+ * 包的 algorithm 会把 seed 覆盖层剥掉，改色走包的 extendTheme。
+ * 槽位选择由 zustand resolvedTheme（system 解析结果）驱动，见 hooks/useTheme.ts。
  */
 
-export function getAntdThemeConfig(mode: ResolvedTheme) {
-  return {
-    algorithm: mode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
-    cssVar: { key: CSS_VAR_KEY },
-    token: {
-      colorPrimary: BRAND_PRIMARY,
-      controlHeightSM: 28,
-    },
-  };
+// 私有常量
+const THEME_SLOTS: Record<'light' | 'dark', ThemeConfig> = {
+  light: claudeLightTheme,
+  dark: paseoDarkTheme,
+};
+
+export function getAntdThemeConfig(mode: 'light' | 'dark'): ThemeConfig {
+  return THEME_SLOTS[mode];
 }
