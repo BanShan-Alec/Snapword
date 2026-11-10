@@ -1,6 +1,7 @@
 import { memo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Header } from '@/components/layout/Header';
+import { SettingsFeature } from '@/features/settings';
 
 /**
  * 路由切换叙事：每次路径变化落一行 info（首次渲染即初始路由）。
@@ -27,7 +28,10 @@ const _App = () => {
       {/* Main Content Area */}
       <main className="relative flex-1 min-h-0 w-full overflow-hidden">
         <div className="h-full w-full overflow-y-auto stable-scrollbar">
-          <div className="max-w-7xl mx-auto p-6" />
+          <div className="max-w-7xl mx-auto p-6">
+            {/* 验收期：主题/语言切换入口（P5 主链路接入后再迁移到设置路由） */}
+            <SettingsFeature />
+          </div>
         </div>
       </main>
     </div>
