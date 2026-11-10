@@ -43,8 +43,15 @@ export const OTA_STAGES = {
 
 export type OtaStage = (typeof OTA_STAGES)[keyof typeof OTA_STAGES];
 
+/**
+ * release notes 在本应用里只按纯文本渲染（ChangelogCard 直接插文本，不走 innerHTML），
+ * 这里的目标是去掉标签噪音而非做 HTML 消毒。一次性剥除全部尖括号：
+ * 「单次标签正则」会被嵌套标签绕过（`<scr<script>ipt>` 删完仍剩 `<script>`，
+ * CodeQL js/incomplete-multi-character-sanitization），而纯文本输出框下
+ * 尖括号本来就无需保留。
+ */
 function stripHtml(input: string): string {
-  return input.replace(/<[^>]*>?/gm, '');
+  return input.replace(/[<>]/g, '');
 }
 
 function normalizeReleaseNotes(raw: unknown): string[] {
