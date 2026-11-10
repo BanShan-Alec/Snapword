@@ -58,9 +58,23 @@ test.describe('首次关闭确认', () => {
       await expect(trayAction).toBeFocused();
       await closeHomeWindow(ctx.electronApp);
       await expect(ctx.page.locator('.ant-modal')).toHaveCount(1);
-      await trayAction.click();
+      // 该点击会同步触发窗口销毁：用 evaluate 派发 DOM click，避免 Playwright
+      // 在动作收尾阶段发现 page 已关闭而抛「Target page ... closed」（CI 时序竞态）
+      await trayAction.evaluate((el: HTMLElement) => el.click());
 
       await expect.poll(() => homeWindowExists(ctx.electronApp), { timeout: 5_000 }).toBe(false);
+      // 配置落盘发生在关闭处理链中，轮询等待文件可见
+      await expect
+        .poll(() => {
+          try {
+            return JSON.parse(
+              fs.readFileSync(path.join(ctx.tempUserDataDir, 'config.json'), 'utf-8'),
+            ).closeBehaviorConfirmed;
+          } catch {
+            return false;
+          }
+        })
+        .toBe(true);
       const savedConfig = JSON.parse(
         fs.readFileSync(path.join(ctx.tempUserDataDir, 'config.json'), 'utf-8'),
       );
@@ -119,7 +133,10 @@ test.describe('首次关闭确认', () => {
 
       await closeHomeWindow(ctx.electronApp);
       await expect(ctx.page.getByRole('dialog')).toBeVisible();
-      await ctx.page.getByRole('button', { name: '退出应用', exact: true }).click();
+      // 同上：该点击触发应用退出，改用 evaluate 派发避免 page-closed 竞态
+      await ctx.page
+        .getByRole('button', { name: '退出应用', exact: true })
+        .evaluate((el: HTMLElement) => el.click());
 
       await ctx.electronApp.waitForEvent('close', { timeout: 10_000 });
     } finally {
