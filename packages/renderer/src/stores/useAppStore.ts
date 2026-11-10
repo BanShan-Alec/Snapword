@@ -33,9 +33,6 @@ interface AppState {
   setThemeMode: (mode: ThemeMode) => void;
   language: LanguageMode;
   setLanguage: (language: LanguageMode) => void;
-  /** 翻译页输入草稿：路由切换会卸载页面，草稿必须放在共享 store 里（RM-03） */
-  translateInput: string;
-  setTranslateInput: (value: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -44,6 +41,4 @@ export const useAppStore = create<AppState>((set) => ({
   setThemeMode: (themeMode) => set({ themeMode, resolvedTheme: resolveTheme(themeMode) }),
   language: DEFAULT_LANGUAGE,
   setLanguage: (language) => set({ language }),
-  translateInput: '',
-  setTranslateInput: (translateInput) => set({ translateInput }),
 }));

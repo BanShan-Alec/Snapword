@@ -14,7 +14,7 @@
 | `components/` | 跨 feature 复用的通用 UI（`ui/` 展示原子，`layout/` 全局骨架）        | 一组件一文件夹（`Xxx/index.tsx`），被 2 个以上域共用才上提      |
 | `hooks/`      | 跨域基础 hooks（`useManualRequest`, `useIpc`, `useTheme`）            | 请求与应用级状态抽象，禁止在业务组件中直连原生 ahooks           |
 | `lib/`        | 跨域底层能力（`ipc.ts` 契约解构与追踪、`classNames.ts`、`sentry.ts`） | 纯工具函数与全局运行时初始化                                    |
-| `locales/`    | LinguiJS 国际化模块（`zh-CN`, `en` 字典与 `dynamicActivate`）         | 中文源码作为 msgid（Source-as-Key），运行时按需加载语言包 Chunk |
+| `locales/`    | LinguiJS 国际化模块（`zh-CN`, `en-US` 字典与 `dynamicActivate`）      | 中文源码作为 msgid（Source-as-Key），运行时按需加载语言包 Chunk |
 | `stores/`     | 全局 Zustand 状态（主题、语言等跨窗口/跨域状态）                      | 仅存放全应用级公共状态                                          |
 
 ## 2. 分层依据
@@ -25,7 +25,7 @@
 **第二层：按有无副作用切**——`features/<domain>/hooks/` 统一持有状态与 IPC 副作用，输出 View Model（`{ state, handlers }`）；
 `features/<domain>/components/` 保持纯展示，仅通过 props 接收数据、通过 callback 输出交互，不碰 IPC、不持有跨卡片状态。
 
-**依赖方向单向流动**：严格遵循 `entries ➔ features ➔ 跨域层`。Feature 之间互相独立，禁止互相 import；Snapword 当前无编排域。
+**依赖方向单向流动**：严格遵循 `entries ➔ features ➔ 跨域层`。Feature 之间互相独立，禁止互相 import；唯一合法例外是 `dashboard` 编排域，跨域组合一律在此完成。
 
 ## 3. Feature 规范
 
@@ -123,7 +123,7 @@ export const UserCard = memo(_UserCard);
 ## 6. 国际化 (i18n)
 
 - **源码直书中文**：文案以 LinguiJS 的 `t` 宏包裹（`t`文案``），中文原文即 msgid（Source-as-Key），杜绝层级 JSON 键名。
-- **提取与完整性校验**：改动文案后必须在根目录执行 `pnpm i18n:extract` 抽词条并补充 `en/messages.po` 翻译，随后运行 `pnpm i18n:check`（缺译即失败）。
+- **提取与完整性校验**：改动文案后必须在根目录执行 `pnpm i18n:extract` 抽词条并补充 `en-US/messages.po` 翻译，随后运行 `pnpm i18n:check`（缺译即失败）。
 - **动态按需加载**：`locales/i18n.ts` 经 `dynamicActivate` 动态加载语言包 Chunk，组件通过 `useLingui()` 响应式监听语言切换。
 
 ## 7. 提交前门禁

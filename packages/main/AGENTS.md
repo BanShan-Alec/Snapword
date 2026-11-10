@@ -106,17 +106,7 @@ export function registerAllControllers(): void {
 }
 ```
 
-## 5. 数据库访问规则（Drizzle + node:sqlite）
-
-> 完整契约见 `docs/data-model.md`（B-03 v2.0）与 `docs/adr/0003-use-drizzle-orm.md`；此处只列编码硬规则。
-
-- **schema 唯一事实源**：`src/db/schema.ts`；迁移 SQL 由 `pnpm --filter @app/main db:generate`（即 `drizzle-kit generate`，配置在本包 `drizzle.config.ts`）生成并提交，**禁止手改生成 SQL**（唯一例外：B-03 §10.1 的 rc.5 #6165 NOT NULL 补丁）。
-- **初始化与退出**：`db/client.ts` 的 `initializeDatabase()`（迁移连接 FK off → `migrate()` → 运行时连接 FK on/WAL）在主进程启动序列接线（当前 P4 为未接线的库层，P5 落地）；退出前必须调用 `closeDatabase()` 做 checkpoint。
-- **访问方式**：Service 层经 `getDb()` 取实例；Controller 禁止触碰数据库（见 §3 Anti-Patterns）。
-- **迁移守卫**：`DbNewerThanAppError` / `MigrationIncompleteError` / `MigrationTableUnsupportedError` 必须映射为带 `ErrorCode` 的失败路径，不得静默吞掉。
-- **验证**：`pnpm db:smoke`（根目录，临时库真实走 `migrate()` + 三表/守卫/PRAGMA 断言）。
-
-## 6. 提交前门禁
+## 5. 提交前门禁
 
 - 根目录执行：`pnpm typecheck` · `pnpm lint` · `pnpm test`。
 - 修改主进程生产依赖或 Vite 配置后，必须本地执行并通过：`pnpm verify:prebuild`。

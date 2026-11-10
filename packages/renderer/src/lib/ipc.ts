@@ -45,8 +45,8 @@ export type IpcApiData<P extends IpcApiPath> =
   IpcApiService<P> extends (...args: never[]) => Promise<Result<infer TData>> ? TData : never;
 
 /**
- * IPC 失败语义化错误：保留主进程 Result 契约中的 code，调用方可按错误码分支
- * （如 UPDATER_NOT_CONFIGURED），而不是解析错误文案。
+ * IPC 失败语义化错误：保留主进程 Result 契约中的 code，调用方可按错误码分支（如 DIVIDE_BY_ZERO），
+ * 而不是解析错误文案。
  */
 export class IpcError extends Error {
   readonly code?: string;

@@ -6,9 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24.0.0-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 
-**当前状态：P4 工程骨架完成，进入 P5 主链路开发。**
+**当前状态：P4 工程底座完成（按干净 temp5 基座重新实现），进入 P5 主链路开发。**
 
-产品与交互设计、4 份阻塞契约（架构 / IPC / DB / 提示词）与 UIA 技术验证（D-1 30/30，P95 16.2/24.2ms，Q-6 93.3%，同源 iframe 10/10）均已完成；P4 已落地 temp5 基座、antd v6 双主题、双语 i18n、取词链路与 DB 第一片。下一步按 v2.0 交互基线开发主链路。
+产品与交互设计、4 份阻塞契约（架构 / IPC / DB / 提示词）与 UIA 技术验证（D-1 30/30，P95 16.2/24.2ms，Q-6 93.3%，同源 iframe 10/10）均已完成。工程侧已落地：temp5@929b199 基座、paseo 双主题（token / behavior 注入）、设置页主题与语言切换、WCO 与窗口底色对齐。取词链路、DB、六个业务域按 P5 从零实现（不沿用旧 P4 移植代码，旧实现仅作参考）。
 
 ---
 
@@ -36,8 +36,8 @@ Snapword 把划词链路压到 2 个动作：**选中 → 点圆点**；主窗�
 | 产品与交互设计 | ✅ PRD v2.0 三窗口基线（圆点 / 翻译卡片 / 主窗口）+ 交互规格             |
 | 技术契约       | ✅ 架构（B-01）、IPC（B-02）、DB schema v2.0（B-03）、提示词（B-04）     |
 | UIA 技术验证   | ✅ D-1 30/30、Q-6 93.3%、同源 iframe 10/10；Q-2 / Q-7 / 多屏等明确不支持 |
-| P4 工程骨架    | ✅ temp5 基座 + antd v6 双主题 + 双语 i18n + 取词链路 + DB 第一片        |
-| P5 主链路      | ⬜ 下一阶段                                                              |
+| P4 工程底座    | ✅ temp5 基座 + paseo 双主题（token/behavior）+ 设置/主题切换 + WCO 配色 |
+| P5 主链路      | 🔄 进行中：取词 addon → capture → DB → 翻译 → 三窗口 → 收藏              |
 | 安装包 / 发布  | ⬜ 未开始（发版流程见 [.github/CICD.md](.github/CICD.md)）               |
 
 ## 仓库架构
@@ -56,7 +56,7 @@ snapword/
 ├── .github/           # CI / CodeQL / OpenCodeReview / Release
 ├── build/             # electron-builder + Sentry 构建配置
 ├── docs/              # PRD / 交互规格 / 技术契约 / ADR / 研究
-├── drizzle/           # Drizzle 迁移
+├── drizzle/           # Drizzle 迁移（P5 实现 DB 后落盘）
 ├── e2e/               # Playwright 桌面端 E2E
 └── scripts/           # dev / build / verify / contrast-check
 ```

@@ -27,18 +27,14 @@ test.describe
       }
       const [win] = await Promise.all([
         electronApp.waitForEvent('window'),
-        mainPage.evaluate(() =>
-          (
-            window as unknown as { api: { updater: { openWindow: () => Promise<unknown> } } }
-          ).api.updater.openWindow(),
-        ),
+        mainPage.getByRole('button', { name: /检查更新|Check for updates/ }).click(),
       ]);
       await win.waitForLoadState('domcontentloaded');
       return win;
     }
 
-    test('用例 1：updater.openWindow API 触发与更新窗口弹出', async ({ page, electronApp }) => {
-      // 1. 经 window.api.updater.openWindow 触发，并监听捕获新的 updater 窗口
+    test('用例 1：设置页触发与更新窗口弹出', async ({ page, electronApp }) => {
+      // 1. 在主窗口 Settings 区域点击「检查更新」按钮，并监听捕获新的 updater 窗口
       updaterPage = await ensureUpdaterWindow(electronApp, page);
 
       // 2. 断言其 URL 包含 updater
@@ -269,14 +265,10 @@ test.describe
         });
       });
 
-      // 主窗口再次经 API 触发，重新创建并拉起更新窗口
+      // 主窗口再次点击「检查更新」，重新创建并拉起更新窗口
       const [newUpdaterPage] = await Promise.all([
         electronApp.waitForEvent('window'),
-        page.evaluate(() =>
-          (
-            window as unknown as { api: { updater: { openWindow: () => Promise<unknown> } } }
-          ).api.updater.openWindow(),
-        ),
+        page.getByRole('button', { name: /检查更新|Check for updates/ }).click(),
       ]);
       await newUpdaterPage.waitForLoadState('domcontentloaded');
 
@@ -314,9 +306,9 @@ test.describe
       try {
         // 切到 en-US：两个窗口经 config.onChanged 同步重渲染
         await page.evaluate(async () => {
-          await (window as any).api?.config?.update?.({ language: 'en' });
+          await (window as any).api?.config?.update?.({ language: 'en-US' });
         });
-        await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+        await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
 
         updaterPage = await ensureUpdaterWindow(electronApp, page);
         // 关闭按钮的 aria-label 走 t 宏，是与更新状态无关的稳定断言点

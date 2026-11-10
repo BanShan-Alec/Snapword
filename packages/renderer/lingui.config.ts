@@ -2,7 +2,7 @@ import type { LinguiConfig } from '@lingui/conf';
 import { formatter } from '@lingui/format-po';
 
 const config: LinguiConfig = {
-  locales: ['zh-CN', 'en'],
+  locales: ['zh-CN', 'en-US'],
   sourceLocale: 'zh-CN',
   catalogs: [
     {

@@ -1,9 +1,7 @@
-# Snapword 发版流水线：本地 changelogen 提升版本并推送 v* tag 后自动触发，Windows-only 构建并发布 GitHub Release。
+# 发版流水线:本地 changelogen 提升版本并推送 v* tag 后自动触发,三平台构建并发布 GitHub Release。
 # CI 内不提升版本号——package.json 的版本由 changelogen 的发版提交保证与 tag 一致。
-# Release 标题 = package.json 的 productName + tag；正文首行给 CHANGELOG 导航，其余由 GitHub 按本版合并的 PR 自动生成。
-# 手动 dispatch 仅构建不发布，用于验证构建管线。
-# Sentry：SENTRY_DSN 注入运行时 DSN（空则生产 Sentry 关闭）；SENTRY_AUTH_TOKEN 存在时
-#          Vite 插件才上传 SourceMap，无 token 自动跳过，不影响构建。
+# Release 标题 = package.json 的 productName + tag;正文首行给 CHANGELOG 导航,其余由 GitHub 按本版合并的 PR 自动生成。
+# 手动 dispatch 仅构建不发布,用于验证构建管线。
 name: Release App
 
 on:
@@ -20,27 +18,52 @@ permissions:
 
 jobs:
   build:
-    name: Build (windows)
-    runs-on: windows-latest
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
-      # DSN / ORG / PROJECT 来自仓库内 .env（与 temp5 约定一致）；这里只注入上传 SourceMap 用的 token
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-env
 
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
       - name: Build Application (Windows)
+        if: runner.os == 'Windows'
         run: pnpm run build:win -- -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Application (macOS)
+        if: runner.os == 'macOS'
+        run: pnpm run build:mac -- -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Application (Linux)
+        if: runner.os == 'Linux'
+        run: pnpm run build:linux -- -p never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts-windows
+          name: artifacts-${{ matrix.os }}
           path: |
             dist/*.exe
+            dist/*.dmg
+            dist/*.deb
+            dist/*.zip
             dist/*.yml
             dist/*.blockmap
           if-no-files-found: error
@@ -72,7 +95,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          # 标题 = productName + tag；正文首行给 CHANGELOG 导航，其余交给 GitHub 按合并的 PR 生成
+          # 标题 = productName + tag;正文首行给 CHANGELOG 导航,其余交给 GitHub 按合并的 PR 生成
           name: ${{ steps.identity.outputs.product_name }} ${{ github.ref_name }}
           body: |
             📖 完整变更日志见 [CHANGELOG.md](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md)

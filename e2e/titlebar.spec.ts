@@ -32,30 +32,25 @@ test.describe('TitleBarOverlay (WCO) E2E 验证', () => {
       expect(state.wcoVisible).toBe(true);
       expect(state.area).not.toBeNull();
       expect(state.paddingRight).toBeGreaterThan(0);
-      // 头部保持 32px 系统标题栏自然高度，不被 overlay 压扁
-      expect(state.headerHeight).toBeGreaterThanOrEqual(32);
+      // 头部保持内容自然高度，不被 overlay 高度压扁
+      expect(state.headerHeight).toBeGreaterThan(40);
     } else if (platformClass === 'platform-darwin') {
       // macOS: overlay 仅启用 env(titlebar-area-x)，红绿灯左侧避让
       expect(state.paddingLeft).toBeGreaterThan(0);
     }
   });
 
-  test('config 主题变更触发 overlay 同步且页面可正常交互', async ({ page }) => {
+  test('主题切换触发主进程 overlay 同步且页面可正常交互', async ({ page }) => {
     const html = page.locator('html');
+    const themeSelect = page.locator('#theme-select');
 
-    // 经 config.update 驱动（与设置页同一链路）：广播 → store → useTheme → 主进程 overlay
-    await page.evaluate(() =>
-      (
-        window as unknown as { api: { config: { update: (input: unknown) => Promise<unknown> } } }
-      ).api.config.update({ theme: 'dark' }),
-    );
+    // 前序用例可能已把语言切到 en-US，选项文案按中英文同时匹配
+    await themeSelect.click();
+    await page.locator('.ant-select-item-option-content', { hasText: /深色模式|Dark/ }).click();
     await expect(html).toHaveAttribute('data-theme', 'dark');
 
-    await page.evaluate(() =>
-      (
-        window as unknown as { api: { config: { update: (input: unknown) => Promise<unknown> } } }
-      ).api.config.update({ theme: 'light' }),
-    );
+    await themeSelect.click();
+    await page.locator('.ant-select-item-option-content', { hasText: /浅色模式|Light/ }).click();
     await expect(html).toHaveAttribute('data-theme', 'light');
   });
 });

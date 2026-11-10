@@ -1,6 +1,6 @@
 # DESIGN.md — renderer 视觉规范
 
-AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：唯一来源是 `src/styles/design-tokens.ts` 的 `BRAND_PRIMARY`，浅/深两套由 antd 算法派生并经 cssVar 暴露为 `--ant-*`。
+AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：唯一来源是 `paseo-antd-themes` 的两套 ThemeConfig（Claude Light / Paseo Dark），经 `src/styles/antd-theme.ts` 的槽位注入后由 cssVar 暴露为 `--ant-*`。
 
 ## 0. 基线
 
@@ -12,9 +12,9 @@ AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：
 
 1. **禁硬编码**：颜色只用 `var(--color-*)` / Tailwind 语义类；字号不进任意值；间距走 4px 阶。
 2. **层级秩序**：`index.css` 首行 `@layer theme, base, antd, components, utilities`，`AppProviders` 用 `<StyleProvider layer>` 收 antd 样式。覆盖只看层：utilities 压 antd；自有组件类进 `components`；**不写层外裸样式**。唯一豁免：`tokens.css` 的 `:root` 平台原语令牌（color-scheme / 滚动条 / 语法高亮——无 antd 对应物）。
-3. **改品牌 = 改一个种子**：`BRAND_PRIMARY` → `ConfigProvider.theme.cssVar = { key: 'css-var-app' }` → antd 注入 `--ant-*`；`index.css` 的 `:root` 再映射成项目语义 `--color-*`。
+3. **改品牌 = 改主题槽位**：paseo 的 ThemeConfig（或包的 `extendTheme`）→ `PaseoThemeProvider` + `cssVar: { key: 'css-var-app' }` → antd 注入 `--ant-*`；`index.css` 的 `:root` 再映射成项目语义 `--color-*`。
 4. **antd 组件样式只经 `antd-theme.ts` / `ConfigProvider`**：不在组件里写 `:global`、不覆盖 `.ant-*` 内部类；需要固定形态时封装组件（见 §4）。
-5. **深浅色**：`applyColorScheme()` 统一切换 `data-theme` 与 `css-var-app` 作用域类；antd 算法由 `ConfigProvider` 随 `resolvedTheme` 切换。组件内不读 `prefers-color-scheme`。
+5. **深浅色**：`applyColorScheme()` 统一切换 `data-theme` 与 `css-var-app` 作用域类；`PaseoThemeProvider` 按 `resolvedTheme` 选槽位。组件内不读 `prefers-color-scheme`。
 
 ## 2. 十二个系统
 
@@ -119,12 +119,12 @@ AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：
 2. 无 `text-[Npx]`、无 tsx 内 hex 颜色、无未定义语义类（`verify:prebuild` 会拦前两项）。
 3. 浅/深各看一眼：文字可读、卡片无空洞、hover 不削弱描边。
 4. 新组件先查 `components/ui`（`AppCard` / `StatusTag` / `CardTitle` / `CodeHighlight` / `EllipsisText`）再动手。
-5. 颜色链路改动后确认 `<html>` 有 `css-var-app` 类且 `--color-primary` 非空（e2e `settings.spec` 已断言）。
+5. 颜色链路改动后确认 `<html>` 有 `css-var-app` 类且 `--color-primary` 非空（e2e `titlebar.spec` 的主题切换用例已断言）。
 6. 改文案后跑 `pnpm i18n:extract` + `pnpm i18n:check`；英文按长度预算自查，并在中英两种语言下各看一眼标题是否被截断。
 
 ## 指针
 
-- 品牌色唯一真源：`src/styles/design-tokens.ts` 的 `BRAND_PRIMARY`。
+- 品牌色唯一真源：`paseo-antd-themes` 的 ThemeConfig（槽位见 `src/styles/antd-theme.ts`）。
 - cssVar 作用域类：同文件的 `CSS_VAR_KEY`；`applyColorScheme()` 负责挂到 `<html>`。
 - 详细设计链路与合规说明：[设计规范与令牌（Design Tokens）](../../docs/src/pages/ui/design-tokens.md)。
 - 品牌定制（换 logo / 主色 / 应用名）：[配置项归属（Configuration-map）](../../docs/src/pages/dx/configuration-map.md)。

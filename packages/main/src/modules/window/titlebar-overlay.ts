@@ -16,6 +16,28 @@ import { nativeTheme } from 'electron';
 // 私有常量
 const IS_WIN = process.platform === 'win32';
 
+/**
+ * paseo 主题 token（与 packages/renderer 的 Claude Light / Paseo Dark 同源）：
+ * - window  = colorBgLayout（窗口画布 / 首帧底色，与 tokens.css 的 --window-bg 一致）
+ * - overlay = colorBgContainer（Header 底色，原生控制按钮叠在其上，必须与其同色）
+ * - symbol  = colorText（控制按钮与图标色）
+ * 换主题槽位或升级 paseo 版本时必须同步这里（原生层读不到 CSS 变量）。
+ */
+interface PaseoColors {
+  window: string;
+  overlay: string;
+  symbol: string;
+}
+
+const PASEO_COLORS: Record<'light' | 'dark', PaseoColors> = {
+  light: { window: '#F0EDE2', overlay: '#F5F4EC', symbol: '#3C3C2C' },
+  dark: { window: '#181B1A', overlay: '#1E2120', symbol: '#FAFAFA' },
+};
+
+function currentPaseoColors(): PaseoColors {
+  return nativeTheme.shouldUseDarkColors ? PASEO_COLORS.dark : PASEO_COLORS.light;
+}
+
 // 可抽离的逻辑处理函数/组件
 
 /** 仅 win32 在窗口创建时启用了对象形态的 overlay，运行时更新（setTitleBarOverlay）也仅对其有意义 */
@@ -24,19 +46,15 @@ export function canUpdateTitleBarOverlay(): boolean {
 }
 
 /**
- * 窗口底色与 overlay 色同源同主题分支（深 #141414 / 浅 #ffffff），
- * 供 BrowserWindow 构造项 backgroundColor 使用：首帧先于渲染进程，
- * 与启动壳叠放后保证深浅主题均无白闪。严禁在别处硬编码这两个色值。
+ * 窗口底色（BrowserWindow backgroundColor）：paseo 的 colorBgLayout。
+ * 首帧先于渲染进程，与启动壳叠放后保证深浅主题均无白闪。严禁在别处硬编码色值。
  */
 export function getWindowBackgroundColor(): string {
-  return nativeTheme.shouldUseDarkColors ? '#141414' : '#ffffff';
+  return currentPaseoColors().window;
 }
 
-/** overlay 颜色与 antd colorBgContainer / colorText 同值（浅 #ffffff / 深 #141414 + 主文字色） */
+/** overlay 颜色与 antd colorBgContainer / colorText 同值，保证原生按钮与 Header 无缝 */
 export function getTitleBarOverlayOptions(): { color: string; symbolColor: string } {
-  const shouldUseDarkColors = nativeTheme.shouldUseDarkColors;
-  return {
-    color: getWindowBackgroundColor(),
-    symbolColor: shouldUseDarkColors ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.88)',
-  };
+  const colors = currentPaseoColors();
+  return { color: colors.overlay, symbolColor: colors.symbol };
 }

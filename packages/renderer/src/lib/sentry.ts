@@ -1,9 +1,9 @@
+import { APP_ENV } from '@app/shared/constants/env';
 import * as Sentry from '@sentry/electron/renderer';
 
 /**
  * 生产级 Sentry 渲染进程配置
- * 1. 严格仅在「生产打包环境（app.isPackaged=true）」且有效 DSN 时激活上报；
- *    开发 / 测试 / 未打包 preview 一律零网络开销与侵入
+ * 1. 严格仅在生产打包环境（PROD）且有效 DSN 时激活上报，开发阶段零网络开销与侵入
  * 2. 仅开启致命异常监控（window.onerror / unhandledrejection / React 组件崩溃）
  * 3. 彻底禁用行为监控（Breadcrumbs / DOM / Console / Net 轨迹），保护隐私与性能
  * 4. 彻底禁用性能追踪（Tracing / Profiling），采样率为 0
@@ -11,11 +11,14 @@ import * as Sentry from '@sentry/electron/renderer';
 export function initSentry(): void {
   const dsn = (typeof window !== 'undefined' && window.__APP_ENV__?.sentryDsn) || '';
 
-  // 生产打包是唯一门控：isPackaged 由主进程注入，preview（MODE=production 但未打包）也不启用
-  const isPackaged = typeof window !== 'undefined' && window.__APP_ENV__?.isPackaged === true;
+  // 基于 window.__APP_ENV__?.mode 判断是否为生产模式 (兜底 import.meta.env.PROD)
+  const isProd =
+    typeof window !== 'undefined' && window.__APP_ENV__?.mode
+      ? window.__APP_ENV__.mode === APP_ENV.PRODUCTION
+      : import.meta.env.PROD;
 
-  // 严格守卫：仅生产打包且有效 DSN 时激活
-  const isEnabled = isPackaged && Boolean(dsn);
+  // 严格守卫：仅 prod 模式且有有效 DSN 时激活
+  const isEnabled = isProd && Boolean(dsn);
 
   if (!isEnabled) {
     return;

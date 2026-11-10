@@ -22,7 +22,7 @@ export default defineConfig({
   // 运行时环境单一事实源：由 Preload 通过 additionalArguments 注入至 window.__APP_ENV__，前端不走编译期 define
   plugins: [
     tailwindcss(),
-    // React Compiler 走 OXC 移植版（oxc-transform-react），不引 Babel——符合 CONTRIBUTING「代码风格与工具链」
+    // React Compiler 走 OXC 移植版（oxc-transform-react），不引 Babel——符合 CONTRIBUTING §一.5 构建工具链时代规则
     react({ compiler: true }),
     lingui({
       configPath: path.resolve(currentDir, 'lingui.config.ts'),

@@ -66,26 +66,6 @@ export class TrayManager implements AppModule {
     this.tray.setContextMenu(this.contextMenu);
   }
 
-  /**
-   * 取词服务故障托盘提示（B-01 §7/§9.1 失败表）。
-   * 文案随 config 语言偏好走 mainMessage 解析；点击跳转诊断入口待 P5 接线。
-   */
-  public notifyCaptureServiceIssue(kind: 'startup' | 'crash'): void {
-    const lang = getAppConfigStore().get('language');
-    const content =
-      kind === 'crash'
-        ? mainMessage(lang, 'captureServiceCrashed')
-        : mainMessage(lang, 'captureServiceStartupFailed');
-    this.logger.warn(`[capture-service] ${content}`);
-    if (process.platform === 'win32' && this.tray) {
-      this.tray.displayBalloon({
-        iconType: 'warning',
-        title: app.getName(),
-        content,
-      });
-    }
-  }
-
   public initTray(): Tray | null {
     if (this.tray) return this.tray;
 
