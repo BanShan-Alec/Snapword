@@ -1,6 +1,6 @@
 /*
  * 非 antd 令牌：color-scheme、滚动条、语法高亮，以及 React 渲染前的窗口画布。
- * 颜色由 paseo-antd-themes 注入（见 styles/index.css 与 antd-theme.ts）。
+ * 颜色经 paseo ThemeConfig → antd cssVar（--ant-*）注入，见 styles/antd-theme.ts 与 AppProviders。
  */
 :root {
   color-scheme: light;

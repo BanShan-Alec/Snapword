@@ -1,7 +1,8 @@
 import { StyleProvider } from '@ant-design/cssinjs';
 import { resolveLocale } from '@app/shared/constants/preferences';
 import { I18nProvider } from '@lingui/react';
-import { App as AntdApp, ConfigProvider } from 'antd';
+import { App as AntdApp } from 'antd';
+import { PaseoThemeProvider } from 'paseo-antd-themes';
 import type React from 'react';
 import { useEffect } from 'react';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
@@ -58,15 +59,19 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
         配合 index.css 首行的层序声明，使 Tailwind utilities 可直接覆盖 antd 组件样式。
       */}
       <StyleProvider layer>
-        <ConfigProvider
-          button={{ autoInsertSpace: false }}
-          theme={getAntdThemeConfig(resolvedTheme)}
+        {/* paseo：按 resolvedTheme 选槽位（token 注入）+ 组件级行为注入；其余 props 透传 antd */}
+        <PaseoThemeProvider
+          mode={resolvedTheme}
+          themes={{
+            light: getAntdThemeConfig('light'),
+            dark: getAntdThemeConfig('dark'),
+          }}
           locale={getAntdLocale(language)}
         >
           <AntdApp>
             <ErrorBoundary>{children}</ErrorBoundary>
           </AntdApp>
-        </ConfigProvider>
+        </PaseoThemeProvider>
       </StyleProvider>
     </I18nProvider>
   );
