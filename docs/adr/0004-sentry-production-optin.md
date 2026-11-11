@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-05
-- 相关：`docs/PRD.md` 验收「安全/隐私」、附录 G；`docs/PRD-v2.md` §1.2；`docs/architecture.md` §12/§16
+- 相关：`docs/PRD.md` 第十一章（权限与安全）、第十五章（验收）；`docs/architecture.md` §12/§16
 
 ## 背景
 

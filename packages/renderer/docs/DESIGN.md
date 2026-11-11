@@ -35,7 +35,7 @@ AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：
 
 ### 文案与膨胀
 
-界面文案按 [国际化文案规范（Copy）](../../docs/src/pages/ui/i18n-copy.md) 的四条原则与长度预算写；布局侧守四条：
+界面文案按 [国际化规范](../AGENTS.md)（§6）的四条原则与长度预算写；布局侧守四条：
 
 1. 不给文本容器写死宽度（`w-[...]`、`w-16` 只用于图标/圆点/Logo），按钮靠 `px` 与内容撑开。
 2. 截断必须有兜底：文本一律单行 `truncate`（或 `line-clamp-*`），**仅在实际被截断时**用 `Tooltip` / 原生 `title` 显示全文；不靠放开换行把内容顶成两行（会破坏卡片头高度节奏）。
@@ -126,5 +126,5 @@ AI 在 renderer 写样式的执行层规范。**颜色值不在这里复制**：
 
 - 品牌色唯一真源：`paseo-antd-themes` 的 ThemeConfig（槽位见 `src/styles/antd-theme.ts`）。
 - cssVar 作用域类：同文件的 `CSS_VAR_KEY`；`applyColorScheme()` 负责挂到 `<html>`。
-- 详细设计链路与合规说明：[设计规范与令牌（Design Tokens）](../../docs/src/pages/ui/design-tokens.md)。
-- 品牌定制（换 logo / 主色 / 应用名）：[配置项归属（Configuration-map）](../../docs/src/pages/dx/configuration-map.md)。
+- 设计令牌与主题实现：见本文件与 `src/styles/antd-theme.ts`。
+- 品牌定制（换 logo / 主色 / 应用名）：见 [配置项归属](../../../CONTRIBUTING.md) §三「配置与依赖归属」。

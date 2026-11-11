@@ -93,20 +93,18 @@ pnpm dev       # 开发模式：Vite DevServer + Electron 双进程热重载
 
 ## 文档
 
-| 文档                                                                                                                 | 内容                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [docs/PRD-v2.md](docs/PRD-v2.md)                                                                                     | **当前交互基线**：三窗口模型（圆点 / 翻译卡片 / 主窗口）、主窗口信息架构、跨窗口联动、验收标准        |
-| [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md)                                                           | **当前交互规格**：逐帧时序、位置算法、卡片状态机、边界三问、41 条验收用例（+ v1.1 同步 6 条）、参数表 |
-| [docs/architecture.md](docs/architecture.md)                                                                         | **B-01 技术架构**：进程拓扑、Native Addon 拆分、线程模型、启动/退出、崩溃恢复、窗口与数据所有权       |
-| [docs/ipc-contract.md](docs/ipc-contract.md)                                                                         | **B-02 IPC 契约**：消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                                  |
-| [docs/data-model.md](docs/data-model.md)                                                                             | **B-03 数据库 schema v2.0**：Drizzle schema-as-code、软删除/撤销、同步预留、索引、迁移/损坏恢复       |
-| [docs/adr/](docs/adr/)                                                                                               | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite、Sentry 生产启用                   |
-| [docs/prompt-contract.md](docs/prompt-contract.md)                                                                   | **B-04 提示词契约**：两条提示词全文、JSON schema、占位符、重试、模型参数                              |
-| [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                 | **视觉规范**：设计令牌、双主题、字号 / 间距、对比度规则                                               |
-| [docs/PRD.md](docs/PRD.md)                                                                                           | 历史基线 v1.1.1：背景、范围、取词方案、53 条功能需求、异常、风险、AI 能力契约                         |
-| [docs/interaction-spec.md](docs/interaction-spec.md)                                                                 | 历史基线 v1.0：气泡 + 侧边栏的逐帧时序（已被 v2 取代）                                                |
-| [docs/research/immersive-translate-interaction-2026-11.md](docs/research/immersive-translate-interaction-2026-11.md) | 本机沉浸式翻译 1.34.4 的三窗口交互调研：圆点尺寸、卡片布局、拖拽/保持打开、参考交互取舍               |
-| [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md)                                   | UIA 验证报告：Q-1、D-1（30/30）、Q-6（93.3%）、同源 iframe、坐标空间发现                              |
+| 文档                                                                                                                 | 内容                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [docs/PRD.md](docs/PRD.md)                                                                                           | **产品需求文档 v3.0**：背景、取词、三窗口交互摘要（7.4）、引擎、隐私、数据、验收（原 PRD-v2 已收敛）      |
+| [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md)                                                           | **当前交互规格**：交互需求条目 RD/RC/RM/RX（13）、逐帧时序、位置算法、状态机、参数表；验收见 PRD 第十五章 |
+| [docs/architecture.md](docs/architecture.md)                                                                         | **B-01 技术架构**：进程拓扑、Native Addon 拆分、线程模型、启动/退出、崩溃恢复、窗口与数据所有权           |
+| [docs/ipc-contract.md](docs/ipc-contract.md)                                                                         | **B-02 IPC 契约**：消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                                      |
+| [docs/data-model.md](docs/data-model.md)                                                                             | **B-03 数据库 schema v2.0**：Drizzle schema-as-code、软删除/撤销、同步预留、索引、迁移/损坏恢复           |
+| [docs/adr/](docs/adr/)                                                                                               | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite、Sentry 生产启用                       |
+| [docs/prompt-contract.md](docs/prompt-contract.md)                                                                   | **B-04 提示词契约**：两条提示词全文、JSON schema、占位符、重试、模型参数                                  |
+| [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                 | **视觉规范**：设计令牌、双主题、字号 / 间距、对比度规则                                                   |
+| [docs/research/immersive-translate-interaction-2026-11.md](docs/research/immersive-translate-interaction-2026-11.md) | 本机沉浸式翻译 1.34.4 的三窗口交互调研：圆点尺寸、卡片布局、拖拽/防误关、参考交互取舍                     |
+| [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md)                                   | UIA 验证报告：Q-1、D-1（30/30）、Q-6（93.3%）、同源 iframe、坐标空间发现                                  |
 
 ## 关键设计决策
 
@@ -118,7 +116,7 @@ pnpm dev       # 开发模式：Vite DevServer + Electron 双进程热重载
 | 是否用模拟复制兜底 | **永久不做**                                                   | 致命问题有两个：无法拦截密码框会导致明文密码外发；终端里 Ctrl+C 是中断信号会杀掉用户正在运行的命令   |
 | 取词失败怎么办     | `RangeFromPoint` 取鼠标下的词 → 主窗口翻译页手输               | 两条都不碰剪贴板                                                                                     |
 | 触发与呈现         | **圆点 → 翻译卡片 → 主窗口**三层                               | 圆点只做入口，卡片只做这一次翻译，主窗口负责历史/生词本/设置；入口不夺焦                             |
-| 译文呈现           | 贴选区的翻译卡片，**出现时不夺取键盘焦点**                     | 卡片在视线附近，可拖拽、保持打开；管理动作移到主窗口                                                 |
+| 译文呈现           | 贴选区的翻译卡片，**出现时不夺取键盘焦点**                     | 卡片在视线附近，可拖拽、防误关；管理动作移到主窗口                                                   |
 | 卡片宽度           | 固定 420px（仅屏幕可用空间不足时夹限），仅拖动位置，不可缩放   | 纯自适应会跳动干扰阅读；固定侧边栏又离视线太远                                                       |
 | 翻译引擎           | 仅 OpenAI 兼容接口，用户自填 Key                               | 无服务器成本；开源项目不该替用户承担接口费用与合规责任                                               |
 | 单词结果           | 全部交给 LLM，但**必须结合所在句子**                           | 用户真正的问题是"这词在这句话里什么意思"，不是"这词有几个意思"                                       |

@@ -3,7 +3,7 @@
 > 文档状态：**已定稿，可直接据此实现主进程与取词服务**
 > 变更：v1.1 按 2026-11-03 决策，从「命名管道 + 长度前缀 JSON」改为 **Electron `utilityProcess` + MessagePort**。
 > 适用范围：Electron 主进程 ↔ 取词 utilityProcess；不覆盖渲染进程 ↔ 主进程的 Electron IPC
-> 上游依据：`docs/architecture.md`（B-01）、`docs/PRD.md` 5.2 / FR-01~FR-10、`docs/PRD-v2.md` RD/RC 章节
+> 上游依据：`docs/architecture.md`（B-01）、`docs/PRD.md` 5.2 / FR-01~FR-10、`docs/interaction-spec-v2.md` 13.2 RD 章节 / 13.3 RC 章节
 > 本契约解决：传输、消息目录、字段类型/单位/坐标系、握手、错误码、超时/重试、顺序与背压、安全校验。
 
 ---
@@ -193,9 +193,9 @@ sequenceDiagram
 | `config_update`      | 主→服务 | 请求      | 设置变更            | 超时 1s → 保留旧配置并提示 |
 | `config_ack`         | 服务→主 | 响应      | 配置应用成功        | —                          |
 | `config_error`       | 服务→主 | 响应      | 配置无效            | 设置页内联错误；旧配置继续 |
-| `capture_current`    | 主→服务 | 请求      | Alt+D / 诊断        | 500ms 超时 → 卡片错误      |
+| `capture_current`    | 主→服务 | 请求      | Alt+W / 诊断        | 500ms 超时 → 卡片错误      |
 | `capture_result`     | 服务→主 | 响应      | 取词成功            | 主进程校验后打开卡片       |
-| `capture_error`      | 服务→主 | 响应/事件 | 取词失败            | 卡片错误态 / 托盘提示      |
+| `capture_error`      | 服务→主 | 响应/事件 | 取词失败            | 卡片错误态 / 诊断提示      |
 | `dot_clicked`        | 服务→主 | 事件      | 点击圆点            | 主进程校验后打开卡片       |
 | `dot_hidden`         | 服务→主 | 事件      | 圆点消失            | 仅诊断/状态同步            |
 | `foreground_changed` | 服务→主 | 事件      | 前台窗口变化        | 主进程关闭普通卡片         |
@@ -353,7 +353,7 @@ sequenceDiagram
 }
 ```
 
-- 主进程用它执行「切换到其他应用 → 关闭卡片（保持打开也关闭）」。
+- 主进程用它执行「切换到其他应用 → 关闭卡片（防误关也关闭）」。
 - `isFullscreen` 仅诊断；全屏卡片置顶暂不支持。
 
 ### 5.7 `service_status`（服务 → 主，心跳）
@@ -431,13 +431,13 @@ sequenceDiagram
 
 | code                      | 来源   | 含义                            | 用户可见行为                               | 可重试           |
 | ------------------------- | ------ | ------------------------------- | ------------------------------------------ | ---------------- |
-| `NoForegroundWindow`      | Addon  | `GetForegroundWindow` 返回 NULL | 热键：托盘提示；圆点：静默                 | 是（手动）       |
+| `NoForegroundWindow`      | Addon  | `GetForegroundWindow` 返回 NULL | 热键：打开卡片显示原因；圆点：静默         | 是（手动）       |
 | `NotWhitelisted`          | Addon  | 前台进程不在白名单              | 圆点/热键均静默（诊断可见）                | 否               |
 | `PasswordField`           | Addon  | 焦点/选区在密码框               | 完全静默，不记录文本                       | 否               |
 | `EmptySelection`          | Addon  | 无选区 / 选区被清除             | 热键：卡片「未获取到选中文本」；圆点：静默 | 是（手动）       |
-| `TextPatternNotSupported` | Addon  | 目标无 TextPattern              | 热键：托盘提示「当前应用不支持取词」       | 否               |
+| `TextPatternNotSupported` | Addon  | 目标无 TextPattern              | 热键：打开卡片显示「当前应用不支持取词」   | 否               |
 | `Timeout`                 | Addon  | UIA 500ms 未返回                | 卡片「取词超时」+ 重试                     | 是（手动）       |
-| `Busy`                    | Addon  | 上一次探测未结束                | 热键：托盘提示「正在取词，请稍后」         | 是（手动）       |
+| `Busy`                    | Addon  | 上一次探测未结束                | 热键：打开卡片显示「正在取词，请稍后」     | 是（手动）       |
 | `ComError`                | Addon  | COM/UIA 调用异常                | 卡片错误 + 诊断                            | 是（手动）       |
 | `SelectionChanged`        | Addon  | 点击圆点时选区已变化            | 卡片「选区已变化」+ 关闭/重试              | 是（手动）       |
 | `NoBoundingRects`         | Addon  | 文本成功但 rects 为空           | 卡片用 `pointer` 定位；圆点不显示          | 否（降级）       |
@@ -460,7 +460,7 @@ sequenceDiagram
 3. `dot_clicked` 必须对应最近的候选；主进程校验 `payload.seq === lastDotSeq`，否则忽略。
 4. 服务 `capture_current` 在飞时，新的 `capture_current` 返回 `Busy`；主进程不排队。
 5. 主进程收到 `dot_clicked` 后立即发 `hide_dot`，不等卡片创建完成。
-6. 主进程处理 `foreground_changed` 时，先关闭普通卡片，再更新状态；保持打开卡片也关闭（应用切换）。
+6. 主进程处理 `foreground_changed` 时，先关闭普通卡片，再更新状态；防误关卡片也关闭（应用切换）。
 7. 事件处理不得阻塞 utilityProcess 的 Node 事件循环；Addon 的耗时工作在自己的线程。
 
 ---
@@ -471,7 +471,7 @@ sequenceDiagram
 | ----------------- | -----------------: | ------------------- | -------------------------- |
 | 握手 `hello`      |                 5s | 重启服务，最多 3 次 | 托盘「取词服务未启动」     |
 | `config_update`   |                 1s | 1 次                | 设置页内联错误；旧配置继续 |
-| `capture_current` |              500ms | 0（用户手动）       | 卡片错误/托盘提示          |
+| `capture_current` |              500ms | 0（用户手动）       | 卡片错误态                 |
 | `diagnose`        |                 2s | 0                   | 诊断页显示「未知」         |
 | `shutdown`        |                 1s | 0                   | `kill()`                   |
 | 心跳              | 5s 间隔 / 12s 缺失 | 重启服务            | 托盘提示（第 3 次）        |
