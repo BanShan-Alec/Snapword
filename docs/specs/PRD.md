@@ -191,7 +191,7 @@
 
 > 以上为公开文档与官方博客的核实结论，**具体到"Chrome 里 `GetSelection()` 能否稳定拿到选中文本"仍需 PoC 实测**（D-1），文档只证明 API 存在，不证明端到端可用。
 >
-> **2026-11-02 实测补充**：Chrome/Edge 156 下 `ExpandToEnclosingUnit(Paragraph)` 返回选区起点所在段落，单个原文段落内的选区 53–608 字符，**未出现 Paragraph → Page/Document 降级**；`Page` 单位在网页内容上等于整个 `Document`（Martin Fowler 页 45,527 字符），因此 Page 不能作为兜底。跨原文段落选区只保留起点段落。完整数据见 [research/uia-validation-2026-11.md](research/uia-validation-2026-11.md)。
+> **2026-11-02 实测补充**：Chrome/Edge 156 下 `ExpandToEnclosingUnit(Paragraph)` 返回选区起点所在段落，单个原文段落内的选区 53–608 字符，**未出现 Paragraph → Page/Document 降级**；`Page` 单位在网页内容上等于整个 `Document`（Martin Fowler 页 45,527 字符），因此 Page 不能作为兜底。跨原文段落选区只保留起点段落。完整数据见 [research/uia-validation-2026-11.md](../research/uia-validation-2026-11.md)。
 
 #### 5.1.2 兜底路径评估（UIA 取不到时怎么办）
 
@@ -890,9 +890,9 @@ API Key **必须**使用 Electron `safeStorage` 加密后持久化（Windows 下
 | 选区跨段行为                | 选区跨 2 个段落时，结果只保留起始段（符合规范化语义，用于确认 FR-12 的约束理解正确）                                |
 | `RangeFromPoint` 兜底可用率 | 在无选区状态下，鼠标指向某个英文单词并调用 `RangeFromPoint` + `ExpandToEnclosingUnit(Word)`，能取到该词的比例 ≥ 90% |
 
-> **2026-11-02 进展**：Q-1（Paragraph 颗粒度）已完成；D-1 主项（3 类页面各 10 次、成功率 ≥ 90%、单次 ≤ 50ms、iframe）尚未按验收标准跑完。已完成的单点验证见 [research/uia-validation-2026-11.md](research/uia-validation-2026-11.md)。
+> **2026-11-02 进展**：Q-1（Paragraph 颗粒度）已完成；D-1 主项（3 类页面各 10 次、成功率 ≥ 90%、单次 ≤ 50ms、iframe）尚未按验收标准跑完。已完成的单点验证见 [research/uia-validation-2026-11.md](../research/uia-validation-2026-11.md)。
 >
-> **2026-11-03 进展**：D-1 已在 Chrome/Edge 156 上按 3 类页面 × 10 次跑完：30/30 成功，P95 16.2/24.2ms，max 30.1/26.3ms，零剪贴板写入；Q-6 `RangeFromPoint` 28/30（93.3%）；同源 iframe 内选区 10/10。详见 [research/uia-validation-2026-11.md](research/uia-validation-2026-11.md)。
+> **2026-11-03 进展**：D-1 已在 Chrome/Edge 156 上按 3 类页面 × 10 次跑完：30/30 成功，P95 16.2/24.2ms，max 30.1/26.3ms，零剪贴板写入；Q-6 `RangeFromPoint` 28/30（93.3%）；同源 iframe 内选区 10/10。详见 [research/uia-validation-2026-11.md](../research/uia-validation-2026-11.md)。
 >
 > **2026-11-03 决定**：Q-2 全屏卡片置顶、Q-7 Chrome <138/企业策略、多显示器第二屏、跨域 iframe、canvas/PDF、管理员权限窗口**暂不支持，不再验证**；仅保留主显示器 + 同源 iframe + Chrome/Edge 138+ 的支持范围。
 
@@ -945,15 +945,15 @@ API Key **必须**使用 Electron `safeStorage` 加密后持久化（Windows 下
 
 ### 14.2 遗留问题
 
-| 编号 | 问题                                                                                                                                                                                                | 影响                                                                       | 计划                                                                                                             |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Q-1  | **已完成（2026-11-02）**：Chrome/Edge 156 实测 Paragraph 返回选区起点所在段落；单个原文段落内的选区 53–608 字符，未退化为 Page/Document；跨原文段落选区只保留起点段落；`Page` 单位等于整个 Document | FR-12 的两步法成立；补充"先 trim 再切句"和"Page/Format 不可作兜底"两条约束 | 完成，报告见 [research/uia-validation-2026-11.md](research/uia-validation-2026-11.md)；iframe 与更大样本仍归 D-1 |
-| Q-6  | `RangeFromPoint` 在 Chrome 中取鼠标下单词的实际可用率未实测                                                                                                                                         | 影响 v1.1 兜底方案 A 的可行性                                              | 纳入 D-1 PoC 一并验证（同一套 UIA 能力，验证成本低）                                                             |
-| Q-7  | Chrome 138 以下版本仍需 `--force-renderer-accessibility` 才有 UIA 树，企业环境还可能被 `UiAutomationProviderEnabled` 策略回退                                                                       | 老版本用户与受管设备可能取词全失效                                         | 系统要求写明 Chrome 138+；诊断页检测浏览器版本并提示                                                             |
-| Q-2  | 全屏应用下 `alwaysOnTop` 的有效性未实测                                                                                                                                                             | 影响 FR-09 与卡片可见性                                                    | 开发期实测，必要时改用"检测到全屏则只保留热键、不显示卡片"                                                       |
-| Q-3  | 圆点与浏览器原生浮动菜单可能重叠（默认右下 +8px 的避让未实测）                                                                                                                                      | 入口被遮挡时用户看不到可点区域                                             | 纳入 UX-7 实测；重叠率不为 0 时调整默认偏移或补充避让规则                                                        |
-| Q-4  | 云 TTS 的具体服务与协议未定（OpenAI `/v1/audio/speech` 或 Azure）                                                                                                                                   | 影响 FR-40 实现                                                            | v1.0 先只做系统 TTS，云 TTS 列为 Could，视需求再定                                                               |
-| Q-5  | 评测集（50 条）尚未建立                                                                                                                                                                             | G-4 无法量化                                                               | 开发期建立，纳入测试用例                                                                                         |
+| 编号 | 问题                                                                                                                                                                                                | 影响                                                                       | 计划                                                                                                                |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Q-1  | **已完成（2026-11-02）**：Chrome/Edge 156 实测 Paragraph 返回选区起点所在段落；单个原文段落内的选区 53–608 字符，未退化为 Page/Document；跨原文段落选区只保留起点段落；`Page` 单位等于整个 Document | FR-12 的两步法成立；补充"先 trim 再切句"和"Page/Format 不可作兜底"两条约束 | 完成，报告见 [research/uia-validation-2026-11.md](../research/uia-validation-2026-11.md)；iframe 与更大样本仍归 D-1 |
+| Q-6  | `RangeFromPoint` 在 Chrome 中取鼠标下单词的实际可用率未实测                                                                                                                                         | 影响 v1.1 兜底方案 A 的可行性                                              | 纳入 D-1 PoC 一并验证（同一套 UIA 能力，验证成本低）                                                                |
+| Q-7  | Chrome 138 以下版本仍需 `--force-renderer-accessibility` 才有 UIA 树，企业环境还可能被 `UiAutomationProviderEnabled` 策略回退                                                                       | 老版本用户与受管设备可能取词全失效                                         | 系统要求写明 Chrome 138+；诊断页检测浏览器版本并提示                                                                |
+| Q-2  | 全屏应用下 `alwaysOnTop` 的有效性未实测                                                                                                                                                             | 影响 FR-09 与卡片可见性                                                    | 开发期实测，必要时改用"检测到全屏则只保留热键、不显示卡片"                                                          |
+| Q-3  | 圆点与浏览器原生浮动菜单可能重叠（默认右下 +8px 的避让未实测）                                                                                                                                      | 入口被遮挡时用户看不到可点区域                                             | 纳入 UX-7 实测；重叠率不为 0 时调整默认偏移或补充避让规则                                                           |
+| Q-4  | 云 TTS 的具体服务与协议未定（OpenAI `/v1/audio/speech` 或 Azure）                                                                                                                                   | 影响 FR-40 实现                                                            | v1.0 先只做系统 TTS，云 TTS 列为 Could，视需求再定                                                                  |
+| Q-5  | 评测集（50 条）尚未建立                                                                                                                                                                             | G-4 无法量化                                                               | 开发期建立，纳入测试用例                                                                                            |
 
 ---
 
@@ -1152,7 +1152,7 @@ API Key **必须**使用 Electron `safeStorage` 加密后持久化（Windows 下
 
 ### 附录 G：参考调研摘要
 
-本版交互参考了本机安装的沉浸式翻译 1.34.4（Chrome）/ 1.33.1（Edge）的本地界面资源，详细数据见 [沉浸式翻译本地版交互调研](research/immersive-translate-interaction-2026-11.md)。
+本版交互参考了本机安装的沉浸式翻译 1.34.4（Chrome）/ 1.33.1（Edge）的本地界面资源，详细数据见 [沉浸式翻译本地版交互调研](../research/immersive-translate-interaction-2026-11.md)。
 
 采用的核心模式：
 
