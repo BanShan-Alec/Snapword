@@ -6,9 +6,9 @@
 > 对照基线：`docs/PRD.md`（v3.0）、`docs/research/uia-validation-2026-11.md`
 > **2026-11-13 更新**：工程底座已同步 **temp5@9345ca2**（#93 IPC 传输契约归一化 + Home 窗口模块重构、#94/#96 pr-review 工作流引擎、#95 OCR 触发限制、#97 Electron Fuses + ASAR 完整性校验）并按干净基座重建：temp5 基座 + Snapword 身份 + paseo 双主题（token / behavior 注入，data-theme + cssVar 机制）+ 设置页主题与语言切换 + WCO 与窗口底色对齐。取词链路 / DB / 六个业务域**尚未迁移**，将在 P5 按契约从零实现（main 历史中的旧 P4 移植代码仅作参考，不作起点）。
 > **2026-11-11 更新**：清理 v1.0 交互规格与开发前审计（均已被 v2 交互规格与四份契约取代）；本轮交互整改已落回 PRD、interaction-spec-v2、ipc-contract、architecture、data-model；原 PRD-v2 摘要并入 PRD v3.0，完整条目迁至 spec 第十三章。
->>>>>>> a09e650 (docs: 合并 PRD 为 v3.0 并将交互需求迁入 spec v2.1)
-> 生成日期：2026-10-19
-> 用途：单页跟踪。所有「还差什么」都已编号，可直接当 issue 拆解依据。
+> > > > > > > a09e650 (docs: 合并 PRD 为 v3.0 并将交互需求迁入 spec v2.1)
+> > > > > > > 生成日期：2026-10-19
+> > > > > > > 用途：单页跟踪。所有「还差什么」都已编号，可直接当 issue 拆解依据。
 
 ---
 
