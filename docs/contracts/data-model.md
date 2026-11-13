@@ -4,7 +4,7 @@
 > 数据库：SQLite（Node 内置 `node:sqlite` / `DatabaseSync`；JSON1）
 > 文件：`%APPDATA%/Snapword/vocab.db`
 > ORM：`drizzle-orm@1.0.0-rc.5` + `drizzle-kit@1.0.0-rc.5`（精确锁版本）
-> 上游依据：`docs/PRD.md` FR-33~FR-38、10.1 数据实体、A-03/A-04/A-05/A-08；`docs/interaction-spec-v2.md` 13.4 RM-05/RM-06/RM-07、13.5 RX-10；`docs/adr/0003-use-drizzle-orm.md`
+> 上游依据：`docs/specs/PRD.md` FR-33~FR-38、10.1 数据实体、A-03/A-04/A-05/A-08；`docs/specs/interaction-spec-v2.md` 13.4 RM-05/RM-06/RM-07、13.5 RX-10；`docs/adr/0003-use-drizzle-orm.md`
 > 本契约解决：schema 事实源、表结构、唯一键、索引、搜索、软删除与撤销、同步（v1.1 预留）、导出映射、迁移、备份/损坏恢复、并发与隐私边界。
 > 本版变更（v2.0，2026-11-04）：数据库访问改为 Drizzle ORM；驱动改为 `node:sqlite`；删除改为软删除 + 墓碑；新增 `setting` 表与同步预留字段；删除 `schema_version` / `user_version`。
 
@@ -1110,14 +1110,14 @@ SELECT name FROM __drizzle_migrations ORDER BY name;
 
 已完成（2026-11-04）：
 
-- `docs/interaction-spec-v2.md`：13.4 RM-05/RM-06 删除撤销、RM-07a 云盘同步（v1.1）、RM-12 数据安全、13.5 RX-10 持久化边界、IA-37~IA-41、SY-01~SY-06。
-- `docs/interaction-spec-v2.md`：§6.5/§6.6 删除与撤销条、§6.7.1 云盘同步、§6.10 边界三问；验收见 `docs/PRD.md` 第十五章（IA-01~IA-44 + SY-01~SY-06）。
+- `docs/specs/interaction-spec-v2.md`：13.4 RM-05/RM-06 删除撤销、RM-07a 云盘同步（v1.1）、RM-12 数据安全、13.5 RX-10 持久化边界、IA-37~IA-41、SY-01~SY-06。
+- `docs/specs/interaction-spec-v2.md`：§6.5/§6.6 删除与撤销条、§6.7.1 云盘同步、§6.10 边界三问；验收见 `docs/specs/PRD.md` 第十五章（IA-01~IA-44 + SY-01~SY-06）。
 - `docs/progress-checklist.md`：B-03 升 v2.0；撤销进 MVP；同步作为 v1.1 里程碑；验收编号同步。
 - `README.md`：数据与隐私路径、备份、同步边界。
 
 仍待回填：
 
-- `docs/PRD.md`（v3.0）不回溯合并前的历史口径；如需核对旧版，以 git 历史为准。
+- `docs/specs/PRD.md`（v3.0）不回溯合并前的历史口径；如需核对旧版，以 git 历史为准。
 - B-05 测试用例集需要新增撤销与同步用例（同步用例可标 v1.1）。
 
 ### 17.3 rc.5 已知缺陷与规避

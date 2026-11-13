@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-05
-- 相关：`docs/PRD.md` 第十一章（权限与安全）、第十五章（验收）；`docs/architecture.md` §12/§16
+- 相关：`docs/specs/PRD.md` 第十一章（权限与安全）、第十五章（验收）；`docs/contracts/architecture.md` §12/§16
 
 ## 背景
 
@@ -38,7 +38,7 @@ PRD v1.1.1 与 v2.0 的原始隐私条款是「无服务器、无账号、无统
 ## 后果
 
 - PRD 相关条款修订：默认无统计上报，生产构建可选启用 Sentry 崩溃上报；「除 Base URL 外无任何外连」增加 Sentry 上报域名例外（2026-11-05 用户拍板修订）。
-- `docs/architecture.md` §12 增加 Sentry 边界条目，§16 抓包验收增加 Sentry 域名例外。
+- `docs/contracts/architecture.md` §12 增加 Sentry 边界条目，§16 抓包验收增加 Sentry 域名例外。
 - 发布流水线只需配置 `SENTRY_AUTH_TOKEN`（SourceMap 上传）；`SENTRY_DSN`/`SENTRY_ORG`/`SENTRY_PROJECT` 在 `.env` 中维护。未配置 DSN 时生产 Sentry 自动关闭，构建不受影响。
 - `.env` 按 temp5 约定入库（当前 DSN 为空占位）；`.env.local` 用于本地覆盖且不入库；`.env.example` 保留键位说明。
 - 抓包验收需区分「未配置 DSN 的生产构建」与「已配置 DSN 的生产构建」两种形态。

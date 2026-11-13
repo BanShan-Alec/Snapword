@@ -1,14 +1,12 @@
 # Snapword · 开发进度与待办总清单 v1.0
 
-> **2026-11-04 更新**：当前需求基线为 [PRD.md](PRD.md)（v3.0，原 PRD-v2 已收敛）与 [interaction-spec-v2.md](interaction-spec-v2.md)，本清单按已确认决策同步；MVP 验收清单为连续唯一的 IA-01～IA-44（PRD 第十五章），云盘同步（v1.1）另用 SY-01～SY-06。暂不支持项见 PRD 第 17.2 节。
+> **2026-11-04 更新**：当前需求基线为 [PRD.md](specs/PRD.md)（v3.0，原 PRD-v2 已收敛）与 [interaction-spec-v2.md](specs/interaction-spec-v2.md)，本清单按已确认决策同步；MVP 验收清单为连续唯一的 IA-01～IA-44（PRD 第十五章），云盘同步（v1.1）另用 SY-01～SY-06。暂不支持项见 PRD 第 17.2 节。
 >
-<<<<<<< HEAD
-> 对照基线：`docs/PRD.md`（v3.0）、`docs/research/uia-validation-2026-11.md`
+> 对照基线：`docs/specs/PRD.md`（v3.0）、`docs/research/uia-validation-2026-11.md`
 > **2026-11-13 更新**：工程底座已同步 **temp5@9345ca2**（#93 IPC 传输契约归一化 + Home 窗口模块重构、#94/#96 pr-review 工作流引擎、#95 OCR 触发限制、#97 Electron Fuses + ASAR 完整性校验）并按干净基座重建：temp5 基座 + Snapword 身份 + paseo 双主题（token / behavior 注入，data-theme + cssVar 机制）+ 设置页主题与语言切换 + WCO 与窗口底色对齐。取词链路 / DB / 六个业务域**尚未迁移**，将在 P5 按契约从零实现（main 历史中的旧 P4 移植代码仅作参考，不作起点）。
 > **2026-11-11 更新**：清理 v1.0 交互规格与开发前审计（均已被 v2 交互规格与四份契约取代）；本轮交互整改已落回 PRD、interaction-spec-v2、ipc-contract、architecture、data-model；原 PRD-v2 摘要并入 PRD v3.0，完整条目迁至 spec 第十三章。
-> > > > > > > a09e650 (docs: 合并 PRD 为 v3.0 并将交互需求迁入 spec v2.1)
-> > > > > > > 生成日期：2026-10-19
-> > > > > > > 用途：单页跟踪。所有「还差什么」都已编号，可直接当 issue 拆解依据。
+> 生成日期：2026-10-19
+> 用途：单页跟踪。所有「还差什么」都已编号，可直接当 issue 拆解依据。
 
 ---
 
@@ -43,24 +41,24 @@
 
 ## 2. 已完成清单（16 项）
 
-| 编号    | 产物                           | 文件                                                                    | 状态                                                                 |
-| ------- | ------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| ✅ D-01 | 需求澄清（7 轮）               | —                                                                       | 53 条 FR（其中 FR-24~32 已随旧交互废止）                             |
-| ✅ D-02 | PRD v1.1.1                     | `docs/PRD.md`（v3.0）                                                   | 原 15 段结构，已并入 v3.0，含 RTM                                    |
-| ✅ D-03 | 交互规格 v1.0                  | —（已被 v2 取代，原文已清理）                                           | 11 节，含反模式 9 条                                                 |
-| ✅ D-04 | 技术事实核实                   | PRD 5.1.1                                                               | Chrome 138+ 默认启用 UIA 等 6 条                                     |
-| ✅ D-05 | 兜底路径评估                   | PRD 5.1.2                                                               | 模拟复制 9 项问题，判定永久不做                                      |
-| ✅ D-06 | 开发前审计                     | —（结论已并入四份契约，原文已清理）                                     | 22 冲突 + 12 缺口 + 8 空洞                                           |
-| ✅ D-07 | 项目改名 Lingo Lens → Snapword | 全仓 + 资料库                                                           | 本地与云端已同步                                                     |
-| ✅ D-08 | 仓库基础文件                   | `README.md` / `LICENSE` / `.gitignore`                                  | MIT，Key 与 DB 已排除                                                |
-| ✅ D-09 | 三窗口交互需求 v2.0            | `docs/PRD.md` 7.4（摘要）+ `docs/interaction-spec-v2.md` 13（完整条目） | 圆点 / 翻译卡片 / 主窗口，含跨窗口与验收                             |
-| ✅ D-10 | 三窗口交互规格 v2.0            | `docs/interaction-spec-v2.md`                                           | 逐帧时序、位置算法、状态机、交互参数；验收见 PRD 十五                |
-| ✅ D-11 | 沉浸式翻译本地版调研           | `docs/research/immersive-translate-interaction-2026-11.md`              | 1.34.4 三层界面与关键数值                                            |
-| ✅ D-12 | D-1 / Q-6 / iframe 自动化验证  | UIA-demo `scripts/d1-feasibility.mjs`                                   | Chrome/Edge 156 均 30/30；Q-6 93.3%；iframe 10/10                    |
-| ✅ D-13 | B-01 技术架构                  | `docs/architecture.md`                                                  | 进程拓扑、职责、线程、崩溃恢复、窗口/数据所有权                      |
-| ✅ D-14 | B-02 IPC 契约                  | `docs/ipc-contract.md`                                                  | 消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                    |
-| ✅ D-15 | B-03 数据库 schema v2.0        | `docs/data-model.md`                                                    | Drizzle schema-as-code、软删除/撤销、同步预留、迁移/备份/损坏恢复    |
-| ✅ D-16 | B-04 提示词契约                | `docs/prompt-contract.md`                                               | v1.1（2026-11-04 对齐）：两条提示词、JSON schema、占位符、重试、参数 |
+| 编号    | 产物                           | 文件                                                                                | 状态                                                                 |
+| ------- | ------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| ✅ D-01 | 需求澄清（7 轮）               | —                                                                                   | 53 条 FR（其中 FR-24~32 已随旧交互废止）                             |
+| ✅ D-02 | PRD v1.1.1                     | `docs/specs/PRD.md`（v3.0）                                                         | 原 15 段结构，已并入 v3.0，含 RTM                                    |
+| ✅ D-03 | 交互规格 v1.0                  | —（已被 v2 取代，原文已清理）                                                       | 11 节，含反模式 9 条                                                 |
+| ✅ D-04 | 技术事实核实                   | PRD 5.1.1                                                                           | Chrome 138+ 默认启用 UIA 等 6 条                                     |
+| ✅ D-05 | 兜底路径评估                   | PRD 5.1.2                                                                           | 模拟复制 9 项问题，判定永久不做                                      |
+| ✅ D-06 | 开发前审计                     | —（结论已并入四份契约，原文已清理）                                                 | 22 冲突 + 12 缺口 + 8 空洞                                           |
+| ✅ D-07 | 项目改名 Lingo Lens → Snapword | 全仓 + 资料库                                                                       | 本地与云端已同步                                                     |
+| ✅ D-08 | 仓库基础文件                   | `README.md` / `LICENSE` / `.gitignore`                                              | MIT，Key 与 DB 已排除                                                |
+| ✅ D-09 | 三窗口交互需求 v2.0            | `docs/specs/PRD.md` 7.4（摘要）+ `docs/specs/interaction-spec-v2.md` 13（完整条目） | 圆点 / 翻译卡片 / 主窗口，含跨窗口与验收                             |
+| ✅ D-10 | 三窗口交互规格 v2.0            | `docs/specs/interaction-spec-v2.md`                                                 | 逐帧时序、位置算法、状态机、交互参数；验收见 PRD 十五                |
+| ✅ D-11 | 沉浸式翻译本地版调研           | `docs/research/immersive-translate-interaction-2026-11.md`                          | 1.34.4 三层界面与关键数值                                            |
+| ✅ D-12 | D-1 / Q-6 / iframe 自动化验证  | UIA-demo `scripts/d1-feasibility.mjs`                                               | Chrome/Edge 156 均 30/30；Q-6 93.3%；iframe 10/10                    |
+| ✅ D-13 | B-01 技术架构                  | `docs/contracts/architecture.md`                                                    | 进程拓扑、职责、线程、崩溃恢复、窗口/数据所有权                      |
+| ✅ D-14 | B-02 IPC 契约                  | `docs/contracts/ipc-contract.md`                                                    | 消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                    |
+| ✅ D-15 | B-03 数据库 schema v2.0        | `docs/contracts/data-model.md`                                                      | Drizzle schema-as-code、软删除/撤销、同步预留、迁移/备份/损坏恢复    |
+| ✅ D-16 | B-04 提示词契约                | `docs/contracts/prompt-contract.md`                                                 | v1.1（2026-11-04 对齐）：两条提示词、JSON schema、占位符、重试、参数 |
 
 ### P4 工程底座（本分支，2026-11-10）
 
@@ -99,7 +97,7 @@
 | A-04 | 术语表存 config 还是 SQLite       | 存 SQLite，独立表                                                                                                                   | config.json 承担两份数据，损坏风险叠加      |
 | A-05 | `senses` 条数谁截断               | 提示词限 5 条，前端只兜底                                                                                                           | token 成本与展示逻辑双重漂移                |
 
-> 落实位置：A-01 / A-02 / A-05 → `docs/prompt-contract.md`；A-03 / A-04 → `docs/data-model.md`。
+> 落实位置：A-01 / A-02 / A-05 → `docs/contracts/prompt-contract.md`；A-03 / A-04 → `docs/contracts/data-model.md`。
 
 ### 4.2 两项方向性（影响范围，不影响结构）
 
@@ -142,12 +140,12 @@
 
 ### 5.1 已完成（4 份，阻塞项）
 
-| 编号 | 文档                 | 产出路径                  | 状态                                                                   |
-| ---- | -------------------- | ------------------------- | ---------------------------------------------------------------------- |
-| B-01 | 技术架构（进程模型） | `docs/architecture.md`    | ✅ 完成                                                                |
-| B-02 | IPC 契约             | `docs/ipc-contract.md`    | ✅ 完成                                                                |
-| B-03 | 数据库 schema        | `docs/data-model.md`      | ✅ 完成（v2.0，2026-11-04：Drizzle + node:sqlite + 软删除 + 同步预留） |
-| B-04 | 提示词契约           | `docs/prompt-contract.md` | ✅ 完成（v1.1，2026-11-04 对齐）                                       |
+| 编号 | 文档                 | 产出路径                            | 状态                                                                   |
+| ---- | -------------------- | ----------------------------------- | ---------------------------------------------------------------------- |
+| B-01 | 技术架构（进程模型） | `docs/contracts/architecture.md`    | ✅ 完成                                                                |
+| B-02 | IPC 契约             | `docs/contracts/ipc-contract.md`    | ✅ 完成                                                                |
+| B-03 | 数据库 schema        | `docs/contracts/data-model.md`      | ✅ 完成（v2.0，2026-11-04：Drizzle + node:sqlite + 软删除 + 同步预留） |
+| B-04 | 提示词契约           | `docs/contracts/prompt-contract.md` | ✅ 完成（v1.1，2026-11-04 对齐）                                       |
 
 ### 5.2 开发前应有（4 份）
 
@@ -216,20 +214,20 @@ flowchart TD
 
 ### 第一批：第 1~5 天（不写业务代码）
 
-| #   | 动作                                         | 产出                      | 完成判据                                                          |
-| --- | -------------------------------------------- | ------------------------- | ----------------------------------------------------------------- |
-| 1   | 落实已确认决策并核实非交互契约               | PRD / 交互规格 / 契约草案 | 交互按 v2 最终决策同步；非交互字段/协议按产品所有者确认           |
-| 2   | 工程基线（按项目实际状态维护，不重复初始化） | 可回滚的基线              | `git status` 与提交记录可检查                                     |
-| 3   | B-01 技术架构                                | `docs/architecture.md`    | 进程拓扑、职责边界、崩溃恢复时序可执行                            |
-| 4   | B-02 IPC 契约                                | `docs/ipc-contract.md`    | 每个字段有类型、单位、坐标系；失败分支有处理                      |
-| 5   | B-03 数据库 schema                           | `docs/data-model.md`      | `schema.ts` 可生成迁移；索引、软删除/撤销、同步预留、迁移约定完整 |
-| 6   | B-04 提示词契约                              | `docs/prompt-contract.md` | 两条提示词全文 + 版本 + 参数；字段与展示约束一致                  |
+| #   | 动作                                         | 产出                                | 完成判据                                                          |
+| --- | -------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------- |
+| 1   | 落实已确认决策并核实非交互契约               | PRD / 交互规格 / 契约草案           | 交互按 v2 最终决策同步；非交互字段/协议按产品所有者确认           |
+| 2   | 工程基线（按项目实际状态维护，不重复初始化） | 可回滚的基线                        | `git status` 与提交记录可检查                                     |
+| 3   | B-01 技术架构                                | `docs/contracts/architecture.md`    | 进程拓扑、职责边界、崩溃恢复时序可执行                            |
+| 4   | B-02 IPC 契约                                | `docs/contracts/ipc-contract.md`    | 每个字段有类型、单位、坐标系；失败分支有处理                      |
+| 5   | B-03 数据库 schema                           | `docs/contracts/data-model.md`      | `schema.ts` 可生成迁移；索引、软删除/撤销、同步预留、迁移约定完整 |
+| 6   | B-04 提示词契约                              | `docs/contracts/prompt-contract.md` | 两条提示词全文 + 版本 + 参数；字段与展示约束一致                  |
 
 **门槛**：这 4 份契约没做完，不写界面。理由：它们都会反向修改界面（`context_snippet` 有没有，直接决定语境义块长什么样）。
 
 **P4 验证门（2026-11-04 已核对，剩项目内复现）**：
 
-已实测：Electron 42.11.18 / 45.2.2 可用（Node 24.19/24.22，SQLite 3.53.3/3.53.4，无 experimental warning）；`node:sqlite` 在主进程与 utilityProcess 可用；`migrate()` 同步、整批一个事务、按目录名匹配、不校验 hash、未知迁移被忽略；`db.$client === client`；`RETURNING`/`json_type`/部分索引/WAL/只读连接均通过。详见 `docs/data-model.md` §17.1。
+已实测：Electron 42.11.18 / 45.2.2 可用（Node 24.19/24.22，SQLite 3.53.3/3.53.4，无 experimental warning）；`node:sqlite` 在主进程与 utilityProcess 可用；`migrate()` 同步、整批一个事务、按目录名匹配、不校验 hash、未知迁移被忽略；`db.$client === client`；`RETURNING`/`json_type`/部分索引/WAL/只读连接均通过。详见 `docs/contracts/data-model.md` §17.1。
 
 P4 仍需在本项目做：
 

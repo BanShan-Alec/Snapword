@@ -4,8 +4,8 @@
 > 变更：v1.2（2026-11-04）数据库访问改为 **Drizzle ORM + Node 内置 `node:sqlite`**；删除改为软删除 + 墓碑；同步（v1.1）预留每设备快照。详见 `docs/adr/0003-use-drizzle-orm.md`。
 > 变更：v1.1 按 2026-11-03 决策，从「独立 Rust exe + 命名管道」改为 **Electron `utilityProcess` + Node 原生插件**。
 > 适用范围：Windows 10 1809+ / Windows 11 x64；Chrome / Edge 138+
-> 上游依据：`docs/PRD.md` v3.0（功能需求与交互摘要）、`docs/interaction-spec-v2.md`（交互需求条目、时序与状态）
-> 下游契约：`docs/ipc-contract.md`（B-02）、`docs/data-model.md`（B-03）、`docs/prompt-contract.md`（B-04）
+> 上游依据：`docs/specs/PRD.md` v3.0（功能需求与交互摘要）、`docs/specs/interaction-spec-v2.md`（交互需求条目、时序与状态）
+> 下游契约：`docs/contracts/ipc-contract.md`（B-02）、`docs/contracts/data-model.md`（B-03）、`docs/contracts/prompt-contract.md`（B-04）
 > 本契约解决：进程拓扑、职责边界、Native Addon 拆分、线程模型、启动/退出顺序、崩溃恢复、窗口与数据所有权、安全边界。
 
 ---

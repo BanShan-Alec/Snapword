@@ -2,7 +2,7 @@
 
 > 文档状态：**2026-11-04 已与产品所有者逐条对齐，可直接据此实现请求层**
 > 适用范围：单词模式（词典 JSON）与句子模式（流式纯译文）
-> 上游依据：`docs/PRD.md` FR-11/12/13/14/17~23、7.9 AI 能力专项；`docs/interaction-spec-v2.md` 13.3 RC-06/RC-07/RC-09/RC-11
+> 上游依据：`docs/specs/PRD.md` FR-11/12/13/14/17~23、7.9 AI 能力专项；`docs/specs/interaction-spec-v2.md` 13.3 RC-06/RC-07/RC-09/RC-11
 > 本版变更：句子提示词极简化、固定分隔符、`temperature=0`、默认不发 `max_tokens`、可选 JSON schema、术语表映射、句子上下文、单词模式流式、`same_text`/长度比例校验、占位符仅句子模式、义项例句必填
 > 明确不做：术语自动抽取、术语 domain、用量记录（v1.1）、marker 批处理、多服务回退
 

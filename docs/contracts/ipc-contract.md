@@ -3,7 +3,7 @@
 > 文档状态：**已定稿，可直接据此实现主进程与取词服务**
 > 变更：v1.1 按 2026-11-03 决策，从「命名管道 + 长度前缀 JSON」改为 **Electron `utilityProcess` + MessagePort**。
 > 适用范围：Electron 主进程 ↔ 取词 utilityProcess；不覆盖渲染进程 ↔ 主进程的 Electron IPC
-> 上游依据：`docs/architecture.md`（B-01）、`docs/PRD.md` 5.2 / FR-01~FR-10、`docs/interaction-spec-v2.md` 13.2 RD 章节 / 13.3 RC 章节
+> 上游依据：`docs/contracts/architecture.md`（B-01）、`docs/specs/PRD.md` 5.2 / FR-01~FR-10、`docs/specs/interaction-spec-v2.md` 13.2 RD 章节 / 13.3 RC 章节
 > 本契约解决：传输、消息目录、字段类型/单位/坐标系、握手、错误码、超时/重试、顺序与背压、安全校验。
 
 ---

@@ -93,19 +93,21 @@ pnpm dev       # 开发模式：Vite DevServer + Electron 双进程热重载
 
 ## 文档
 
-| 文档                                                                                                                 | 内容                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [docs/PRD.md](docs/PRD.md)                                                                                           | **产品需求文档 v3.0**：背景、取词、三窗口交互摘要（7.4）、引擎、隐私、数据、验收（原 PRD-v2 已收敛）      |
-| [GLOSSARY.md](GLOSSARY.md)                                                                                           | **领域术语表**：划词/取词、三窗口、语境、请求分段、会话历史、翻译引擎等标准用词                           |
-| [docs/interaction-spec-v2.md](docs/interaction-spec-v2.md)                                                           | **当前交互规格**：交互需求条目 RD/RC/RM/RX（13）、逐帧时序、位置算法、状态机、参数表；验收见 PRD 第十五章 |
-| [docs/architecture.md](docs/architecture.md)                                                                         | **B-01 技术架构**：进程拓扑、Native Addon 拆分、线程模型、启动/退出、崩溃恢复、窗口与数据所有权           |
-| [docs/ipc-contract.md](docs/ipc-contract.md)                                                                         | **B-02 IPC 契约**：消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                                      |
-| [docs/data-model.md](docs/data-model.md)                                                                             | **B-03 数据库 schema v2.0**：Drizzle schema-as-code、软删除/撤销、同步预留、索引、迁移/损坏恢复           |
-| [docs/adr/](docs/adr/)                                                                                               | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite、Sentry 生产启用                       |
-| [docs/prompt-contract.md](docs/prompt-contract.md)                                                                   | **B-04 提示词契约**：两条提示词全文、JSON schema、占位符、重试、模型参数                                  |
-| [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                 | **视觉规范**：设计令牌、双主题、字号 / 间距、对比度规则                                                   |
-| [docs/research/immersive-translate-interaction-2026-11.md](docs/research/immersive-translate-interaction-2026-11.md) | 本机沉浸式翻译 1.34.4 的三窗口交互调研：圆点尺寸、卡片布局、拖拽/防误关、参考交互取舍                     |
-| [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md)                                   | UIA 验证报告：Q-1、D-1（30/30）、Q-6（93.3%）、同源 iframe、坐标空间发现                                  |
+完整文档体系与分层规范见 [docs/README.md](docs/README.md)（含研发玩法与契约先行原则）：
+
+| 分类     | 文档                                                                                                                 | 内容                                                                                                      |
+| :------- | :------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- |
+| **规格** | [docs/specs/PRD.md](docs/specs/PRD.md)                                                                               | **产品需求文档 v3.0**：背景、取词、三窗口交互摘要（7.4）、引擎、隐私、数据、验收（原 PRD-v2 已收敛）      |
+| **规格** | [docs/specs/interaction-spec-v2.md](docs/specs/interaction-spec-v2.md)                                               | **当前交互规格**：交互需求条目 RD/RC/RM/RX（13）、逐帧时序、位置算法、状态机、参数表；验收见 PRD 第十五章 |
+| **契约** | [docs/contracts/architecture.md](docs/contracts/architecture.md)                                                     | **B-01 技术架构**：进程拓扑、Native Addon 拆分、线程模型、启动/退出、崩溃恢复、窗口与数据所有权           |
+| **契约** | [docs/contracts/ipc-contract.md](docs/contracts/ipc-contract.md)                                                     | **B-02 IPC 契约**：消息目录、字段/单位/DIP 坐标系、错误码、超时/背压                                      |
+| **契约** | [docs/contracts/data-model.md](docs/contracts/data-model.md)                                                         | **B-03 数据库 schema v2.0**：Drizzle schema-as-code、软删除/撤销、同步预留、索引、迁移/损坏恢复           |
+| **契约** | [docs/contracts/prompt-contract.md](docs/contracts/prompt-contract.md)                                               | **B-04 提示词契约**：两条提示词全文、JSON schema、占位符、重试、模型参数                                  |
+| **术语** | [GLOSSARY.md](GLOSSARY.md)                                                                                           | **领域术语表**：划词/取词、三窗口、语境、请求分段、会话历史、翻译引擎等标准用词                           |
+| **决策** | [docs/adr/](docs/adr/)                                                                                               | 架构决策记录：PUA 占位符、temperature=0、Drizzle ORM + node:sqlite、Sentry 生产启用                       |
+| **视觉** | [packages/renderer/docs/DESIGN.md](packages/renderer/docs/DESIGN.md)                                                 | **视觉规范**：设计令牌、双主题、字号 / 间距、对比度规则                                                   |
+| **调研** | [docs/research/immersive-translate-interaction-2026-11.md](docs/research/immersive-translate-interaction-2026-11.md) | 本机沉浸式翻译 1.34.4 的三窗口交互调研：圆点尺寸、卡片布局、拖拽/防误关、参考交互取舍                     |
+| **调研** | [docs/research/uia-validation-2026-11.md](docs/research/uia-validation-2026-11.md)                                   | UIA 验证报告：Q-1、D-1（30/30）、Q-6（93.3%）、同源 iframe、坐标空间发现                                  |
 
 ## 关键设计决策
 

@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-04
-- 相关：PRD FR-13、`docs/prompt-contract.md` §6/§8.2、B-07 评测集
+- 相关：PRD FR-13、`docs/contracts/prompt-contract.md` §6/§8.2、B-07 评测集
 
 ## 背景
 
