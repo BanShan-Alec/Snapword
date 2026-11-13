@@ -1,0 +1,109 @@
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    /* 首帧画布由原生 BrowserWindow.backgroundColor 承担（window 模块 resolveNativeTheme），
+       renderer 恒透明叠于其上；React 根须不透明满幅，否则原生底色透出（见 DESIGN.md §3）。 */
+    background-color: transparent;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/*
+ * 以下自定义类与平台原语规则统一入 @layer components（DESIGN.md 层级秩序纪律）。
+ * 不入 base：components > base > antd 的层序保持这些规则压过 antd 的可能注入；
+ * 这些属性（-webkit-app-region / scrollbar 伪元素 / scrollbar-gutter）
+ * 无 Tailwind utility 对应，入层仅消除「层外裸样式」。
+ */
+
+/* Electron App Region Dragging */
+@layer components {
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+
+  .no-drag {
+    -webkit-app-region: no-drag;
+  }
+
+  /*
+   * 平台标题栏避让（env() 由 titleBarOverlay 提供）：
+   * - darwin: 红绿灯在左上角，env(titlebar-area-x) 为其实际宽度，回退 80px（全屏时 env 为 0，保底 1rem 避让边距）
+   * - win32: 原生窗口控制按钮覆盖右上角，右侧按 env(titlebar-area-width) 预留
+   * 双层分治结构：仅首层系统标题栏（.drag-region）挂钩避让，第二层业务栏恢复全宽布局。
+   */
+  .platform-darwin .drag-region:not(.no-wco) {
+    padding-left: max(1rem, env(titlebar-area-x, 80px));
+  }
+
+  .platform-win32 .drag-region:not(.no-wco) {
+    padding-right: calc(100vw - env(titlebar-area-width, 100vw));
+  }
+
+  /*
+   * 全局自定义滚动条。推翻旧决策「绘制交给平台原生」：Chromium 页面未声明 color-scheme
+   * 时原生滚动条恒按浅色绘制（nativeTheme 只影响浏览器级 UI），深色主题下必然发白突兀。
+   * 仅用 ::-webkit-scrollbar 系列：Electron 内核固定无需标准属性兜底，
+   * 且 scrollbar-color 一旦声明会整体禁用本伪元素样式，两者互斥。
+   */
+  *::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /*
+   * 透明 border + background-clip 让滑块四周离边留白（悬浮观感）：
+   * 14px 总宽 - 两侧各 3px = 视觉 8px 滑块；外圈圆角 7px 扣除 border 后视觉即 4px。
+   * 隙不能取 2px：Chromium 按设备像素取整，100% 缩放下 2px 实渲染 ≈1px，视觉等于贴边。
+   */
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-scrollbar-thumb);
+    border: 3px solid transparent;
+    border-radius: 7px;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background-color: var(--color-scrollbar-thumb-active);
+  }
+
+  /* Windows 自定义滚动条默认带步进箭头按钮，显式隐藏 */
+  *::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Scrollbar gutter stability（仅预留槽位防布局抖动，滚动条外观见上方全局规则） */
+  .stable-scrollbar {
+    scrollbar-gutter: stable;
+  }
+}

@@ -1,0 +1,125 @@
+import fs from 'node:fs';
+import { join } from 'node:path';
+import type { Configuration } from 'electron-builder';
+import { APP_IDENTITY } from './lib/app-identity';
+
+// 基于当前构建脚本目录确定全局确定的根目录
+const ROOT_DIR = join(__dirname, '..');
+
+const config: Configuration = {
+  appId: APP_IDENTITY.appId,
+  productName: APP_IDENTITY.productName,
+  directories: {
+    output: 'dist',
+    buildResources: 'build/resources',
+  },
+  generateUpdatesFilesForAllChannels: true,
+  publish: {
+    provider: 'github',
+    owner: APP_IDENTITY.repositoryOwner,
+    repo: APP_IDENTITY.repositoryName,
+    releaseType: 'release',
+  },
+  win: {
+    target: [
+      {
+        target: 'nsis',
+        arch: ['x64'],
+      },
+      {
+        target: 'portable',
+        arch: ['x64'],
+      },
+    ],
+    icon: 'build/resources/icon.ico',
+  },
+  portable: {
+    // 与 NSIS 安装包同为目标 exe，必须区分产物名避免互相覆盖
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder placeholder template
+    artifactName: '${name}-${version}-${os}-${arch}-portable.${ext}',
+  },
+  nsis: {
+    oneClick: false,
+    perMachine: true,
+    allowToChangeInstallationDirectory: true,
+    allowElevation: true,
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
+    shortcutName: APP_IDENTITY.productName,
+    installerIcon: 'build/resources/icon.ico',
+    uninstallerIcon: 'build/resources/icon.ico',
+    installerHeaderIcon: 'build/resources/icon.ico',
+    deleteAppDataOnUninstall: false,
+  },
+  extraResources: [
+    {
+      from: 'build/resources',
+      to: 'buildResources',
+      filter: ['**/*'],
+    },
+  ],
+  /**
+   * 采用 package.json 的 name (snapword)，零空格小写规范
+   * 杜绝 GitHub Releases 上传时被自动转换为点号 (.) 导致 latest.yml 校验与下载 404
+   */
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder placeholder template
+  artifactName: '${name}-${version}-${os}-${arch}.${ext}',
+  asarUnpack: ['**/*.node'],
+  /**
+   * Electron Fuses（构建期写入二进制熔丝开关）
+   * - runAsNode / enableNodeOptionsEnvironmentVariable：防止客户端被当作通用 Node 运行器或注入 NODE_OPTIONS
+   * - onlyLoadAppFromAsar + enableEmbeddedAsarIntegrityValidation：锁死仅从 app.asar 加载并校验完整性（Win/Mac 生效；防篡改需配合 OS 代码签名）
+   * - resetAdHocDarwinSignature：无正式 Apple 签名时保证 macOS arm64 修改 Fuse 后仍可正常启动
+   * - 未关闭 enableNodeCliInspectArguments：verify-postbuild 依赖 Playwright electron.launch(--inspect=0) 验真
+   */
+  electronFuses: {
+    runAsNode: false,
+    enableNodeOptionsEnvironmentVariable: false,
+    onlyLoadAppFromAsar: true,
+    enableEmbeddedAsarIntegrityValidation: true,
+    resetAdHocDarwinSignature: true,
+  },
+  files: [
+    'LICENSE*',
+    '!node_modules/@app/**',
+    ...getListOfFilesFromEachWorkspace(['main', 'preload', 'renderer']),
+    '!**/*.map', // 严禁将 SourceMap 源码映射文件打包进 asar，彻底防止源码泄露
+    '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,changelog.md}',
+    '!**/node_modules/*/{test,__tests__,tests,docs,example,examples}/**',
+    '!**/node_modules/**/*.d.ts',
+    '!**/node_modules/**/*.d.cts',
+    '!**/node_modules/**/*.d.mts',
+  ],
+};
+
+export default config;
+
+/**
+ * 显式读取指定 workspace 子包的 package.json 中的 files 配置，生成打包匹配规则
+ */
+function getListOfFilesFromEachWorkspace(
+  workspaces: string[],
+): Array<{ from: string; to: string; filter: string[] }> {
+  const packagesDir = join(ROOT_DIR, 'packages');
+  const allFilesToInclude: Array<{ from: string; to: string; filter: string[] }> = [];
+
+  for (const workspace of workspaces) {
+    const dirName = workspace.replace(/^@app\//, '');
+    const pkgPath = join(packagesDir, dirName, 'package.json');
+    if (!fs.existsSync(pkgPath)) continue;
+
+    const workspacePkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    const name = workspacePkg.name;
+    if (!name) continue;
+
+    if (!Array.isArray(workspacePkg.files) || workspacePkg.files.length === 0) continue;
+
+    allFilesToInclude.push({
+      from: `packages/${dirName}`,
+      to: `node_modules/${name}`,
+      filter: [...workspacePkg.files, '!**/*.map'],
+    });
+  }
+
+  return allFilesToInclude;
+}

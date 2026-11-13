@@ -1,0 +1,80 @@
+{
+  "name": "snapword",
+  "productName": "Snapword",
+  "appId": "com.snapword.app",
+  "description": "Snapword:划词取词翻译桌面应用(Electron + utilityProcess + Native Addon)",
+  "version": "0.1.0",
+  "author": {
+    "name": "BanShan-Alec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BanShan-Alec/Snapword.git"
+  },
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@12.15.0",
+  "main": "node_modules/@app/main/dist/index.cjs",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": "^12.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "build:unpack": "tsx scripts/build.ts --dir",
+    "build:win": "tsx scripts/build.ts --win",
+    "dev": "cross-env MODE=development tsx scripts/dev.ts",
+    "preview": "cross-env MODE=production tsx scripts/dev.ts",
+    "start": "pnpm preview",
+    "pr-review": "pnpm --filter @app/pr-review run cli",
+    "i18n:extract": "pnpm --filter @app/renderer exec lingui extract --clean",
+    "i18n:check": "pnpm --filter @app/renderer exec lingui check missing",
+    "test": "vitest run -c .config/vitest.config.ts",
+    "test:pr-review": "pnpm --filter @app/pr-review run test",
+    "test:watch": "vitest -c .config/vitest.config.ts",
+    "test:bench": "cross-env BENCHMARK=true vitest run -c .config/vitest.config.ts",
+    "test:e2e": "playwright test -c .config/playwright.config.ts",
+    "test:e2e:build": "pnpm run build && pnpm run test:e2e",
+    "verify:prebuild": "tsx scripts/verify-prebuild.ts",
+    "verify:postbuild": "tsx scripts/verify-postbuild.ts",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "biome check --config-path=.config .",
+    "lint:fix": "biome check --write --config-path=.config .",
+    "format": "biome format --write --config-path=.config .",
+    "changelog": "changelogen",
+    "release": "changelogen --release",
+    "release:patch": "changelogen --release --patch",
+    "release:minor": "changelogen --release --minor",
+    "release:major": "changelogen --release --major",
+    "prepare": "husky",
+    "postinstall": "cross-env ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ install-electron"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,md,yml,yaml}": [
+      "biome check --write --config-path=.config --no-errors-on-unmatched"
+    ]
+  },
+  "devDependencies": {
+    "@app/preload": "workspace:*",
+    "@app/renderer": "workspace:*",
+    "@app/tsconfig": "workspace:*",
+    "@biomejs/biome": "^2.6.4",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "catalog:",
+    "changelogen": "^0.6.2",
+    "cross-env": "^10.1.0",
+    "electron": "45.2.1",
+    "electron-builder": "26.18.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "tsx": "^4.23.15",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@app/main": "workspace:*"
+  }
+}

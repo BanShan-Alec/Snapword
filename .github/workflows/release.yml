@@ -1,0 +1,108 @@
+# 发版流水线:本地 changelogen 提升版本并推送 v* tag 后自动触发,三平台构建并发布 GitHub Release。
+# CI 内不提升版本号——package.json 的版本由 changelogen 的发版提交保证与 tag 一致。
+# Release 标题 = package.json 的 productName + tag;正文首行给 CHANGELOG 导航,其余由 GitHub 按本版合并的 PR 自动生成。
+# 手动 dispatch 仅构建不发布,用于验证构建管线。
+name: Release App
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-env
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
+      - name: Build Application (Windows)
+        if: runner.os == 'Windows'
+        run: pnpm run build:win -- -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Build Application (macOS)
+        if: runner.os == 'macOS'
+        run: pnpm run build:mac -- -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Build Application (Linux)
+        if: runner.os == 'Linux'
+        run: pnpm run build:linux -- -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.os }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.deb
+            dist/*.zip
+            dist/*.yml
+            dist/*.blockmap
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Resolve release identity
+        id: identity
+        run: |
+          echo "product_name=$(node -p "require('./package.json').productName")" >> "$GITHUB_OUTPUT"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          # 标题 = productName + tag;正文首行给 CHANGELOG 导航,其余交给 GitHub 按合并的 PR 生成
+          name: ${{ steps.identity.outputs.product_name }} ${{ github.ref_name }}
+          body: |
+            📖 完整变更日志见 [CHANGELOG.md](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md)
+          files: release-artifacts/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

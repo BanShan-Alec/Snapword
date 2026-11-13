@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@app/main/*": ["../main/src/*"],
+      "@app/preload/*": ["../preload/src/*"],
+      "@app/renderer/*": ["../renderer/src/*"],
+      "@app/shared/*": ["../shared/src/*"],
+      "@shared/*": ["../shared/src/*"],
+      "@/*": ["../renderer/src/*"]
+    }
+  }
+}

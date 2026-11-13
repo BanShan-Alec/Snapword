@@ -1,0 +1,31 @@
+packages:
+  - "packages/*"
+
+catalog:
+  typescript: ^6.0.0
+  vite: ^8.3.5
+  zod: ^4.5.4
+  react: ^19.3.1
+  react-dom: ^19.3.1
+  "@types/react": ^19.2.14
+  "@types/react-dom": ^19.2.3
+  "@types/node": ^24.19.2
+  vitest: ^5.1.0
+  tailwindcss: ^4.3.4
+
+# pnpm 12 起非 auth/registry 设置只从本文件读取（.npmrc 仅剩 registry）
+nodeLinker: isolated
+autoInstallPeers: true
+
+# 供应链防护：发布不满 24 小时的依赖禁止安装（显式化默认值；临时豁免用 minimumReleaseAgeExclude）
+minimumReleaseAge: 1440
+
+# 构建脚本审批（strictDepBuilds 默认 true：未审批=安装失败 ERR_PNPM_IGNORED_BUILDS）。
+# 新增依赖撞该错误时：`pnpm ignored-builds` 查列表 → `pnpm approve-builds <包名>` 审批后决策落到此。
+# 注意：electron 42+ 起无 install 生命周期脚本（二进制惰性下载），不在此列，由根 postinstall 守卫兜底
+allowBuilds:
+  "@sentry/cli": true
+  "electron-winstaller": true
+  esbuild: true
+  es5-ext: true
+  vue-demi: true

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__APP_TITLE__</title>
+    <script>
+      // 首帧主题由主进程经 URL query 显式传入（window 模块 resolveNativeTheme → shared STARTUP_THEME_QUERY_KEY）。
+      // 不读 prefers-color-scheme：system 模式的运行时变化由 useTheme 的 matchMedia 监听负责。
+      const startupTheme = new URLSearchParams(window.location.search).get('theme');
+      if (startupTheme === 'dark' || startupTheme === 'light') {
+        document.documentElement.dataset.theme = startupTheme;
+      }
+      if (window.location.search.includes('skip_animation')) {
+        document.documentElement.classList.add('skip-startup-animation');
+      }
+    </script>
+    <style>
+      #root {
+        opacity: 0;
+        transition: opacity 0.16s ease;
+      }
+
+      body.app-startup-ready #root {
+        opacity: 1;
+      }
+
+      /* 拖拽必须写在内联样式块：Tailwind content 仅扫描 ./src/**，
+         任意属性类 [app-region:drag] 在本文件中不会生成产物 */
+      #loading {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.16s ease;
+        -webkit-app-region: drag;
+      }
+
+      body.app-startup-ready #loading {
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      html.skip-startup-animation #loading {
+        display: none !important;
+      }
+
+      html.skip-startup-animation #root {
+        opacity: 1 !important;
+        transition: none !important;
+      }
+
+      .startup-logo-shell {
+        position: relative;
+        display: flex;
+        width: 96px;
+        height: 96px;
+        align-items: center;
+        justify-content: center;
+        transform: scale(0.72);
+        opacity: 0;
+        animation: startup-logo-pop 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        transform-origin: center;
+      }
+
+      .startup-logo-slot {
+        width: 96px;
+        height: 96px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      @keyframes startup-logo-pop {
+        0% {
+          opacity: 0;
+          transform: scale(0.72);
+        }
+        38% {
+          opacity: 1;
+          transform: scale(1.045);
+        }
+        58% {
+          opacity: 1;
+          transform: scale(0.985);
+        }
+        76% {
+          opacity: 1;
+          transform: scale(1.008);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .startup-logo-shell {
+          opacity: 1;
+          transform: scale(1);
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="loading" role="status" aria-busy="true" aria-label="Loading...">
+      <div class="startup-logo-shell">
+        <div class="startup-logo-slot">
+          <!-- __APP_STARTUP_LOGO__ -->
+        </div>
+      </div>
+    </div>
+    <!-- __APP_STARTUP_COORDINATOR__ -->
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>
