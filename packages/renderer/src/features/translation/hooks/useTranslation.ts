@@ -78,6 +78,50 @@ export function useTranslation() {
     };
   }, [message]);
 
+  // 联动监听来自卡片的「在主窗口打开」(RC-18 / IA-25)
+  useEffect(() => {
+    const cardApi = window.api?.card;
+    if (!cardApi?.onOpenInHome) return;
+
+    const unbindOpenInHome = cardApi.onOpenInHome((payload: unknown) => {
+      if (!payload || typeof payload !== 'object') return;
+      const data = payload as {
+        text?: string;
+        context?: string;
+        mode?: 'word' | 'sentence';
+        wordResult?: WordTranslationResult;
+        sentenceResult?: SentenceTranslationResult;
+        aborted?: boolean;
+      };
+
+      if (typeof data.text === 'string') {
+        setText(data.text);
+      }
+      if (typeof data.context === 'string') {
+        setContext(data.context);
+      }
+      if (data.mode === 'word' || data.mode === 'sentence') {
+        setMode(data.mode);
+      }
+      if (data.wordResult) {
+        setWordResult(data.wordResult);
+      }
+      if (data.sentenceResult) {
+        setSentenceResult(data.sentenceResult);
+        setStreamingText(data.sentenceResult.text);
+      }
+      if (data.aborted) {
+        setError('请求已中止 · 重新翻译');
+      } else {
+        setError(null);
+      }
+    });
+
+    return () => {
+      unbindOpenInHome();
+    };
+  }, []);
+
   const handleTranslate = async () => {
     if (!trimmed) {
       message.warning(t`请输入待翻译内容`);
@@ -106,6 +150,7 @@ export function useTranslation() {
         mode: effectiveMode,
         text: trimmed,
         context: context.trim() || undefined,
+        source: 'home',
       });
 
       if (!res.success) {

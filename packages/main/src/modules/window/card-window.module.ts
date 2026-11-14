@@ -7,22 +7,38 @@ import {
   CARD_WINDOW_WIDTH,
 } from '@app/shared/constants/window-geometry';
 import { STARTUP_THEME_QUERY_KEY, WINDOW_IDS } from '@app/shared/constants/windows';
-import type { SelectionPayload } from '@app/shared/schemas/capture';
+import type {
+  DotHiddenMessage,
+  ForegroundChangedMessage,
+  SelectionPayload,
+} from '@app/shared/schemas/capture';
 import type { CardActionPayload } from '@app/shared/types/card';
 import { BrowserWindow, globalShortcut, screen } from 'electron';
 import type { AppInitConfig } from '../../AppInitConfig';
 import type { AppModule } from '../../AppModule';
+import { abortTranslationsBySource } from '../../controllers/translation.controller';
 import { getPackedEnvArgument } from '../../env';
 import type { ModuleContext } from '../../ModuleContext';
 import { getCaptureSupervisorModule } from '../capture-supervisor.module';
 import { getAppConfigStore } from '../config.module';
 import { getLogManager } from '../log.module';
 import { resolveNativeTheme } from '../native-theme.module';
+import {
+  type BlurReason,
+  CardAntiCloseStateMachine,
+  type ForegroundProcessInfo,
+} from './card-anti-close';
 import { calculateCardBounds, calculateCardRebound } from './card-geometry';
 import { resolveSelectionDispatch } from './card-shortcut';
 import { getHomeWindowModule } from './home-window.module';
 import { getWindowBackgroundColor } from './titlebar-overlay';
-import { forgetWindow, getWindow, registerWindow, sendToWindow } from './window-registry';
+import {
+  forgetWindow,
+  getWindow,
+  getWindowName,
+  registerWindow,
+  sendToWindow,
+} from './window-registry';
 
 export interface CardWindowModuleOptions {
   initConfig: AppInitConfig;
@@ -37,8 +53,8 @@ export class CardWindowModule implements AppModule {
 
   private lastDraggedPosition: { x: number; y: number } | null = null;
   private currentHeight: number = CARD_WINDOW_DEFAULT_HEIGHT;
-  private isPinned = false;
   private pendingAction: CardActionPayload | null = null;
+  private readonly stateMachine = new CardAntiCloseStateMachine();
 
   constructor({ initConfig, openDevTools = false }: CardWindowModuleOptions) {
     this.preload = initConfig.preload;
@@ -73,9 +89,25 @@ export class CardWindowModule implements AppModule {
           this.logger.error('圆点点击唤起卡片异常:', err);
         });
       });
+      // 3. 监听前台应用切换与外部点击防误关状态机 (IA-07, IA-08, IA-09)
+      captureSupervisor.on('foreground_changed', (msg: ForegroundChangedMessage) => {
+        this.handleForegroundChanged(msg);
+      });
+      captureSupervisor.on('dot_hidden', (msg: DotHiddenMessage) => {
+        if (msg.reason === 'outside_click') {
+          this.handleOutsideClick();
+        }
+      });
     } catch (err) {
-      this.logger.warn('挂载 captureSupervisor dot_clicked 监听异常:', err);
+      this.logger.warn('挂载 captureSupervisor 监听异常:', err);
     }
+
+    // 4. 监听应用内窗口获焦联动（如主窗口获焦，防误关开启保留，关闭则隐藏）
+    electronApp.on('browser-window-focus', (_event, focusedWin) => {
+      if (getWindowName(focusedWin) === WINDOW_IDS.HOME) {
+        this.handleHomeWindowFocus();
+      }
+    });
 
     electronApp.on('will-quit', () => {
       try {
@@ -138,6 +170,11 @@ export class CardWindowModule implements AppModule {
 
     browserWindow.on('closed', () => {
       forgetWindow(WINDOW_IDS.CARD, browserWindow);
+    });
+
+    // 焦点转移与失焦防闪退监控 (RC-01 / RC-15)
+    browserWindow.on('blur', () => {
+      this.handleWindowBlur('raw_blur');
     });
 
     // 拖拽松手吸附回弹算法 (RC-13)
@@ -214,6 +251,12 @@ export class CardWindowModule implements AppModule {
 
     win.setPosition(bounds.x, bounds.y);
 
+    // 状态机记录源进程信息
+    this.stateMachine.onOpen({
+      processName: action.selection?.processName,
+      processId: action.selection?.processId,
+    });
+
     // RC-01: 必须不夺取焦点展示，避免破坏前台应用选区
     win.showInactive();
 
@@ -225,12 +268,16 @@ export class CardWindowModule implements AppModule {
   }
 
   /**
-   * 隐藏卡片窗口
+   * 隐藏卡片窗口并可选择性中止进行中的请求 (RC-14)
    */
-  hideCard(): void {
+  hideCard(abort = true): void {
     const win = getWindow(WINDOW_IDS.CARD);
     if (win && !win.isDestroyed()) {
       win.hide();
+    }
+    this.stateMachine.onCloseButton();
+    if (abort) {
+      abortTranslationsBySource('card');
     }
   }
 
@@ -254,25 +301,80 @@ export class CardWindowModule implements AppModule {
    * 切换防误关状态 (RC-04 / RC-14)
    */
   setPin(pin: boolean): void {
-    this.isPinned = pin;
-    this.logger.info('Card pin status toggled:', { isPinned: this.isPinned });
+    this.stateMachine.setPin(pin);
+    this.logger.info('Card pin status toggled:', { isPinned: this.stateMachine.getPin() });
   }
 
   getPinStatus(): boolean {
-    return this.isPinned;
+    return this.stateMachine.getPin();
   }
 
   /**
-   * 在主窗口打开当前内容并隐藏卡片 (RC-18)
+   * 在主窗口打开当前内容并隐藏卡片 (RC-18 / IA-25)
    */
-  openInHome(_data?: unknown): void {
-    this.hideCard();
+  openInHome(data?: unknown): void {
+    const action = this.stateMachine.onOpenInHome();
+    this.hideCard(action.shouldAbortRequest);
     const homeModule = getHomeWindowModule();
     if (homeModule) {
-      homeModule.restoreOrCreateWindow(true).catch((err) => {
-        this.logger.error('Failed to restore home window from card:', err);
-      });
+      homeModule
+        .restoreOrCreateWindow(true)
+        .then((win) => {
+          if (win && !win.isDestroyed() && data) {
+            sendToWindow(WINDOW_IDS.HOME, IPC_CHANNELS.CARD_OPEN_IN_HOME, data);
+          }
+        })
+        .catch((err) => {
+          this.logger.error('Failed to restore home window from card:', err);
+        });
     }
+  }
+
+  /**
+   * 外部点击事件处理 (IA-07 / IA-08)
+   */
+  handleOutsideClick(): void {
+    const action = this.stateMachine.onOutsideClick();
+    if (action.shouldClose) {
+      this.hideCard(action.shouldAbortRequest);
+    }
+  }
+
+  /**
+   * 前台应用切换事件处理 (IA-09)
+   */
+  handleForegroundChanged(fg: ForegroundProcessInfo | ForegroundChangedMessage): void {
+    const action = this.stateMachine.onForegroundChanged(fg);
+    if (action.shouldClose) {
+      this.hideCard(action.shouldAbortRequest);
+    }
+  }
+
+  /**
+   * 主窗口聚焦联动处理 (RC-14 / IA-07 / IA-08)
+   */
+  handleHomeWindowFocus(): void {
+    const action = this.stateMachine.onHomeWindowFocused();
+    if (action.shouldClose) {
+      this.hideCard(action.shouldAbortRequest);
+    }
+  }
+
+  /**
+   * 焦点转移 / 失焦防闪退监控 (RC-01 / RC-15 防闪退红线)
+   */
+  handleWindowBlur(reason?: BlurReason): void {
+    const action = this.stateMachine.onWindowBlur(reason);
+    if (action.shouldClose) {
+      this.hideCard(action.shouldAbortRequest);
+    }
+  }
+
+  /**
+   * 获取底层状态机实例（便于单测与状态诊断）
+   */
+  getStateMachine(): CardAntiCloseStateMachine {
+    return this.stateMachine;
   }
 
   /**

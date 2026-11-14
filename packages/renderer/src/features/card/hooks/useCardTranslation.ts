@@ -89,6 +89,7 @@ export function useCardTranslation() {
           text: trimmed,
           context: targetContext,
           mode: inferredMode,
+          source: 'card',
         });
 
         if (res.success && res.data?.requestId) {
@@ -148,6 +149,7 @@ export function useCardTranslation() {
   }, [stopTranslation]);
 
   const openInHome = useCallback(async () => {
+    const wasLoading = isLoading;
     await stopTranslation();
     try {
       await window.api?.card?.openInHome({
@@ -156,11 +158,12 @@ export function useCardTranslation() {
         mode,
         wordResult,
         sentenceResult,
+        aborted: wasLoading,
       });
     } catch {
       // ignore
     }
-  }, [text, context, mode, wordResult, sentenceResult, stopTranslation]);
+  }, [text, context, mode, wordResult, sentenceResult, isLoading, stopTranslation]);
 
   const toggleFavorite = useCallback(() => {
     setIsFavorite((prev) => !prev);

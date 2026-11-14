@@ -5,6 +5,7 @@ export const translationInputSchema = z.object({
   mode: z.enum(['word', 'sentence']),
   text: z.string().min(1, '待翻译文本不能为空').max(20000, '待翻译文本超出长度限制'),
   context: z.string().max(2000).optional(),
+  source: z.enum(['card', 'home']).optional(),
 });
 export type TranslationInput = z.infer<typeof translationInputSchema>;
 

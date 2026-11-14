@@ -1,7 +1,12 @@
 import { ErrorCode } from '@app/shared/constants/error-codes';
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
-import { cardPinInputSchema, cardResizeInputSchema } from '@app/shared/schemas/card';
+import {
+  cardCopyInputSchema,
+  cardPinInputSchema,
+  cardResizeInputSchema,
+} from '@app/shared/schemas/card';
 import type { Result } from '@app/shared/types/result';
+import { clipboard } from 'electron';
 import { getCardWindowModule } from '../modules/window/card-window.module';
 import { handleTraced } from '../telemetry/ipc-tracer';
 import { catchToResult, failResult, successResult } from './utils';
@@ -44,6 +49,22 @@ export function registerCardControllers(): void {
       try {
         const cardModule = getCardWindowModule();
         cardModule.setPin(parseResult.data.pin);
+        return successResult({ success: true });
+      } catch (err) {
+        return catchToResult(err);
+      }
+    },
+  );
+
+  handleTraced(
+    IPC_CHANNELS.CARD_COPY_TEXT,
+    async (_event, rawInput: unknown): Promise<Result<{ success: boolean }>> => {
+      const parseResult = cardCopyInputSchema.safeParse(rawInput);
+      if (!parseResult.success) {
+        return failResult(parseResult.error.issues[0].message, ErrorCode.VALIDATION_ERROR);
+      }
+      try {
+        clipboard.writeText(parseResult.data.text);
         return successResult({ success: true });
       } catch (err) {
         return catchToResult(err);

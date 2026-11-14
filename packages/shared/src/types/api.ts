@@ -94,8 +94,10 @@ export interface ElectronApi {
     hide: (_payload?: void, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     resize: (height: number, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     setPin: (pin: boolean, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
+    copyText: (text: string, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     openInHome: (data?: unknown, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     onAction: (cb: (payload: CardActionPayload) => void) => () => void;
+    onOpenInHome?: (cb: (payload: unknown) => void) => () => void;
   };
   // 遵循 specs-electron-fullstack / renderer/ipc-consumption.md 安全规范
   getPathForFile: (file: File) => string;

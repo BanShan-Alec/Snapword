@@ -7,6 +7,8 @@ import {
   type CaptureMessage,
   type CaptureServiceState,
   DEFAULT_CAPTURE_CONFIG,
+  type DotHiddenMessage,
+  type ForegroundChangedMessage,
   type SelectionPayload,
   type ServiceStatusMessage,
 } from '@app/shared/schemas/capture';
@@ -295,6 +297,8 @@ export class CaptureSupervisorModule implements AppModule {
 
   // 事件监听封装
   public on(event: 'dot_clicked', listener: (payload: SelectionPayload) => void): this;
+  public on(event: 'dot_hidden', listener: (msg: DotHiddenMessage) => void): this;
+  public on(event: 'foreground_changed', listener: (msg: ForegroundChangedMessage) => void): this;
   public on(event: 'capture_result', listener: (payload: SelectionPayload) => void): this;
   public on(event: 'status', listener: (status: ServiceStatusMessage) => void): this;
   public on(
@@ -424,6 +428,16 @@ export class CaptureSupervisorModule implements AppModule {
           sentAt: new Date().toISOString(),
           reason: 'card_opened',
         });
+        break;
+      }
+
+      case 'dot_hidden': {
+        this.emitter.emit('dot_hidden', msg);
+        break;
+      }
+
+      case 'foreground_changed': {
+        this.emitter.emit('foreground_changed', msg);
         break;
       }
 

@@ -55,6 +55,7 @@ export const IPC_CHANNELS = {
   CARD_HIDE: 'card:hide',
   CARD_RESIZE: 'card:resize',
   CARD_PIN_TOGGLE: 'card:pin-toggle',
+  CARD_COPY_TEXT: 'card:copy-text',
   CARD_OPEN_IN_HOME: 'card:open-in-home',
   CARD_EVENT_ACTION: 'card:event:action',
 } as const;

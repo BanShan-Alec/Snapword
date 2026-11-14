@@ -14,7 +14,27 @@ import { handleTraced } from '../telemetry/ipc-tracer';
 import { failResult, successResult } from './utils';
 
 // 维护进行中的请求与 AbortController，便于中途取消
-const activeRequests = new Map<string, AbortController>();
+interface ActiveRequestRecord {
+  controller: AbortController;
+  source?: 'card' | 'home';
+}
+const activeRequests = new Map<string, ActiveRequestRecord>();
+
+export function abortTranslationsBySource(source: 'card' | 'home'): void {
+  for (const [requestId, record] of activeRequests.entries()) {
+    if (record.source === source) {
+      record.controller.abort();
+      activeRequests.delete(requestId);
+    }
+  }
+}
+
+export function abortAllTranslations(): void {
+  for (const [requestId, record] of activeRequests.entries()) {
+    record.controller.abort();
+    activeRequests.delete(requestId);
+  }
+}
 
 export function registerTranslationControllers(): void {
   handleTraced(
@@ -28,7 +48,10 @@ export function registerTranslationControllers(): void {
       const input = parseResult.data;
       const requestId = input.requestId || crypto.randomUUID();
       const abortController = new AbortController();
-      activeRequests.set(requestId, abortController);
+      activeRequests.set(requestId, {
+        controller: abortController,
+        source: input.source,
+      });
 
       const sender = event.sender;
 
@@ -78,9 +101,9 @@ export function registerTranslationControllers(): void {
       }
 
       const { requestId } = parseResult.data;
-      const controller = activeRequests.get(requestId);
-      if (controller) {
-        controller.abort();
+      const record = activeRequests.get(requestId);
+      if (record) {
+        record.controller.abort();
         activeRequests.delete(requestId);
       }
 

@@ -38,11 +38,21 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
   const handleCopy = async () => {
     if (!contentToCopy) return;
     try {
-      await navigator.clipboard.writeText(contentToCopy);
+      if (window.api?.card?.copyText) {
+        await window.api.card.copyText(contentToCopy);
+      } else {
+        await navigator.clipboard.writeText(contentToCopy);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // ignore
+      try {
+        await navigator.clipboard.writeText(contentToCopy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch {
+        // ignore
+      }
     }
   };
 
