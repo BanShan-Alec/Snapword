@@ -4,8 +4,8 @@
 > 变更：v1.2（2026-11-04）数据库访问改为 **Drizzle ORM + Node 内置 `node:sqlite`**；删除改为软删除 + 墓碑；同步（v1.1）预留每设备快照。详见 `docs/adr/0003-use-drizzle-orm.md`。
 > 变更：v1.1 按 2026-11-03 决策，从「独立 Rust exe + 命名管道」改为 **Electron `utilityProcess` + Node 原生插件**。
 > 适用范围：Windows 10 1809+ / Windows 11 x64；Chrome / Edge 138+
-> 上游依据：`docs/PRD.md` v1.1.1（非交互约束）、`docs/PRD-v2.md`（三窗口交互）、`docs/interaction-spec-v2.md`（时序与状态）
-> 下游契约：`docs/ipc-contract.md`（B-02）、`docs/data-model.md`（B-03）、`docs/prompt-contract.md`（B-04）
+> 上游依据：`docs/specs/PRD.md` v3.0（功能需求与交互摘要）、`docs/specs/interaction-spec-v2.md`（交互需求条目、时序与状态）
+> 下游契约：`docs/contracts/ipc-contract.md`（B-02）、`docs/contracts/data-model.md`（B-03）、`docs/contracts/prompt-contract.md`（B-04）
 > 本契约解决：进程拓扑、职责边界、Native Addon 拆分、线程模型、启动/退出顺序、崩溃恢复、窗口与数据所有权、安全边界。
 
 ---
@@ -325,16 +325,16 @@ sequenceDiagram
 
 ### 10.1 翻译卡片（Electron BrowserWindow）
 
-| 属性 | 值                                                     |
-| ---- | ------------------------------------------------------ |
-| 尺寸 | 固定 420px 宽；高度随内容，最大 70% 工作区；不可缩放   |
-| 框架 | `frame: false`；自绘头部                               |
-| 显示 | `showInactive()`；不抢键盘焦点                         |
-| 层级 | `alwaysOnTop: true`；`skipTaskbar: true`               |
-| 焦点 | 点击后获焦；未获焦时鼠标操作仍可用                     |
-| 位置 | 屏幕 DIP 坐标；默认选区右下，越界回退；仅主显示器      |
-| 全屏 | 不保证显示；失败托盘提示 + 主窗口（Q-2 暂不支持）      |
-| 关闭 | 关闭按钮 / 外部点击 / 切换应用；保持打开只阻止外部点击 |
+| 属性 | 值                                                   |
+| ---- | ---------------------------------------------------- |
+| 尺寸 | 固定 420px 宽；高度随内容，最大 70% 工作区；不可缩放 |
+| 框架 | `frame: false`；自绘头部                             |
+| 显示 | `showInactive()`；不抢键盘焦点                       |
+| 层级 | `alwaysOnTop: true`；`skipTaskbar: true`             |
+| 焦点 | 点击后获焦；未获焦时鼠标操作仍可用                   |
+| 位置 | 屏幕 DIP 坐标；默认选区右下，越界回退；仅主显示器    |
+| 全屏 | 不保证显示；失败托盘提示 + 主窗口（Q-2 暂不支持）    |
+| 关闭 | 关闭按钮 / 外部点击 / 切换应用；防误关只阻止外部点击 |
 
 卡片窗口**按需创建**：首次打开时创建，记录 `card.createMs` 与 `card.firstPaintMs` 到诊断日志；关闭只隐藏并复用同一实例。**不预创建**，首次创建允许超过 200ms，后续再优化预热/预创建。
 

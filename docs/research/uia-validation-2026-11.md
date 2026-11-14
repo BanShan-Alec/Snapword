@@ -1,13 +1,13 @@
 # UIA 取词与 ExpandToEnclosingUnit 验证报告
 
 > 验证日期：2026-11-02（Q-1）；2026-11-03（D-1 30 次统计 + Q-6 + iframe）
-> 对应需求：PRD D-1（完成）、Q-1（完成）、Q-6（完成）、FR-12 语境界
+> 对应需求：PRD D-1（完成）、Q-1（完成）、Q-6（完成）、FR-12 语境
 > 验证代码：配套 `uia-probe`（UIA-demo）仓库；Q-1 见提交 `d65be43`，D-1 脚本见该仓库 `scripts/d1-feasibility.mjs`
 > 结论适用范围：Windows 11 + Chrome/Edge 156；不外推到 Chrome 138–155、canvas、PDF、跨域 iframe
 
 ## 1. 结论摘要
 
-1. **Q-1 已完成**：Chrome/Edge 156 下，`ExpandToEnclosingUnit(Paragraph)` 返回的是选区起点所在段落。单段选区实测 53–608 字符，没有退化成 Page/Document。
+1. **Q-1 已完成**：Chrome/Edge 156 下，`ExpandToEnclosingUnit(Paragraph)` 返回的是选区起点所在段落。单个原文段落内的选区实测 53–608 字符，没有退化成 Page/Document。
 2. **`Page` 单位在网页内容上等于整个 `Document`**。Martin Fowler 页面 Page 与 Document 都是 45,527 字符；因此 **禁止**用 Page 作为 Paragraph 的兜底。
 3. **跨段选区只保留起点段**：A→B 选区 196 字符，Paragraph 返回 A 的 133 字符；B→C 选区 156 字符，Paragraph 返回 B 的 121 字符。PRD 5.1.1 / FR-12 对“折叠到 Start 端点”的判断被实测确认。
 4. **`Format` 不是段落替身**：Martin Fowler 页 Format 返回 655 字符，比段落 608 还大；Wikipedia 首段 Format 只有 29 字符，远小于段落 191。Format 随格式连续性变化，可能跨段也可能只覆盖局部。
@@ -85,7 +85,7 @@ GetSelection() → ExpandToEnclosingUnit(Paragraph) → GetText(2000) → 本地
 需要补充两条实现约束：
 
 1. **先 trim 再切句**：Paragraph 末尾可能带 `\n`，Word 可能带尾随空格；不清洗会导致句子边界和字符数统计偏差。
-2. **跨段选区不能依赖 Paragraph 保留全文**：FR-12 目前只对单词使用，符合当前设计；如果未来扩展到句子模式，必须使用原选区本身或按段处理，不能假设 Paragraph 会保留整段选区。
+2. **跨段选区不能依赖 Paragraph 保留全文**：FR-12 目前只对单词使用，符合当前设计；如果未来扩展到句子模式，必须使用原选区本身或按原文段落处理，不能假设 Paragraph 会保留整段选区。
 
 同时确认：
 

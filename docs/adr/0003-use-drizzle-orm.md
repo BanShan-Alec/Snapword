@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 日期：2026-11-04
-- 相关：B-03 `docs/data-model.md` v2.0、B-01 `docs/architecture.md` §5.2/§11、PRD-v2 RM-07/RX-10
+- 相关：B-03 `docs/contracts/data-model.md` v2.0、B-01 `docs/contracts/architecture.md` §5.2/§11、`docs/specs/interaction-spec-v2.md` 13.4 RM-07 / 13.5 RX-10
 
 ## 背景
 
