@@ -2,6 +2,7 @@ import { registerConfigControllers } from './config.controller';
 import { registerDiagnosticsControllers } from './diagnostics.controller';
 import { registerShellControllers } from './shell.controller';
 import { registerSystemControllers } from './system.controller';
+import { registerTranslationControllers } from './translation.controller';
 import { registerUpdaterControllers } from './updater.controller';
 import { registerWindowControllers } from './window.controller';
 
@@ -16,4 +17,5 @@ export function registerAllControllers(): void {
   registerShellControllers();
   registerUpdaterControllers();
   registerWindowControllers();
+  registerTranslationControllers();
 }
