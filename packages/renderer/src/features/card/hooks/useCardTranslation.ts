@@ -165,9 +165,56 @@ export function useCardTranslation() {
     }
   }, [text, context, mode, wordResult, sentenceResult, isLoading, stopTranslation]);
 
-  const toggleFavorite = useCallback(() => {
-    setIsFavorite((prev) => !prev);
+  const checkFavorite = useCallback(async (word: string) => {
+    if (!word?.trim() || !window.api?.vocabulary?.getByWord) return;
+    try {
+      const res = await window.api.vocabulary.getByWord(word.trim());
+      if (res?.success && res.data && !res.data.deletedAt) {
+        setIsFavorite(true);
+      } else {
+        setIsFavorite(false);
+      }
+    } catch {
+      // ignore
+    }
   }, []);
+
+  const saveFavorite = useCallback(async () => {
+    if (!wordResult || !window.api?.vocabulary?.save) return;
+    try {
+      const res = await window.api.vocabulary.save({
+        word: wordResult.word,
+        phoneticUs: wordResult.phonetic_us,
+        phoneticUk: wordResult.phonetic_uk,
+        contextSense: wordResult.context_sense,
+        contextSnippet: context.trim() || undefined,
+        senses: wordResult.senses,
+      });
+      if (res?.success) {
+        setIsFavorite(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, [wordResult, context]);
+
+  const toggleFavorite = useCallback(() => {
+    if (!isFavorite) {
+      saveFavorite();
+    }
+  }, [isFavorite, saveFavorite]);
+
+  // 监听生词本变更广播，实时同步收藏状态
+  useEffect(() => {
+    const unbind = window.api?.vocabulary?.onChanged(() => {
+      if (wordResult?.word) {
+        checkFavorite(wordResult.word);
+      }
+    });
+    return () => {
+      unbind?.();
+    };
+  }, [wordResult?.word, checkFavorite]);
 
   // 挂载主进程 Card 事件与 Translation 流式事件
   useEffect(() => {
@@ -205,6 +252,7 @@ export function useCardTranslation() {
         activeRequestIdRef.current = null;
         if (event.result.mode === 'word') {
           setWordResult(event.result.data);
+          checkFavorite(event.result.data.word);
         } else {
           setSentenceResult(event.result.data);
           setStreamingText(event.result.data.text);
@@ -256,5 +304,6 @@ export function useCardTranslation() {
     hideCard,
     openInHome,
     toggleFavorite,
+    saveFavorite,
   };
 }

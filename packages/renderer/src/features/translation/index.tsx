@@ -1,6 +1,7 @@
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { AppCard } from '@/components/ui/AppCard';
+import { RecentTranslations } from './components/RecentTranslations';
 import { TranslationInput } from './components/TranslationInput';
 import { TranslationResult } from './components/TranslationResult';
 import { useTranslation } from './hooks/useTranslation';
@@ -32,6 +33,7 @@ function TranslationFeature() {
     handleTranslate,
     handleAbort,
     handleClear,
+    handleReplay,
   } = useTranslation();
 
   // 组件渲染
@@ -65,6 +67,9 @@ function TranslationFeature() {
           effectiveMode={effectiveMode}
           error={error}
         />
+
+        {/* 最近 5 条共享翻译历史 (RM-03) */}
+        <RecentTranslations onSelect={handleReplay} />
       </div>
     </AppCard>
   );

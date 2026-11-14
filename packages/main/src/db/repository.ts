@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 import type { NodeSQLiteDatabase } from 'drizzle-orm/node-sqlite';
 import { db as defaultDb } from './client.ts';
 import { type JsonValue, type Sense, setting, term, vocabulary } from './schema.ts';
@@ -216,7 +216,13 @@ export class VocabularyRepository {
     };
   }
 
-  getWords(options?: { limit?: number; offset?: number; tag?: string }): VocabularyRecord[] {
+  getWords(options?: {
+    limit?: number;
+    offset?: number;
+    tag?: string;
+    search?: string;
+    sort?: 'time' | 'alpha';
+  }): VocabularyRecord[] {
     const limit = Math.max(1, options?.limit ?? 50);
     const offset = Math.max(0, options?.offset ?? 0);
 
@@ -226,14 +232,65 @@ export class VocabularyRepository {
         sql`EXISTS (SELECT 1 FROM json_each(${vocabulary.tagsJson}) WHERE json_each.value = ${options.tag})`,
       );
     }
+    if (options?.search?.trim()) {
+      const pattern = `%${escapeLike(options.search.trim().toLowerCase())}%`;
+      conditions.push(
+        or(
+          sql`${vocabulary.wordNorm} LIKE ${pattern} ESCAPE '\\'`,
+          sql`lower(coalesce(${vocabulary.contextSense}, '')) LIKE ${pattern} ESCAPE '\\'`,
+          sql`lower(${vocabulary.sensesJson}) LIKE ${pattern} ESCAPE '\\'`,
+        )!,
+      );
+    }
+
+    const orderByClause =
+      options?.sort === 'alpha' ? asc(vocabulary.wordNorm) : desc(vocabulary.createdAt);
 
     const rows = this.database
       .select()
       .from(vocabulary)
       .where(and(...conditions))
-      .orderBy(desc(vocabulary.createdAt))
+      .orderBy(orderByClause)
       .limit(limit)
       .offset(offset)
+      .all();
+
+    return rows.map(mapVocabularyRow);
+  }
+
+  countWords(options?: { tag?: string; search?: string }): number {
+    const conditions = [isNull(vocabulary.deletedAt)];
+    if (options?.tag) {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM json_each(${vocabulary.tagsJson}) WHERE json_each.value = ${options.tag})`,
+      );
+    }
+    if (options?.search?.trim()) {
+      const pattern = `%${escapeLike(options.search.trim().toLowerCase())}%`;
+      conditions.push(
+        or(
+          sql`${vocabulary.wordNorm} LIKE ${pattern} ESCAPE '\\'`,
+          sql`lower(coalesce(${vocabulary.contextSense}, '')) LIKE ${pattern} ESCAPE '\\'`,
+          sql`lower(${vocabulary.sensesJson}) LIKE ${pattern} ESCAPE '\\'`,
+        )!,
+      );
+    }
+
+    const rows = this.database
+      .select({ count: sql<number>`count(*)` })
+      .from(vocabulary)
+      .where(and(...conditions))
+      .all();
+
+    return Number(rows[0]?.count ?? 0);
+  }
+
+  getAllLiveWords(): VocabularyRecord[] {
+    const rows = this.database
+      .select()
+      .from(vocabulary)
+      .where(isNull(vocabulary.deletedAt))
+      .orderBy(desc(vocabulary.createdAt))
       .all();
 
     return rows.map(mapVocabularyRow);
@@ -315,6 +372,28 @@ export class VocabularyRepository {
         originDevice: deviceId,
       })
       .where(and(isNull(vocabulary.deletedAt), inArray(vocabulary.id, idList)))
+      .run();
+
+    return {
+      batchId,
+      affectedCount: (res as { changes?: number }).changes ?? 0,
+    };
+  }
+
+  softDeleteAll(deviceId = 'local-device'): { batchId: string; affectedCount: number } {
+    const batchId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const res = this.database
+      .update(vocabulary)
+      .set({
+        deletedAt: now,
+        deletedBatch: batchId,
+        updatedAt: now,
+        rev: sql`${vocabulary.rev} + 1`,
+        originDevice: deviceId,
+      })
+      .where(isNull(vocabulary.deletedAt))
       .run();
 
     return {

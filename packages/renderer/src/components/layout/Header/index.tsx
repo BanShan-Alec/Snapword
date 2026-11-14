@@ -1,7 +1,7 @@
 import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Badge, Tabs } from 'antd';
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import logoCompact from '@/assets/logo-compact.svg?url';
 import { EllipsisText } from '@/components/ui/EllipsisText';
@@ -9,6 +9,8 @@ import { EllipsisText } from '@/components/ui/EllipsisText';
 // 可抽离的逻辑处理函数/组件
 function resolveActiveTab(location: string): HeaderTab | undefined {
   if (location === '/settings') return 'settings';
+  if (location === '/vocabulary') return 'vocabulary';
+  if (location === '/history') return 'history';
   return 'translation';
 }
 
@@ -18,22 +20,79 @@ const _Header = (props: HeaderProps) => {
 
   // 变量声明、解构
   const activeTab = resolveActiveTab(location);
+  const [vocabCount, setVocabCount] = useState<number>(0);
 
-  // 组件状态
+  // 监听生词本实时总数变更
+  useEffect(() => {
+    let mounted = true;
+    window.api?.vocabulary
+      ?.getCount()
+      .then((res) => {
+        if (mounted && res?.success && typeof res.data.count === 'number') {
+          setVocabCount(res.data.count);
+        }
+      })
+      .catch(() => {});
 
-  // 网络IO
+    const unbind = window.api?.vocabulary?.onChanged((payload) => {
+      if (!mounted) return;
+      if (
+        payload &&
+        typeof payload === 'object' &&
+        'count' in payload &&
+        typeof (payload as { count: number }).count === 'number'
+      ) {
+        setVocabCount((payload as { count: number }).count);
+      } else {
+        window.api?.vocabulary
+          ?.getCount()
+          .then((res) => {
+            if (mounted && res?.success && typeof res.data.count === 'number') {
+              setVocabCount(res.data.count);
+            }
+          })
+          .catch(() => {});
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unbind?.();
+    };
+  }, []);
 
   // 数据转换
   const appName = window.__APP_ENV__?.appName || 'Snapword';
-  const tabItems: Array<{ key: HeaderTab; label: string }> = [
+  const tabItems = [
     { key: 'translation', label: t`翻译` },
+    { key: 'history', label: t`翻译历史` },
+    {
+      key: 'vocabulary',
+      label: (
+        <span className="flex items-center gap-1.5">
+          <span>{t`生词本`}</span>
+          {vocabCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-xs bg-primary/10 text-primary font-medium">
+              {vocabCount}
+            </span>
+          )}
+        </span>
+      ),
+    },
     { key: 'settings', label: t`设置` },
   ];
 
   // 逻辑处理函数
   const handleTabChange = (key: string) => {
     const nextTab = key as HeaderTab;
-    const targetPath = nextTab === 'settings' ? '/settings' : '/';
+    const targetPath =
+      nextTab === 'settings'
+        ? '/settings'
+        : nextTab === 'vocabulary'
+          ? '/vocabulary'
+          : nextTab === 'history'
+            ? '/history'
+            : '/';
     navigate(targetPath);
     props.onTabChange?.(nextTab);
   };

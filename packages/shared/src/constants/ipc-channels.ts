@@ -58,6 +58,23 @@ export const IPC_CHANNELS = {
   CARD_COPY_TEXT: 'card:copy-text',
   CARD_OPEN_IN_HOME: 'card:open-in-home',
   CARD_EVENT_ACTION: 'card:event:action',
+
+  // 生词本通道 (Vocabulary IPC Channels)
+  VOCABULARY_SAVE: 'vocabulary:save',
+  VOCABULARY_LIST: 'vocabulary:list',
+  VOCABULARY_GET_BY_WORD: 'vocabulary:get-by-word',
+  VOCABULARY_COUNT: 'vocabulary:count',
+  VOCABULARY_DELETE: 'vocabulary:delete',
+  VOCABULARY_UNDO_DELETE: 'vocabulary:undo-delete',
+  VOCABULARY_CLEAR: 'vocabulary:clear',
+  VOCABULARY_EXPORT_CSV: 'vocabulary:export-csv',
+  VOCABULARY_EVENT_CHANGED: 'vocabulary:event:changed',
+
+  // 翻译历史通道 (Translation History IPC Channels)
+  HISTORY_GET: 'history:get',
+  HISTORY_CLEAR: 'history:clear',
+  HISTORY_DELETE: 'history:delete',
+  HISTORY_EVENT_CHANGED: 'history:event:changed',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
