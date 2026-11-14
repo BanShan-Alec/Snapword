@@ -1,10 +1,12 @@
 import { registerCardControllers } from './card.controller';
 import { registerConfigControllers } from './config.controller';
 import { registerDiagnosticsControllers } from './diagnostics.controller';
+import { registerHistoryControllers } from './history.controller';
 import { registerShellControllers } from './shell.controller';
 import { registerSystemControllers } from './system.controller';
 import { registerTranslationControllers } from './translation.controller';
 import { registerUpdaterControllers } from './updater.controller';
+import { registerVocabularyControllers } from './vocabulary.controller';
 import { registerWindowControllers } from './window.controller';
 
 /**
@@ -20,4 +22,6 @@ export function registerAllControllers(): void {
   registerWindowControllers();
   registerTranslationControllers();
   registerCardControllers();
+  registerVocabularyControllers();
+  registerHistoryControllers();
 }

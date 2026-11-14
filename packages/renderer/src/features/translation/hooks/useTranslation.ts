@@ -1,3 +1,4 @@
+import type { TranslationHistoryItem } from '@app/shared/schemas/history';
 import type {
   SentenceTranslationResult,
   WordTranslationResult,
@@ -188,6 +189,23 @@ export function useTranslation() {
     setError(null);
   };
 
+  // 点击历史记录条目恢复结果，不重新请求 (RM-03 / IA-27)
+  const handleReplay = (item: TranslationHistoryItem) => {
+    setText(item.text);
+    setContext(item.context || '');
+    setMode(item.mode);
+    setError(null);
+    if (item.mode === 'word') {
+      setWordResult(item.result.data as WordTranslationResult);
+      setSentenceResult(null);
+      setStreamingText('');
+    } else {
+      setSentenceResult(item.result.data as SentenceTranslationResult);
+      setWordResult(null);
+      setStreamingText((item.result.data as SentenceTranslationResult).text || '');
+    }
+  };
+
   return {
     text,
     setText,
@@ -204,5 +222,6 @@ export function useTranslation() {
     handleTranslate,
     handleAbort,
     handleClear,
+    handleReplay,
   };
 }

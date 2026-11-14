@@ -7,7 +7,7 @@ import {
   StarFilled,
   StarOutlined,
 } from '@ant-design/icons';
-import { Button, Tooltip } from 'antd';
+import { Button, Popover, Tooltip } from 'antd';
 import type React from 'react';
 import { useState } from 'react';
 
@@ -20,6 +20,7 @@ export interface CardBottomBarProps {
   onStop: () => void;
   onRetry: () => void;
   onToggleFavorite: () => void;
+  onUpdateFavorite?: () => void;
 }
 
 export const CardBottomBar: React.FC<CardBottomBarProps> = ({
@@ -31,9 +32,11 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
   onStop,
   onRetry,
   onToggleFavorite,
+  onUpdateFavorite,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [duplicatePromptOpen, setDuplicatePromptOpen] = useState(false);
 
   const handleCopy = async () => {
     if (!contentToCopy) return;
@@ -125,17 +128,60 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
           />
         </Tooltip>
 
-        {mode === 'word' && (
-          <Tooltip title={isFavorite ? '已在生词本' : '加入生词本'}>
-            <Button
-              type="text"
-              size="small"
-              icon={isFavorite ? <StarFilled className="text-warning" /> : <StarOutlined />}
-              onClick={onToggleFavorite}
-              className="h-7 w-7 p-0"
-            />
-          </Tooltip>
-        )}
+        {mode === 'word' &&
+          (isFavorite ? (
+            <Popover
+              open={duplicatePromptOpen}
+              onOpenChange={setDuplicatePromptOpen}
+              trigger="click"
+              placement="topRight"
+              content={
+                <div className="flex flex-col gap-2 p-1 text-xs select-none">
+                  <div className="font-medium text-foreground">已收藏 · 更新 / 取消</div>
+                  <div className="text-foreground-secondary">是否使用当前语境片段更新该词条？</div>
+                  <div className="flex items-center justify-end gap-1.5 pt-1">
+                    <Button
+                      size="small"
+                      onClick={() => setDuplicatePromptOpen(false)}
+                      className="h-6 text-xs"
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={() => {
+                        setDuplicatePromptOpen(false);
+                        onUpdateFavorite?.();
+                      }}
+                      className="h-6 text-xs"
+                    >
+                      更新
+                    </Button>
+                  </div>
+                </div>
+              }
+            >
+              <Tooltip title={duplicatePromptOpen ? undefined : '已在生词本'}>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<StarFilled className="text-warning" />}
+                  className="h-7 w-7 p-0"
+                />
+              </Tooltip>
+            </Popover>
+          ) : (
+            <Tooltip title="加入生词本">
+              <Button
+                type="text"
+                size="small"
+                icon={<StarOutlined />}
+                onClick={onToggleFavorite}
+                className="h-7 w-7 p-0"
+              />
+            </Tooltip>
+          ))}
       </div>
     </footer>
   );

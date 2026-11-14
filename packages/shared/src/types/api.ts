@@ -1,8 +1,18 @@
 import type { CloseBehaviorChoice } from '../schemas/close-behavior';
 import type { AppConfig, UpdateConfigInput } from '../schemas/config';
 import type { LogInput, PerformActionInput } from '../schemas/diagnostics';
+import type { DeleteHistoryInput, TranslationHistoryItem } from '../schemas/history';
 import type { ShowItemInFolderInput } from '../schemas/shell';
 import type { AbortTranslationInput, TranslationInput } from '../schemas/translate';
+import type {
+  DeleteWordInput,
+  ListWordsInput,
+  ListWordsResult,
+  SaveWordInput,
+  SaveWordResult,
+  UndoDeleteInput,
+  VocabularyRecordDto,
+} from '../schemas/vocabulary';
 import type { CardActionPayload } from './card';
 import type { ActionResult, OpenLogFolderResult } from './diagnostics';
 import type { Result } from './result';
@@ -98,6 +108,41 @@ export interface ElectronApi {
     openInHome: (data?: unknown, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     onAction: (cb: (payload: CardActionPayload) => void) => () => void;
     onOpenInHome?: (cb: (payload: unknown) => void) => () => void;
+  };
+  vocabulary: {
+    save: (input: SaveWordInput, options?: IpcCallOptions) => Promise<Result<SaveWordResult>>;
+    list: (input?: ListWordsInput, options?: IpcCallOptions) => Promise<Result<ListWordsResult>>;
+    getByWord: (
+      word: string,
+      options?: IpcCallOptions,
+    ) => Promise<Result<VocabularyRecordDto | null>>;
+    getCount: (_payload?: void, options?: IpcCallOptions) => Promise<Result<{ count: number }>>;
+    deleteWord: (
+      input: DeleteWordInput,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ batchId: string; affectedCount: number }>>;
+    undoDelete: (
+      input: UndoDeleteInput,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ restoredCount: number }>>;
+    clearAll: (
+      _payload?: void,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ batchId: string; affectedCount: number }>>;
+    exportCsv: (
+      _payload?: void,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ csv: string; count: number }>>;
+    onChanged: (cb: (payload?: unknown) => void) => () => void;
+  };
+  history: {
+    get: (_payload?: void, options?: IpcCallOptions) => Promise<Result<TranslationHistoryItem[]>>;
+    deleteItem: (
+      input: DeleteHistoryInput,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ success: boolean }>>;
+    clear: (_payload?: void, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
+    onChanged: (cb: (items: TranslationHistoryItem[]) => void) => () => void;
   };
   // 遵循 specs-electron-fullstack / renderer/ipc-consumption.md 安全规范
   getPathForFile: (file: File) => string;

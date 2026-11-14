@@ -9,6 +9,7 @@ import type {
   TranslationFinishEvent,
 } from '@app/shared/types/translate';
 import { AppError } from '../errors/AppError';
+import { translationHistoryService } from '../services/history.service';
 import { translationService } from '../services/translation.service';
 import { handleTraced } from '../telemetry/ipc-tracer';
 import { failResult, successResult } from './utils';
@@ -66,6 +67,17 @@ export function registerTranslationControllers(): void {
                 sender.send(IPC_CHANNELS.TRANSLATION_EVENT_CHUNK, chunkEvent);
               }
             },
+          });
+
+          // 记录至内存共享最近 20 条翻译历史 (RM-04 / IA-14/15/26/27)
+          translationHistoryService.addRecord({
+            id: requestId,
+            timestamp: Date.now(),
+            source: input.source ?? 'home',
+            mode: result.mode,
+            text: input.text,
+            context: input.context,
+            result,
           });
 
           if (!sender.isDestroyed()) {

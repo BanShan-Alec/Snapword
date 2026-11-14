@@ -32,6 +32,7 @@ export const CardFeature: React.FC = () => {
     hideCard,
     openInHome,
     toggleFavorite,
+    saveFavorite,
   } = useCardTranslation();
 
   // 视口与卡片内容高度自适应反馈 (RC-03)
@@ -115,6 +116,7 @@ export const CardFeature: React.FC = () => {
           onStop={stopTranslation}
           onRetry={retry}
           onToggleFavorite={toggleFavorite}
+          onUpdateFavorite={saveFavorite}
         />
       )}
     </div>
