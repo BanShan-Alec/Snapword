@@ -65,7 +65,10 @@ export default defineConfig({
     assetsDir: '.',
     target: 'node24',
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        'capture-service': 'src/capture/capture-service.ts',
+      },
       formats: ['cjs'],
     },
     rolldownOptions: {

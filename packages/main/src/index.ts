@@ -6,6 +6,7 @@ import { SILENT_CHECK_DELAY_MS } from './constants/updater';
 import { devServerUrl } from './env';
 import { createModuleRunner } from './ModuleRunner';
 import { terminateAppOnLastWindowClose } from './modules/auto-terminate.module';
+import { createCaptureSupervisorModule } from './modules/capture-supervisor.module';
 import { createConfigModule, getAppConfigStore } from './modules/config.module';
 import { createIPCModule } from './modules/ipc.module';
 import { createLogModule } from './modules/log.module';
@@ -39,6 +40,7 @@ export async function initApp(initConfig: AppInitConfig) {
     .init(createHomeWindowModule({ initConfig }))
     .init(createUpdaterWindowModule({ initConfig }))
     .init(createTrayModule())
+    .init(createCaptureSupervisorModule())
     .init(disallowMultipleAppInstance())
     .init(terminateAppOnLastWindowClose())
 

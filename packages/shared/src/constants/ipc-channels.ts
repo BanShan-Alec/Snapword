@@ -35,6 +35,13 @@ export const IPC_CHANNELS = {
   WINDOW_CLOSE_REQUESTED: 'window:event:close-requested',
   WINDOW_CLOSE_READY: 'window:close-ready',
   WINDOW_CLOSE_RESPOND: 'window:close-respond',
+
+  // 取词与选区通道 (Capture IPC Channels)
+  CAPTURE_CURRENT: 'capture:current',
+  CAPTURE_GET_STATUS: 'capture:get-status',
+  CAPTURE_EVENT_DOT_CLICKED: 'capture:event:dot-clicked',
+  CAPTURE_EVENT_RESULT: 'capture:event:result',
+  CAPTURE_EVENT_STATUS: 'capture:event:status',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
