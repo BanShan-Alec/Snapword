@@ -1,0 +1,30 @@
+# .gitignore 决定了 “哪些文件不需要被 Git 跟踪”
+# .gitattributes 决定的就是 “Git 应该如何对待和处理这些已被跟踪的文件”。
+
+# 1. 基础换行符自动处理
+* text=auto
+
+# 2. 必须使用 LF,除非是 Windows 平台的批处理文件
+* eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 3. 常见二进制静态资源
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.pdf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+
+# 4. GitHub PR 体验优化（折叠 lockfile 的大篇幅 diff）
+pnpm-lock.yaml -diff
+package-lock.json -diff
+yarn.lock -diff

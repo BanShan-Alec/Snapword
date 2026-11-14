@@ -1,0 +1,63 @@
+{
+  "name": "@app/renderer",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "extract": "lingui extract --clean",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/cssinjs": "^2.1.2",
+    "@ant-design/icons": "^6.3.4",
+    "@app/shared": "workspace:*",
+    "@lingui/core": "^6.11.0",
+    "@lingui/react": "^6.11.0",
+    "@sentry/electron": "^8.3.0",
+    "ahooks": "^3.11.0",
+    "antd": "^6.6.8",
+    "clsx": "^2.1.1",
+    "paseo-antd-themes": "^0.2.2",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "wouter": "^3.13.0",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@app/tsconfig": "workspace:*",
+    "@lingui/cli": "^6.11.0",
+    "@lingui/conf": "^6.11.0",
+    "@lingui/format-po": "^6.11.0",
+    "@lingui/vite-plugin": "^6.11.0",
+    "@sentry/vite-plugin": "^5.4.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^6.2.1",
+    "oxc-transform-react": "^0.156.0",
+    "@tailwindcss/vite": "^4.3.4",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "main": "./dist/src/entries/home/index.html",
+  "files": [
+    "dist/**",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "default": "./dist/src/entries/home/index.html"
+    },
+    "./updater": {
+      "default": "./dist/src/entries/updater/index.html"
+    },
+    "./updater.html": {
+      "default": "./dist/src/entries/updater/index.html"
+    },
+    "./package.json": "./package.json"
+  }
+}

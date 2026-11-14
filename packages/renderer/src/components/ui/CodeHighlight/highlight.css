@@ -1,0 +1,40 @@
+/*
+ * CSS Custom Highlight API 语法高亮样式规则
+ * 使用 ::highlight(token-name) 挂载样式
+ * 层级归属 components：遵守 DESIGN.md 层级秩序纪律，层外裸样式会压过 utilities
+ */
+
+@layer components {
+  ::highlight(hl-keyword) {
+    color: var(--hl-keyword);
+  }
+
+  ::highlight(hl-string) {
+    color: var(--hl-string);
+  }
+
+  ::highlight(hl-comment) {
+    color: var(--hl-comment);
+    font-style: italic;
+  }
+
+  ::highlight(hl-type) {
+    color: var(--hl-type);
+  }
+
+  ::highlight(hl-function) {
+    color: var(--hl-function);
+  }
+
+  ::highlight(hl-number) {
+    color: var(--hl-number);
+  }
+
+  ::highlight(hl-boolean) {
+    color: var(--hl-boolean);
+  }
+
+  ::highlight(hl-builtin) {
+    color: var(--hl-builtin);
+  }
+}

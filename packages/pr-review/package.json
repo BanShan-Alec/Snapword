@@ -1,0 +1,20 @@
+{
+  "name": "@app/pr-review",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PR Lifecycle & OpenCodeReview Dashboard Workflow Toolkit",
+  "main": "dist/index.cjs",
+  "scripts": {
+    "cli": "tsx src/cli.ts",
+    "test": "vitest run -c vitest.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@app/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

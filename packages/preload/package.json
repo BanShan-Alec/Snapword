@@ -1,0 +1,25 @@
+{
+  "name": "@app/preload",
+  "main": "./dist/index.cjs",
+  "files": [
+    "dist/**",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@app/shared": "workspace:*",
+    "@app/tsconfig": "workspace:*",
+    "@sentry/electron": "^8.3.0",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

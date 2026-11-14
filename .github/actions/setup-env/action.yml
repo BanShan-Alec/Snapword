@@ -1,0 +1,39 @@
+name: Setup environment
+description: Setup Node.js + corepack-managed pnpm + dependencies, start Xvfb on Linux
+
+runs:
+  using: composite
+  steps:
+    - if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: |
+        Xvfb :99 -screen 0 1280x960x24 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+
+    # pnpm 版本由根 package.json 的 packageManager 字段决定,Node 24 自带 corepack
+    - name: Enable corepack
+      run: corepack enable
+      shell: bash
+
+    # electron 42+ 起无安装期脚本，二进制由根 postinstall 的 install-electron 现场下载；
+    # 缓存三平台的机器级 zip（key 含 lockfile hash，electron 版本变更自动失效）
+    - name: Cache electron binary
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/electron
+          ~/Library/Caches/electron
+          ~/AppData/Local/electron/Cache
+        key: electron-bin-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Install Dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
+      env:
+        COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"

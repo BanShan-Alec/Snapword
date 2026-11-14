@@ -1,0 +1,100 @@
+/*
+ * 样式入口（home / updater 双入口共用）。
+ * 首行层序声明是 antd v6 + Tailwind v4 组合的秩序基石（antd 官方 compatible-style 配比）：
+ * theme < base < antd < components < utilities，此后覆盖关系只看层、不看特异性与注入顺序。
+ * 配套：AppProviders 的 <StyleProvider layer> 把 cssinjs 注入的 antd 样式收进 @layer antd。
+ */
+@layer theme, base, antd, components, utilities;
+
+/* Tailwind v4：官方 Vite 插件驱动；source(none)+@source "../" 把扫描精确圈定为 src/ */
+@import "tailwindcss" source(none);
+@import "./tokens.css";
+@import "./base.css";
+
+@source "../";
+
+/*
+ * 项目语义色 → antd cssVar 变量。
+ * 实体由 ConfigProvider 在 .css-var-app 作用域注入（applyColorScheme 把类挂到 <html>），
+ * 这里只做改名，组件与 Tailwind 不直接依赖 --ant-* 名字。
+ */
+@layer base {
+  :root {
+    --color-bg-primary: var(--ant-color-bg-layout);
+    --color-bg-container: var(--ant-color-bg-container);
+    --color-bg-elevated: var(--ant-color-bg-elevated);
+    --color-bg-sunken: var(--ant-color-fill-alter);
+    --color-text-primary: var(--ant-color-text);
+    --color-text-secondary: var(--ant-color-text-secondary);
+    --color-text-muted: var(--ant-color-text-tertiary);
+    --color-text-on-primary: var(--ant-color-text-light-solid);
+    --color-border: var(--ant-color-border);
+    --color-primary: var(--ant-color-primary);
+    --color-primary-hover: var(--ant-color-primary-hover);
+    --color-primary-light: var(--ant-color-primary-bg);
+    --color-success: var(--ant-color-success);
+    --color-warning: var(--ant-color-warning);
+    --color-danger: var(--ant-color-error);
+  }
+}
+
+/*
+ * 语义色 → Tailwind 工具类别名。
+ * inline 必须带：映射值是 var() 引用，工具类需内联引用本体而非再包一层主题变量。
+ * 不写 fallback：颜色链路断了应当显形（透明），而不是退回另一套品牌色。
+ */
+@theme inline {
+  --color-background: var(--color-bg-primary);
+  --color-background-sunken: var(--color-bg-sunken);
+  --color-background-elevated: var(--color-bg-elevated);
+  --color-background-container: var(--color-bg-container);
+  --color-foreground: var(--color-text-primary);
+  --color-foreground-secondary: var(--color-text-secondary);
+  --color-foreground-muted: var(--color-text-muted);
+  --color-on-primary: var(--color-text-on-primary);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-light: var(--color-primary-light);
+  --color-border: var(--color-border);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Fira Code", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+}
+
+@layer components {
+  /* 项目卡片：只补 antd Card 没有的投影；描边与底色交给 antd 默认令牌 */
+  .app-card {
+    background: var(--color-bg-container);
+    box-shadow:
+      0 1px 2px 0 rgba(0, 0, 0, 0.03),
+      0 1px 6px -1px rgba(0, 0, 0, 0.02),
+      0 2px 4px 0 rgba(0, 0, 0, 0.02);
+    transition: box-shadow 200ms ease;
+  }
+
+  .app-card-hover:hover {
+    box-shadow:
+      0 4px 8px -2px color-mix(in srgb, var(--color-text-primary) 12%, transparent),
+      0 8px 16px -4px color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  }
+
+  .usb-scroll-fade {
+    position: absolute;
+    inset-inline: 0;
+    height: 1.25rem;
+    pointer-events: none;
+    transition: opacity 150ms linear;
+  }
+
+  .usb-scroll-fade-top {
+    top: 0;
+    background: linear-gradient(to bottom, var(--color-bg-container), transparent);
+  }
+
+  .usb-scroll-fade-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, var(--color-bg-container), transparent);
+  }
+}
