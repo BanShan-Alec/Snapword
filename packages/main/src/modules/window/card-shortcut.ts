@@ -10,6 +10,8 @@ export function isEnglishText(text: string, minRatio = 0.3): boolean {
   return englishChars.length / nonWhitespace.length >= minRatio;
 }
 
+import { isWordCandidate } from '@app/shared/schemas/translate';
+
 export interface SelectionDispatchResult {
   action: 'notice' | 'translate';
   notice?: string;
@@ -43,7 +45,7 @@ export function resolveSelectionDispatch(
     };
   }
 
-  const isWord = trimmed.length <= 120 && /^[a-zA-Z]+(?:-[a-zA-Z]+)*$/.test(trimmed);
+  const isWord = isWordCandidate(trimmed);
 
   return {
     action: 'translate',

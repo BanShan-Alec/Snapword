@@ -69,16 +69,16 @@ export class CardWindowModule implements AppModule {
     try {
       const registered = globalShortcut.register('Alt+W', () => {
         this.handleHotkey().catch((err) => {
-          this.logger.error('Alt+W 唤起卡片异常:', err);
+          this.logger.error('Failed to trigger card on Alt+W shortcut:', err);
         });
       });
       if (registered) {
-        this.logger.info('已成功注册翻译卡片全局热键 Alt+W');
+        this.logger.info('Registered card global shortcut Alt+W successfully');
       } else {
-        this.logger.warn('注册翻译卡片全局热键 Alt+W 失败 (可能已被系统占用)');
+        this.logger.warn('Failed to register card global shortcut Alt+W (may be occupied)');
       }
     } catch (err) {
-      this.logger.error('全局热键 Alt+W 注册异常:', err);
+      this.logger.error('Exception registering card global shortcut Alt+W:', err);
     }
 
     // 2. 监听圆点点击事件驱动卡片 (B-02 §7)
@@ -86,7 +86,7 @@ export class CardWindowModule implements AppModule {
       const captureSupervisor = getCaptureSupervisorModule();
       captureSupervisor.on('dot_clicked', (payload: SelectionPayload) => {
         this.handleDotClicked(payload).catch((err) => {
-          this.logger.error('圆点点击唤起卡片异常:', err);
+          this.logger.error('Failed to trigger card on dot click:', err);
         });
       });
       // 3. 监听前台应用切换与外部点击防误关状态机 (IA-07, IA-08, IA-09)
@@ -99,7 +99,7 @@ export class CardWindowModule implements AppModule {
         }
       });
     } catch (err) {
-      this.logger.warn('挂载 captureSupervisor 监听异常:', err);
+      this.logger.warn('Failed to attach captureSupervisor listeners:', err);
     }
 
     // 4. 监听应用内窗口获焦联动（如主窗口获焦，防误关开启保留，关闭则隐藏）

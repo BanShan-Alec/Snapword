@@ -25,9 +25,9 @@ export interface StreamCallbacks {
   signal?: AbortSignal;
 }
 
-const DEFAULT_BASE_URL = 'https://token.sensenova.cn/v1';
-const DEFAULT_API_KEY = 'sk-z3gakTrvhiNxKfJ5kasFjyp184FZ8YLO';
-const DEFAULT_MODEL = 'sensenova-6.8-flash-lite';
+const DEFAULT_BASE_URL = process.env.SNAPWORD_API_BASE_URL ?? 'https://token.sensenova.cn/v1';
+const DEFAULT_API_KEY = process.env.SNAPWORD_API_KEY ?? process.env.OPENAI_API_KEY ?? '';
+const DEFAULT_MODEL = process.env.SNAPWORD_API_MODEL ?? 'sensenova-6.8-flash-lite';
 const DEFAULT_TIMEOUT_MS = 30000;
 
 export function normalizeBaseUrl(rawUrl: string): string {

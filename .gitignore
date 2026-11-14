@@ -22,6 +22,8 @@ target/
 packages/pr-review/reviews/
 
 # Environment & Local Configuration
+.env
+.env.*
 .env.local
 .env.*.local
 *.local

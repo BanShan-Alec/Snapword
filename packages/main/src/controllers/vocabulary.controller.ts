@@ -2,6 +2,7 @@ import { ErrorCode } from '@app/shared/constants/error-codes';
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
 import {
   deleteWordInputSchema,
+  getByWordSchema,
   type ListWordsResult,
   listWordsInputSchema,
   type SaveWordResult,
@@ -10,14 +11,9 @@ import {
   type VocabularyRecordDto,
 } from '@app/shared/schemas/vocabulary';
 import type { Result } from '@app/shared/types/result';
-import { z } from 'zod';
 import { vocabularyService } from '../services/vocabulary.service';
 import { handleTraced } from '../telemetry/ipc-tracer';
 import { catchToResult, failResult, successResult } from './utils';
-
-const getByWordSchema = z.object({
-  word: z.string().min(1, '单词不能为空'),
-});
 
 export function registerVocabularyControllers(): void {
   handleTraced(

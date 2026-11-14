@@ -42,3 +42,11 @@ export const sentenceTranslationResultSchema = z.object({
   placeholder_mismatch: z.boolean().optional(),
 });
 export type SentenceTranslationResult = z.infer<typeof sentenceTranslationResultSchema>;
+
+/**
+ * 校验一段文本是否符合英文单词候选模式（单词或连字符复合词，且长度 <= 120）
+ */
+export function isWordCandidate(text: string): boolean {
+  const trimmed = text.trim();
+  return trimmed.length > 0 && trimmed.length <= 120 && /^[a-zA-Z]+(?:-[a-zA-Z]+)*$/.test(trimmed);
+}

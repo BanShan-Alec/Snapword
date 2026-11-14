@@ -69,3 +69,8 @@ export interface SaveWordResult {
   record: VocabularyRecordDto;
   isNew: boolean;
 }
+
+export const getByWordSchema = z.object({
+  word: z.string().min(1, '单词不能为空'),
+});
+export type GetByWordInput = z.infer<typeof getByWordSchema>;

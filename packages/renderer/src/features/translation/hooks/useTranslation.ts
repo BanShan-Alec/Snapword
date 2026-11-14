@@ -1,7 +1,8 @@
 import type { TranslationHistoryItem } from '@app/shared/schemas/history';
-import type {
-  SentenceTranslationResult,
-  WordTranslationResult,
+import {
+  isWordCandidate,
+  type SentenceTranslationResult,
+  type WordTranslationResult,
 } from '@app/shared/schemas/translate';
 import type {
   TranslationChunkEvent,
@@ -31,8 +32,7 @@ export function useTranslation() {
 
   // 自动推断模式：纯单英文单词走 word，多词或包含标点/句子走 sentence
   const trimmed = text.trim();
-  const isSingleWord =
-    trimmed.length > 0 && trimmed.length <= 120 && /^[a-zA-Z]+(?:-[a-zA-Z]+)*$/.test(trimmed);
+  const isSingleWord = isWordCandidate(trimmed);
   const effectiveMode: 'word' | 'sentence' =
     mode === 'auto' ? (isSingleWord ? 'word' : 'sentence') : mode;
 

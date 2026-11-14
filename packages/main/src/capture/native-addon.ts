@@ -312,11 +312,35 @@ export function resolveNativeAddonCandidates(): string[] {
   // 2. 本地构建产物 main/dist/native/uia-probe.node
   candidates.push(path.join(__dirname, 'native', 'uia-probe.node'));
   candidates.push(path.join(__dirname, '..', 'native', 'uia-probe.node'));
-  candidates.push(path.join(process.cwd(), 'packages', 'main', 'dist', 'native', 'uia-probe.node'));
+  candidates.push(path.resolve(__dirname, '..', '..', 'dist', 'native', 'uia-probe.node'));
 
   // 3. Cargo 编译输出目录
-  candidates.push(path.join(process.cwd(), 'native', 'target', 'release', 'uia_probe_addon.dll'));
-  candidates.push(path.join(process.cwd(), 'native', 'target', 'debug', 'uia_probe_addon.dll'));
+  candidates.push(
+    path.resolve(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      'native',
+      'target',
+      'release',
+      'uia_probe_addon.dll',
+    ),
+  );
+  candidates.push(
+    path.resolve(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      'native',
+      'target',
+      'debug',
+      'uia_probe_addon.dll',
+    ),
+  );
 
   return candidates;
 }

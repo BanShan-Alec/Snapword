@@ -118,57 +118,62 @@ export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBo
   };
 
   // 优先级 1: 选区右下 (rect.right + 8, rect.bottom + 8)
-  const p1 = {
+  const bottomRightPos = {
     x: selectionRect.x + selectionRect.width + 8,
     y: selectionRect.y + selectionRect.height + 8,
   };
-  if (isPositionValid(p1.x, p1.y)) {
-    return { x: p1.x, y: p1.y, width: targetWidth, height: targetHeight };
+  if (isPositionValid(bottomRightPos.x, bottomRightPos.y)) {
+    return { x: bottomRightPos.x, y: bottomRightPos.y, width: targetWidth, height: targetHeight };
   }
 
   // 优先级 2: 选区下方居中 (rect.centerX - w/2, rect.bottom + 8)
-  const p2 = {
+  const bottomCenterPos = {
     x: Math.round(selectionRect.x + (selectionRect.width - targetWidth) / 2),
     y: selectionRect.y + selectionRect.height + 8,
   };
-  if (isPositionValid(p2.x, p2.y)) {
-    return { x: p2.x, y: p2.y, width: targetWidth, height: targetHeight };
+  if (isPositionValid(bottomCenterPos.x, bottomCenterPos.y)) {
+    return { x: bottomCenterPos.x, y: bottomCenterPos.y, width: targetWidth, height: targetHeight };
   }
 
   // 优先级 3: 选区上方居中 (rect.centerX - w/2, rect.top - 8 - h)
-  const p3 = {
+  const topCenterPos = {
     x: Math.round(selectionRect.x + (selectionRect.width - targetWidth) / 2),
     y: selectionRect.y - 8 - targetHeight,
   };
-  if (isPositionValid(p3.x, p3.y)) {
-    return { x: p3.x, y: p3.y, width: targetWidth, height: targetHeight };
+  if (isPositionValid(topCenterPos.x, topCenterPos.y)) {
+    return { x: topCenterPos.x, y: topCenterPos.y, width: targetWidth, height: targetHeight };
   }
 
   // 优先级 4: 选区右侧 (rect.right + 8, rect.centerY - h/2)
-  const p4 = {
+  const rightCenterPos = {
     x: selectionRect.x + selectionRect.width + 8,
     y: Math.round(selectionRect.y + (selectionRect.height - targetHeight) / 2),
   };
-  if (isPositionValid(p4.x, p4.y)) {
-    return { x: p4.x, y: p4.y, width: targetWidth, height: targetHeight };
+  if (isPositionValid(rightCenterPos.x, rightCenterPos.y)) {
+    return { x: rightCenterPos.x, y: rightCenterPos.y, width: targetWidth, height: targetHeight };
   }
 
   // 优先级 5: 屏幕右侧固定位置 (screen.right - w - 16, screen.centerY - h/2)
-  const p5 = {
+  const screenRightPos = {
     x: workArea.x + workArea.width - targetWidth - 16,
     y: Math.round(workArea.y + (workArea.height - targetHeight) / 2),
   };
-  if (isPositionValid(p5.x, p5.y)) {
-    return { x: p5.x, y: p5.y, width: targetWidth, height: targetHeight };
+  if (isPositionValid(screenRightPos.x, screenRightPos.y)) {
+    return { x: screenRightPos.x, y: screenRightPos.y, width: targetWidth, height: targetHeight };
   }
 
   // 优先级 6: 屏幕底部居中 (screen.centerX - w/2, screen.bottom - h - 24)
-  const p6 = {
+  const screenBottomCenterPos = {
     x: Math.round(workArea.x + (workArea.width - targetWidth) / 2),
     y: workArea.y + workArea.height - targetHeight - 24,
   };
   const clamped = calculateCardRebound(
-    { x: p6.x, y: p6.y, width: targetWidth, height: targetHeight },
+    {
+      x: screenBottomCenterPos.x,
+      y: screenBottomCenterPos.y,
+      width: targetWidth,
+      height: targetHeight,
+    },
     workArea,
     CARD_WINDOW_MIN_MARGIN,
   );

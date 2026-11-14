@@ -1,6 +1,7 @@
-import type {
-  SentenceTranslationResult,
-  WordTranslationResult,
+import {
+  isWordCandidate,
+  type SentenceTranslationResult,
+  type WordTranslationResult,
 } from '@app/shared/schemas/translate';
 import type { CardActionPayload } from '@app/shared/types/card';
 import type {
@@ -46,9 +47,7 @@ export function useCardTranslation() {
         return;
       }
 
-      const inferredMode =
-        targetMode ??
-        (trimmed.length <= 120 && /^[a-zA-Z]+(?:-[a-zA-Z]+)*$/.test(trimmed) ? 'word' : 'sentence');
+      const inferredMode = targetMode ?? (isWordCandidate(trimmed) ? 'word' : 'sentence');
 
       const translationApi = window.api?.translation;
       if (!translationApi) {
