@@ -10,26 +10,26 @@ Snapword 是一个高频交互、高可靠性要求的 Windows 桌面工具（�
 
 ```mermaid
 flowchart TD
-    subgraph S1 [阶段一: 需求与交互收敛]
+    subgraph S1 ["阶段一: 需求与交互收敛"]
         PRD["需求基线 (docs/specs/PRD.md)<br/>44条现行FR / 明确不支持边界"] --> Spec["交互细则 (docs/specs/interaction-spec-v2.md)<br/>三窗口状态机 / 逐帧时序 / 像素级坐标"]
     end
 
-    subgraph S2 [阶段二: 阻塞契约锁定 - B01~B04]
+    subgraph S2 ["阶段二: 阻塞契约锁定 - B01~B04"]
         Spec --> B01["B-01 架构契约 (docs/contracts/architecture.md)<br/>进程拓扑 / utilityProcess 隔离"]
         B01 --> B02["B-02 IPC 契约 (docs/contracts/ipc-contract.md)<br/>Channel 目录 / DIP 坐标 / 错误码"]
         B01 --> B03["B-03 数据契约 (docs/contracts/data-model.md)<br/>Drizzle Schema / 软删除与撤销"]
         B01 --> B04["B-04 提示词契约 (docs/contracts/prompt-contract.md)<br/>词句双Prompt / JSON Schema 约束"]
     end
 
-    subgraph S3 [阶段三: 原型验证与工程底座]
+    subgraph S3 ["阶段三: 原型验证与工程底座"]
         D1["D-1/Q-6 UIA 技术验证<br/>30/30 通过 / P95 16.2ms"] --> Base["工程底座就绪 (P4)<br/>Clean Monorepo / Paseo双主题 / 安全Fuses"]
     end
 
-    subgraph S4 [阶段四: 业务主链路落地 (P5 - 当前阶段)]
+    subgraph S4 ["阶段四: 业务主链路落地 (P5 - 当前阶段)"]
         B02 & B03 & B04 & Base ==> Code["主链路编码与装配<br/>取词 Addon → Capture 服务 → DB 接线 → 翻译管线 → 三窗口交互"]
     end
 
-    subgraph S5 [阶段五: 验收闭环]
+    subgraph S5 ["阶段五: 验收闭环"]
         Code --> IA["IA-01 ~ IA-44 连续唯一验收矩阵<br/>Given-When-Then 全量跑通"]
     end
 
