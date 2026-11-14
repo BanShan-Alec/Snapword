@@ -48,6 +48,7 @@ async function runBuild() {
       'packages/preload/dist/index.cjs',
       'packages/renderer/dist/src/entries/home/index.html',
       'packages/renderer/dist/src/entries/updater/index.html',
+      'packages/renderer/dist/src/entries/card/index.html',
     ];
     const missing = requiredArtifacts.filter(
       (artifact) => !fs.existsSync(join(ROOT_DIR, artifact)),

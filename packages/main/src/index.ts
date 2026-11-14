@@ -17,6 +17,7 @@ import { allowExternalUrls } from './modules/security/external-urls';
 import { createSentryModule, initMainSentry } from './modules/sentry.module';
 import { disallowMultipleAppInstance } from './modules/single-instance.module';
 import { createTrayModule } from './modules/tray.module';
+import { createCardWindowModule } from './modules/window/card-window.module';
 import { createHomeWindowModule } from './modules/window/home-window.module';
 import { createUpdaterWindowModule } from './modules/window/updater-window.module';
 import { updaterService } from './services/updater.service';
@@ -39,6 +40,7 @@ export async function initApp(initConfig: AppInitConfig) {
     .init(createIPCModule())
     .init(createHomeWindowModule({ initConfig }))
     .init(createUpdaterWindowModule({ initConfig }))
+    .init(createCardWindowModule({ initConfig }))
     .init(createTrayModule())
     .init(createCaptureSupervisorModule())
     .init(disallowMultipleAppInstance())
@@ -96,6 +98,9 @@ initApp({
     updater: devServer
       ? new URL('src/entries/updater/index.html', devServer)
       : { path: require.resolve('@app/renderer/updater') },
+    card: devServer
+      ? new URL('src/entries/card/index.html', devServer)
+      : { path: require.resolve('@app/renderer/card') },
   },
   preload: {
     path: require.resolve('@app/preload'),
