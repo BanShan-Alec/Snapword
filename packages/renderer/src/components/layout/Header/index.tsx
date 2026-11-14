@@ -7,8 +7,9 @@ import logoCompact from '@/assets/logo-compact.svg?url';
 import { EllipsisText } from '@/components/ui/EllipsisText';
 
 // 可抽离的逻辑处理函数/组件
-function resolveActiveTab(_location: string): HeaderTab | undefined {
-  return undefined;
+function resolveActiveTab(location: string): HeaderTab | undefined {
+  if (location === '/settings') return 'settings';
+  return 'translation';
 }
 
 const _Header = (props: HeaderProps) => {
@@ -23,13 +24,17 @@ const _Header = (props: HeaderProps) => {
   // 网络IO
 
   // 数据转换
-  const appName = window.__APP_ENV__?.appName || 'Electron App';
-  const tabItems: Array<{ key: HeaderTab; label: string }> = [];
+  const appName = window.__APP_ENV__?.appName || 'Snapword';
+  const tabItems: Array<{ key: HeaderTab; label: string }> = [
+    { key: 'translation', label: t`翻译` },
+    { key: 'settings', label: t`设置` },
+  ];
 
   // 逻辑处理函数
   const handleTabChange = (key: string) => {
     const nextTab = key as HeaderTab;
-    navigate(nextTab);
+    const targetPath = nextTab === 'settings' ? '/settings' : '/';
+    navigate(targetPath);
     props.onTabChange?.(nextTab);
   };
 

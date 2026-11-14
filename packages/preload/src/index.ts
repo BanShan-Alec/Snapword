@@ -6,8 +6,14 @@ import type { CloseBehaviorChoice } from '@app/shared/schemas/close-behavior';
 import type { AppConfig, UpdateConfigInput } from '@app/shared/schemas/config';
 import type { LogInput, PerformActionInput } from '@app/shared/schemas/diagnostics';
 import type { ShowItemInFolderInput } from '@app/shared/schemas/shell';
+import type { AbortTranslationInput, TranslationInput } from '@app/shared/schemas/translate';
 import type { ElectronApi } from '@app/shared/types/api';
 import type { AppRuntimeEnv } from '@app/shared/types/env';
+import type {
+  TranslationChunkEvent,
+  TranslationErrorEvent,
+  TranslationFinishEvent,
+} from '@app/shared/types/translate';
 import type { UpdaterProgress, UpdaterSnapshot } from '@app/shared/types/updater';
 import { APP_ENV_ARG_PREFIX, unpackRuntimeEnv } from '@app/shared/utils/env-packer';
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
@@ -96,6 +102,34 @@ export const apiBridge: ElectronApi = {
       ipcRenderer.on(IPC_CHANNELS.UPDATER_EVENT_PROGRESS, listener);
       return () => {
         ipcRenderer.removeListener(IPC_CHANNELS.UPDATER_EVENT_PROGRESS, listener);
+      };
+    },
+  },
+  translation: {
+    translate: (input: TranslationInput, options) =>
+      invokeTraced(IPC_CHANNELS.TRANSLATION_TRANSLATE, input, options),
+    abort: (input: AbortTranslationInput, options) =>
+      invokeTraced(IPC_CHANNELS.TRANSLATION_ABORT, input, options),
+    onChunk: (cb: (event: TranslationChunkEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: TranslationChunkEvent) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_CHUNK, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_CHUNK, listener);
+      };
+    },
+    onFinish: (cb: (event: TranslationFinishEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: TranslationFinishEvent) =>
+        cb(data);
+      ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_FINISH, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_FINISH, listener);
+      };
+    },
+    onError: (cb: (event: TranslationErrorEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: TranslationErrorEvent) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_ERROR, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_ERROR, listener);
       };
     },
   },

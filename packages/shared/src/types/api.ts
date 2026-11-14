@@ -2,10 +2,16 @@ import type { CloseBehaviorChoice } from '../schemas/close-behavior';
 import type { AppConfig, UpdateConfigInput } from '../schemas/config';
 import type { LogInput, PerformActionInput } from '../schemas/diagnostics';
 import type { ShowItemInFolderInput } from '../schemas/shell';
+import type { AbortTranslationInput, TranslationInput } from '../schemas/translate';
 import type { ActionResult, OpenLogFolderResult } from './diagnostics';
 import type { Result } from './result';
 import type { PingResult, SystemInfo } from './system';
 import type { IpcCallOptions } from './telemetry';
+import type {
+  TranslationChunkEvent,
+  TranslationErrorEvent,
+  TranslationFinishEvent,
+} from './translate';
 import type { UpdaterProgress, UpdaterSnapshot } from './updater';
 
 /**
@@ -69,6 +75,19 @@ export interface ElectronApi {
     /** 返回取消订阅函数，渲染层必须在 useEffect cleanup 中调用 */
     onStateChanged: (cb: (s: UpdaterSnapshot) => void) => () => void;
     onProgressChanged: (cb: (p: UpdaterProgress) => void) => () => void;
+  };
+  translation: {
+    translate: (
+      input: TranslationInput,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ requestId: string }>>;
+    abort: (
+      input: AbortTranslationInput,
+      options?: IpcCallOptions,
+    ) => Promise<Result<{ success: boolean }>>;
+    onChunk: (cb: (event: TranslationChunkEvent) => void) => () => void;
+    onFinish: (cb: (event: TranslationFinishEvent) => void) => () => void;
+    onError: (cb: (event: TranslationErrorEvent) => void) => () => void;
   };
   // 遵循 specs-electron-fullstack / renderer/ipc-consumption.md 安全规范
   getPathForFile: (file: File) => string;

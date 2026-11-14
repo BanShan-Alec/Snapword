@@ -35,6 +35,13 @@ export const IPC_CHANNELS = {
   WINDOW_CLOSE_REQUESTED: 'window:event:close-requested',
   WINDOW_CLOSE_READY: 'window:close-ready',
   WINDOW_CLOSE_RESPOND: 'window:close-respond',
+
+  // 流式翻译通道 (Translation Pipeline)
+  TRANSLATION_TRANSLATE: 'translation:translate',
+  TRANSLATION_ABORT: 'translation:abort',
+  TRANSLATION_EVENT_CHUNK: 'translation:event:chunk',
+  TRANSLATION_EVENT_FINISH: 'translation:event:finish',
+  TRANSLATION_EVENT_ERROR: 'translation:event:error',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
