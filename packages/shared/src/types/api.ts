@@ -3,6 +3,7 @@ import type { AppConfig, UpdateConfigInput } from '../schemas/config';
 import type { LogInput, PerformActionInput } from '../schemas/diagnostics';
 import type { ShowItemInFolderInput } from '../schemas/shell';
 import type { AbortTranslationInput, TranslationInput } from '../schemas/translate';
+import type { CardActionPayload } from './card';
 import type { ActionResult, OpenLogFolderResult } from './diagnostics';
 import type { Result } from './result';
 import type { PingResult, SystemInfo } from './system';
@@ -88,6 +89,13 @@ export interface ElectronApi {
     onChunk: (cb: (event: TranslationChunkEvent) => void) => () => void;
     onFinish: (cb: (event: TranslationFinishEvent) => void) => () => void;
     onError: (cb: (event: TranslationErrorEvent) => void) => () => void;
+  };
+  card: {
+    hide: (_payload?: void, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
+    resize: (height: number, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
+    setPin: (pin: boolean, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
+    openInHome: (data?: unknown, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
+    onAction: (cb: (payload: CardActionPayload) => void) => () => void;
   };
   // 遵循 specs-electron-fullstack / renderer/ipc-consumption.md 安全规范
   getPathForFile: (file: File) => string;

@@ -49,6 +49,14 @@ export const IPC_CHANNELS = {
   TRANSLATION_EVENT_CHUNK: 'translation:event:chunk',
   TRANSLATION_EVENT_FINISH: 'translation:event:finish',
   TRANSLATION_EVENT_ERROR: 'translation:event:error',
+
+  // 翻译卡片通道 (Card Window IPC Channels)
+  CARD_SHOW: 'card:show',
+  CARD_HIDE: 'card:hide',
+  CARD_RESIZE: 'card:resize',
+  CARD_PIN_TOGGLE: 'card:pin-toggle',
+  CARD_OPEN_IN_HOME: 'card:open-in-home',
+  CARD_EVENT_ACTION: 'card:event:action',
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

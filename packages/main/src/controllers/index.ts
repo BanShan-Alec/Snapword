@@ -1,3 +1,4 @@
+import { registerCardControllers } from './card.controller';
 import { registerConfigControllers } from './config.controller';
 import { registerDiagnosticsControllers } from './diagnostics.controller';
 import { registerShellControllers } from './shell.controller';
@@ -18,4 +19,5 @@ export function registerAllControllers(): void {
   registerUpdaterControllers();
   registerWindowControllers();
   registerTranslationControllers();
+  registerCardControllers();
 }

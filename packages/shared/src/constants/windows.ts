@@ -3,6 +3,8 @@ export const WINDOW_IDS = {
   HOME: 'home',
   /** 自动更新窗口：changelog + 进度 + 操作 */
   UPDATER: 'updater',
+  /** 翻译卡片窗口：置顶轻量级 420px 翻译结果展示 */
+  CARD: 'card',
 } as const;
 
 export type WindowId = (typeof WINDOW_IDS)[keyof typeof WINDOW_IDS];

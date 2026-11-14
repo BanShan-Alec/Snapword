@@ -58,6 +58,12 @@
     "./updater.html": {
       "default": "./dist/src/entries/updater/index.html"
     },
+    "./card": {
+      "default": "./dist/src/entries/card/index.html"
+    },
+    "./card.html": {
+      "default": "./dist/src/entries/card/index.html"
+    },
     "./package.json": "./package.json"
   }
 }

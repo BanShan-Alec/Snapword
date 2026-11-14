@@ -8,6 +8,7 @@ import type { LogInput, PerformActionInput } from '@app/shared/schemas/diagnosti
 import type { ShowItemInFolderInput } from '@app/shared/schemas/shell';
 import type { AbortTranslationInput, TranslationInput } from '@app/shared/schemas/translate';
 import type { ElectronApi } from '@app/shared/types/api';
+import type { CardActionPayload } from '@app/shared/types/card';
 import type { AppRuntimeEnv } from '@app/shared/types/env';
 import type {
   TranslationChunkEvent,
@@ -130,6 +131,20 @@ export const apiBridge: ElectronApi = {
       ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_ERROR, listener);
       return () => {
         ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_ERROR, listener);
+      };
+    },
+  },
+  card: {
+    hide: (_payload, options) => invokeTraced(IPC_CHANNELS.CARD_HIDE, undefined, options),
+    resize: (height: number, options) =>
+      invokeTraced(IPC_CHANNELS.CARD_RESIZE, { height }, options),
+    setPin: (pin: boolean, options) => invokeTraced(IPC_CHANNELS.CARD_PIN_TOGGLE, { pin }, options),
+    openInHome: (data, options) => invokeTraced(IPC_CHANNELS.CARD_OPEN_IN_HOME, data, options),
+    onAction: (cb: (payload: CardActionPayload) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: CardActionPayload) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.CARD_EVENT_ACTION, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.CARD_EVENT_ACTION, listener);
       };
     },
   },
