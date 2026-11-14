@@ -21,6 +21,7 @@
   },
   "scripts": {
     "build": "pnpm -r run build",
+    "native:build": "cargo build --release --manifest-path native/Cargo.toml && tsx scripts/copy-native.ts",
     "build:unpack": "tsx scripts/build.ts --dir",
     "build:win": "tsx scripts/build.ts --win",
     "dev": "cross-env MODE=development tsx scripts/dev.ts",

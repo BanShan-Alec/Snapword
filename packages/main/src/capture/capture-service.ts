@@ -1,12 +1,21 @@
 import {
   CAPTURE_PROTOCOL_VERSION,
   type CaptureConfig,
+  type CaptureErrorCode,
   type CaptureMessage,
   type CaptureServiceState,
   captureConfigSchema,
   DEFAULT_CAPTURE_CONFIG,
+  type DotHiddenReason,
+  type SelectionPayload,
 } from '@app/shared/schemas/capture';
 import { MockSelectionEmitter } from './mock-selection-emitter';
+import {
+  type INativeAddon,
+  loadNativeAddon,
+  type NativeDotEvent,
+  type NativeProbeResult,
+} from './native-addon';
 
 export interface MessagePortLike {
   postMessage(message: unknown): void;
@@ -23,15 +32,19 @@ export interface CaptureServiceOptions {
   exitOnShutdown?: boolean;
   heartbeatIntervalMs?: number;
   handshakeTimeoutMs?: number;
+  addon?: INativeAddon;
+  forceMock?: boolean;
 }
 
 /**
  * 取词守护进程实现 (CaptureService)
  * 运行在独立的 Electron utilityProcess 中，通过 parentPort 与主进程通信
+ * 集成 Rust UIA 原生选区探针与 Win32 原生免激活分层圆点窗口 (Slice-06)
  */
 export class CaptureService {
   private readonly port: MessagePortLike | null;
   private readonly mockEmitter: MockSelectionEmitter;
+  private readonly addon: INativeAddon;
   private readonly exitOnShutdown: boolean;
   private readonly heartbeatIntervalMs: number;
   private readonly handshakeTimeoutMs: number;
@@ -54,6 +67,7 @@ export class CaptureService {
         ? (process.parentPort as unknown as MessagePortLike)
         : null);
     this.mockEmitter = new MockSelectionEmitter();
+    this.addon = options?.addon ?? loadNativeAddon({ forceMock: options?.forceMock });
     this.exitOnShutdown = options?.exitOnShutdown ?? true;
     this.heartbeatIntervalMs = options?.heartbeatIntervalMs ?? 5000;
     this.handshakeTimeoutMs = options?.handshakeTimeoutMs ?? 5000;
@@ -77,6 +91,10 @@ export class CaptureService {
     return this.mockEmitter;
   }
 
+  public getAddon(): INativeAddon {
+    return this.addon;
+  }
+
   /**
    * 启动取词守护服务
    */
@@ -98,17 +116,30 @@ export class CaptureService {
     };
     this.port.on('message', this.messageListener);
 
+    // 挂载原生圆点事件监听
+    if (this.config.dotEnabled) {
+      try {
+        this.addon.startDot((evt: NativeDotEvent) => {
+          this.handleDotEvent(evt);
+        });
+      } catch (err) {
+        console.warn('[capture-service] Failed to start native dot window:', err);
+      }
+    }
+
+    const diag = this.addon.diagnose();
+
     // 步骤 1：主动向主进程发送 hello 握手包 (B-02 §3.1)
     this.postMessage({
       type: 'hello',
       protocolVersion: CAPTURE_PROTOCOL_VERSION,
       sentAt: new Date().toISOString(),
       serviceVersion: '1.0.0',
-      addonVersion: '1.0.0-mock',
+      addonVersion: diag.addonVersion,
       pid: process.pid,
       startedAt: this.startedAt,
       capabilities: {
-        uia: true,
+        uia: diag.uiaAvailable,
         dot: true,
         rangeFromPoint: true,
         fullscreenDetection: true,
@@ -147,6 +178,12 @@ export class CaptureService {
       }
       this.messageListener = null;
     }
+
+    try {
+      this.addon.stopDot();
+    } catch {
+      // ignore
+    }
   }
 
   /**
@@ -163,6 +200,85 @@ export class CaptureService {
   }
 
   /**
+   * 处理原生圆点回调事件
+   */
+  private handleDotEvent(evt: NativeDotEvent): void {
+    switch (evt.eventType) {
+      case 'clicked': {
+        if (!evt.payload) return;
+        const payload = this.formatSelectionPayload(evt.payload, 'dot');
+        this.postMessage({
+          type: 'dot_clicked',
+          protocolVersion: CAPTURE_PROTOCOL_VERSION,
+          sentAt: new Date().toISOString(),
+          seq: evt.seq,
+          payload,
+        });
+        break;
+      }
+
+      case 'hidden': {
+        this.postMessage({
+          type: 'dot_hidden',
+          protocolVersion: CAPTURE_PROTOCOL_VERSION,
+          sentAt: new Date().toISOString(),
+          seq: evt.seq,
+          reason: (evt.reason as DotHiddenReason) || 'outside_click',
+        });
+        break;
+      }
+
+      case 'foreground_changed': {
+        if (!evt.foreground) return;
+        this.postMessage({
+          type: 'foreground_changed',
+          protocolVersion: CAPTURE_PROTOCOL_VERSION,
+          sentAt: new Date().toISOString(),
+          processName: evt.foreground.processName,
+          processId: evt.foreground.processId,
+          windowTitle: evt.foreground.windowTitle,
+          isFullscreen: evt.foreground.isFullscreen,
+          at: new Date().toISOString(),
+        });
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  /**
+   * 统一将 NativeProbeResult 格式化为契约规定的 SelectionPayload
+   */
+  private formatSelectionPayload(
+    raw: NativeProbeResult,
+    source: 'hotkey' | 'dot',
+  ): SelectionPayload {
+    return {
+      source,
+      seq: raw.seq,
+      text: raw.text,
+      textTruncated: raw.textTruncated,
+      rects: raw.rects,
+      anchor: raw.anchor,
+      pointer: raw.pointer,
+      processName: raw.processName,
+      processId: raw.processId,
+      windowTitle: raw.windowTitle,
+      paragraph: raw.paragraph || raw.text,
+      paragraphError: raw.paragraphError ?? null,
+      paragraphTruncated: raw.paragraphTruncated,
+      capturedAt: raw.capturedAt || new Date().toISOString(),
+      elapsedMs: raw.elapsedMs,
+      dpiScale: raw.dpiScale,
+      coordinateSpace: 'dip',
+      selectionRanges: raw.selectionRanges || (raw.rects.length > 0 ? 1 : 0),
+      warnings: raw.warnings || [],
+    };
+  }
+
+  /**
    * 处理从主进程接收到的消息
    */
   private handleMessage(msg: CaptureMessage): void {
@@ -172,7 +288,6 @@ export class CaptureService {
 
     switch (msg.type) {
       case 'hello_ack': {
-        // 收到主进程握手应答
         if (this.handshakeTimer) {
           clearTimeout(this.handshakeTimer);
           this.handshakeTimer = null;
@@ -182,7 +297,6 @@ export class CaptureService {
         this.configRevision = msg.configRevision;
         this.state = 'ready';
 
-        // 回复 config_ack (B-02 §3.3)
         this.postMessage({
           type: 'config_ack',
           protocolVersion: CAPTURE_PROTOCOL_VERSION,
@@ -192,13 +306,11 @@ export class CaptureService {
           appliedAt: new Date().toISOString(),
         });
 
-        // 启动定时心跳 (B-02 §5.7 每 5 秒发送 service_status)
         this.startHeartbeat();
         break;
       }
 
       case 'config_update': {
-        // 配置更新：revision 必须严格大于当前快照
         if (msg.revision <= this.configRevision) {
           this.postMessage({
             type: 'config_error',
@@ -229,6 +341,11 @@ export class CaptureService {
         this.config = parseResult.data;
         this.configRevision = msg.revision;
 
+        // 根据最新配置启停圆点
+        if (!this.config.dotEnabled) {
+          this.addon.hideDot();
+        }
+
         this.postMessage({
           type: 'config_ack',
           protocolVersion: CAPTURE_PROTOCOL_VERSION,
@@ -241,47 +358,66 @@ export class CaptureService {
       }
 
       case 'capture_current': {
-        // 当前前台实时取词探测指令
-        const payload = this.mockEmitter.createMockSelection({
-          source: msg.reason === 'hotkey' ? 'hotkey' : 'hotkey',
-        });
+        // 当前前台实时 UIA 选区探针探测 (B-02 §5.1)
+        const timeoutMs = msg.timeoutMs ?? this.config.captureTimeoutMs ?? 500;
+        const probeRes = this.addon.probeSelection(timeoutMs);
 
-        this.postMessage({
-          type: 'capture_result',
-          protocolVersion: CAPTURE_PROTOCOL_VERSION,
-          sentAt: new Date().toISOString(),
-          requestId: msg.requestId,
-          payload,
-        });
+        if (probeRes.success && probeRes.text.trim().length > 0) {
+          const payload = this.formatSelectionPayload(probeRes, 'hotkey');
+          this.postMessage({
+            type: 'capture_result',
+            protocolVersion: CAPTURE_PROTOCOL_VERSION,
+            sentAt: new Date().toISOString(),
+            requestId: msg.requestId,
+            payload,
+          });
+        } else {
+          this.postMessage({
+            type: 'capture_error',
+            protocolVersion: CAPTURE_PROTOCOL_VERSION,
+            sentAt: new Date().toISOString(),
+            requestId: msg.requestId,
+            seq: probeRes.seq,
+            code: (probeRes.errorCode as CaptureErrorCode) || 'EmptySelection',
+            message: probeRes.errorMessage || 'No valid selection found in foreground window',
+            processName: probeRes.processName || 'unknown.exe',
+            processId: probeRes.processId || 0,
+            windowTitle: probeRes.windowTitle || '',
+            elapsedMs: probeRes.elapsedMs || 0,
+            retryable: probeRes.errorCode === 'Timeout' || probeRes.errorCode === 'Busy',
+          });
+        }
         break;
       }
 
       case 'hide_dot': {
-        // 隐藏圆点命令
+        // 隐藏圆点命令 (B-02 §5.9)
+        this.addon.hideDot();
         break;
       }
 
       case 'diagnose': {
-        // 诊断请求
+        // 诊断请求 (B-02 §5.8)
+        const diag = this.addon.diagnose();
         this.postMessage({
           type: 'diagnose_result',
           protocolVersion: CAPTURE_PROTOCOL_VERSION,
           sentAt: new Date().toISOString(),
           requestId: msg.requestId,
-          uiaAvailable: true,
-          hookInstalled: true,
-          dotVisible: false,
-          foreground: {
-            processName: 'chrome.exe',
-            processId: 12345,
-            windowTitle: 'Example — Google Chrome',
+          uiaAvailable: diag.uiaAvailable,
+          hookInstalled: diag.hookInstalled,
+          dotVisible: diag.dotVisible,
+          foreground: diag.foreground ?? {
+            processName: 'unknown.exe',
+            processId: 0,
+            windowTitle: '',
             isFullscreen: false,
           },
           serviceVersion: '1.0.0',
-          addonVersion: '1.0.0-mock',
-          osVersion: process.platform,
-          dpiScale: 1.0,
-          warnings: [],
+          addonVersion: diag.addonVersion,
+          osVersion: diag.osVersion,
+          dpiScale: diag.dpiScale,
+          warnings: diag.warnings,
         });
         break;
       }
@@ -314,7 +450,6 @@ export class CaptureService {
       }
 
       case 'shutdown': {
-        // 收到主进程优雅退出指令 (B-02 §5.9)
         this.stop();
 
         this.postMessage({
@@ -338,7 +473,7 @@ export class CaptureService {
   }
 
   /**
-   * 启动 5 秒定时心跳发射
+   * 启动 5 秒定时心跳发射 (B-02 §5.7)
    */
   private startHeartbeat(): void {
     if (this.heartbeatTimer) {
@@ -356,16 +491,18 @@ export class CaptureService {
       return;
     }
 
+    const diag = this.addon.diagnose();
+
     this.postMessage({
       type: 'service_status',
       protocolVersion: CAPTURE_PROTOCOL_VERSION,
       sentAt: new Date().toISOString(),
       state: this.state,
-      uiaAvailable: true,
-      hookInstalled: true,
-      dotVisible: false,
+      uiaAvailable: diag.uiaAvailable,
+      hookInstalled: diag.hookInstalled,
+      dotVisible: diag.dotVisible,
       serviceVersion: '1.0.0',
-      addonVersion: '1.0.0-mock',
+      addonVersion: diag.addonVersion,
       uptimeMs: Math.round(performance.now() - this.startTime),
       lastErrorCode: null,
     });
