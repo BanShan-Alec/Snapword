@@ -1,7 +1,7 @@
 {
   "name": "@app/main",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && tsx ../../scripts/copy-native.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },
