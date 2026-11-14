@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__APP_TITLE__</title>
+    <script>
+      // 首帧主题由主进程经 URL query 显式预置 (STARTUP_THEME_QUERY_KEY)
+      const startupTheme = new URLSearchParams(window.location.search).get('theme');
+      if (startupTheme === 'dark' || startupTheme === 'light') {
+        document.documentElement.dataset.theme = startupTheme;
+      }
+    </script>
+  </head>
+  <body class="overflow-hidden select-none bg-transparent">
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>

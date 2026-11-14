@@ -5,9 +5,24 @@ import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
 import type { CloseBehaviorChoice } from '@app/shared/schemas/close-behavior';
 import type { AppConfig, UpdateConfigInput } from '@app/shared/schemas/config';
 import type { LogInput, PerformActionInput } from '@app/shared/schemas/diagnostics';
+import type { DeleteHistoryInput, TranslationHistoryItem } from '@app/shared/schemas/history';
 import type { ShowItemInFolderInput } from '@app/shared/schemas/shell';
+import type { AbortTranslationInput, TranslationInput } from '@app/shared/schemas/translate';
+import type {
+  DeleteWordInput,
+  ListWordsInput,
+  SaveWordInput,
+  UndoDeleteInput,
+} from '@app/shared/schemas/vocabulary';
 import type { ElectronApi } from '@app/shared/types/api';
+import type { CardActionPayload } from '@app/shared/types/card';
 import type { AppRuntimeEnv } from '@app/shared/types/env';
+import type { IpcCallOptions } from '@app/shared/types/telemetry';
+import type {
+  TranslationChunkEvent,
+  TranslationErrorEvent,
+  TranslationFinishEvent,
+} from '@app/shared/types/translate';
 import type { UpdaterProgress, UpdaterSnapshot } from '@app/shared/types/updater';
 import { APP_ENV_ARG_PREFIX, unpackRuntimeEnv } from '@app/shared/utils/env-packer';
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
@@ -96,6 +111,98 @@ export const apiBridge: ElectronApi = {
       ipcRenderer.on(IPC_CHANNELS.UPDATER_EVENT_PROGRESS, listener);
       return () => {
         ipcRenderer.removeListener(IPC_CHANNELS.UPDATER_EVENT_PROGRESS, listener);
+      };
+    },
+  },
+  translation: {
+    translate: (input: TranslationInput, options) =>
+      invokeTraced(IPC_CHANNELS.TRANSLATION_TRANSLATE, input, options),
+    abort: (input: AbortTranslationInput, options) =>
+      invokeTraced(IPC_CHANNELS.TRANSLATION_ABORT, input, options),
+    onChunk: (cb: (event: TranslationChunkEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: TranslationChunkEvent) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_CHUNK, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_CHUNK, listener);
+      };
+    },
+    onFinish: (cb: (event: TranslationFinishEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: TranslationFinishEvent) =>
+        cb(data);
+      ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_FINISH, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_FINISH, listener);
+      };
+    },
+    onError: (cb: (event: TranslationErrorEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: TranslationErrorEvent) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.TRANSLATION_EVENT_ERROR, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSLATION_EVENT_ERROR, listener);
+      };
+    },
+  },
+  card: {
+    hide: (_payload, options) => invokeTraced(IPC_CHANNELS.CARD_HIDE, undefined, options),
+    resize: (height: number, options) =>
+      invokeTraced(IPC_CHANNELS.CARD_RESIZE, { height }, options),
+    setPin: (pin: boolean, options) => invokeTraced(IPC_CHANNELS.CARD_PIN_TOGGLE, { pin }, options),
+    copyText: (text: string, options) =>
+      invokeTraced(IPC_CHANNELS.CARD_COPY_TEXT, { text }, options),
+    openInHome: (data, options) => invokeTraced(IPC_CHANNELS.CARD_OPEN_IN_HOME, data, options),
+    onAction: (cb: (payload: CardActionPayload) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: CardActionPayload) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.CARD_EVENT_ACTION, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.CARD_EVENT_ACTION, listener);
+      };
+    },
+    onOpenInHome: (cb: (payload: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: unknown) => cb(data);
+      ipcRenderer.on(IPC_CHANNELS.CARD_OPEN_IN_HOME, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.CARD_OPEN_IN_HOME, listener);
+      };
+    },
+  },
+  vocabulary: {
+    save: (input: SaveWordInput, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_SAVE, input, options),
+    list: (input?: ListWordsInput, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_LIST, input, options),
+    getByWord: (word: string, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_GET_BY_WORD, { word }, options),
+    getCount: (_payload?: void, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_COUNT, undefined, options),
+    deleteWord: (input: DeleteWordInput, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_DELETE, input, options),
+    undoDelete: (input: UndoDeleteInput, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_UNDO_DELETE, input, options),
+    clearAll: (_payload?: void, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_CLEAR, undefined, options),
+    exportCsv: (_payload?: void, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.VOCABULARY_EXPORT_CSV, undefined, options),
+    onChanged: (cb: (payload?: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, payload?: unknown) => cb(payload);
+      ipcRenderer.on(IPC_CHANNELS.VOCABULARY_EVENT_CHANGED, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.VOCABULARY_EVENT_CHANGED, listener);
+      };
+    },
+  },
+  history: {
+    get: (_payload?: void, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.HISTORY_GET, undefined, options),
+    deleteItem: (input: DeleteHistoryInput, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.HISTORY_DELETE, input, options),
+    clear: (_payload?: void, options?: IpcCallOptions) =>
+      invokeTraced(IPC_CHANNELS.HISTORY_CLEAR, undefined, options),
+    onChanged: (cb: (items: TranslationHistoryItem[]) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, items: TranslationHistoryItem[]) =>
+        cb(items);
+      ipcRenderer.on(IPC_CHANNELS.HISTORY_EVENT_CHANGED, listener);
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.HISTORY_EVENT_CHANGED, listener);
       };
     },
   },

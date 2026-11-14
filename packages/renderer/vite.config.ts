@@ -80,6 +80,7 @@ export default defineConfig({
       input: {
         home: path.resolve(currentDir, 'src/entries/home/index.html'),
         updater: path.resolve(currentDir, 'src/entries/updater/index.html'),
+        card: path.resolve(currentDir, 'src/entries/card/index.html'),
       },
       output: {
         chunkFileNames: 'assets/[name]-[hash].js',

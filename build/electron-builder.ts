@@ -59,6 +59,11 @@ const config: Configuration = {
       to: 'buildResources',
       filter: ['**/*'],
     },
+    {
+      from: 'packages/main/drizzle',
+      to: 'drizzle',
+      filter: ['**/*'],
+    },
   ],
   /**
    * 采用 package.json 的 name (snapword)，零空格小写规范

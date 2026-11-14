@@ -6,7 +6,9 @@ import { SILENT_CHECK_DELAY_MS } from './constants/updater';
 import { devServerUrl } from './env';
 import { createModuleRunner } from './ModuleRunner';
 import { terminateAppOnLastWindowClose } from './modules/auto-terminate.module';
+import { createCaptureSupervisorModule } from './modules/capture-supervisor.module';
 import { createConfigModule, getAppConfigStore } from './modules/config.module';
+import { createDatabaseModule } from './modules/db.module';
 import { createIPCModule } from './modules/ipc.module';
 import { createLogModule } from './modules/log.module';
 import { createNativeThemeModule } from './modules/native-theme.module';
@@ -16,6 +18,7 @@ import { allowExternalUrls } from './modules/security/external-urls';
 import { createSentryModule, initMainSentry } from './modules/sentry.module';
 import { disallowMultipleAppInstance } from './modules/single-instance.module';
 import { createTrayModule } from './modules/tray.module';
+import { createCardWindowModule } from './modules/window/card-window.module';
 import { createHomeWindowModule } from './modules/window/home-window.module';
 import { createUpdaterWindowModule } from './modules/window/updater-window.module';
 import { updaterService } from './services/updater.service';
@@ -34,11 +37,14 @@ export async function initApp(initConfig: AppInitConfig) {
     .init(createLogModule())
     .init(createSentryModule())
     .init(createConfigModule())
+    .init(createDatabaseModule())
     .init(createNativeThemeModule())
     .init(createIPCModule())
     .init(createHomeWindowModule({ initConfig }))
     .init(createUpdaterWindowModule({ initConfig }))
+    .init(createCardWindowModule({ initConfig }))
     .init(createTrayModule())
+    .init(createCaptureSupervisorModule())
     .init(disallowMultipleAppInstance())
     .init(terminateAppOnLastWindowClose())
 
@@ -94,6 +100,9 @@ initApp({
     updater: devServer
       ? new URL('src/entries/updater/index.html', devServer)
       : { path: require.resolve('@app/renderer/updater') },
+    card: devServer
+      ? new URL('src/entries/card/index.html', devServer)
+      : { path: require.resolve('@app/renderer/card') },
   },
   preload: {
     path: require.resolve('@app/preload'),

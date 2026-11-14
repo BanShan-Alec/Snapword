@@ -3,171 +3,37 @@ msgstr ""
 "Language: en-US\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "{cpuCores, plural, one {# 核} other {# 核}} ({cpuModel})"
-msgstr "{cpuCores, plural, one {# core} other {# cores}} ({cpuModel})"
-
-#: src/features/usb/components/UsbCard/index.tsx
-msgid "{manufacturerName} 设备"
-msgstr "{manufacturerName} device"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "{uptimeMinutes, plural, one {# 分钟} other {# 分钟}} ({uptimeSeconds, plural, one {# 秒} other {# 秒}})"
-msgstr "{uptimeMinutes, plural, one {# min} other {# mins}} ({uptimeSeconds, plural, one {# sec} other {# secs}})"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "@app/shared 共享契约单一事实源"
-msgstr "@app/shared single source of truth"
-
-#: src/features/logging/hooks/useLogging.ts
-msgid "✅ 已发送 {levelUpper} 日志到 renderer-home.log"
-msgstr "✅ Sent {levelUpper} log to renderer-home.log"
-
-#: src/features/logging/hooks/useLogging.ts
-msgid "❌ 已触发测试异常并写入 renderer-home.log (生产打包模式下将由全局监听器自动上报 Sentry)"
-msgstr "❌ Test error written to renderer-home.log (Sentry reports it in production builds)"
-
-#: src/features/logging/hooks/useLogging.ts
-msgid "📂 已打开日志目录: {path}"
-msgstr "📂 Opened log folder: {path}"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "Chromium 版本"
-msgstr "Chromium"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "Controller 执行 Zod 防御性参数校验与顶层异常包装，Service 专注核心业务逻辑，杜绝 Procedure 称谓混淆。"
-msgstr "Controllers run Zod validation and wrap errors; services hold business logic."
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "CPU 核心 / 架构"
-msgstr "CPU"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "Electron & Node.js 原生底层探针"
-msgstr "Electron and Node.js runtime probes"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "Electron 版本"
-msgstr "Electron"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "Fullstack 经典分层通信架构全流程"
-msgstr "Layered IPC architecture"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "Fullstack 规范分层方式"
-msgstr "Layered architecture"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "IPC 传输"
-msgstr "IPC transit"
-
-#. placeholder {0}: timing.ipcMs
-#: src/features/ping/components/PingCard/index.tsx
-msgid "IPC 传输: {0}ms"
-msgstr "IPC transit: {0}ms"
-
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "IPC 计数器 (Counter)"
-msgstr "IPC counter"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "IPC 通信往返延迟"
-msgstr "Roundtrip latency"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "Main 进程 Controller -> Service 分层"
-msgstr "Main process layering"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "Node.js 版本"
-msgstr "Node.js"
-
-#: src/features/ping/hooks/usePing.ts
-msgid "Ping 失败: {detail}"
-msgstr "Ping failed: {detail}"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "Preload 精准白名单桥接"
-msgstr "Preload allowlist bridge"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "Renderer 进程纯净消费"
-msgstr "Renderer consumes only window.api"
-
-#: src/features/usb/components/UsbCard/index.tsx
-msgid "USB 硬件设备监控"
-msgstr "USB devices"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "V8 引擎版本"
-msgstr "V8"
-
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "Zod 严格模式入参校验与语义化错误码 Result 契约"
-msgstr "Strict Zod validation with typed error codes"
-
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "Zod 校验"
-msgstr "Zod validated"
+#: src/features/translation/index.tsx
+msgid "AI 流式翻译与词典"
+msgstr "AI Streaming Translation & Dictionary"
 
 #: src/features/updater/components/ProgressCard/index.tsx
 msgid "下载进度"
 msgstr "Download progress"
 
-#: src/features/devtools/components/DevToolsCard/index.tsx
-msgid "严格协议白名单校验 (仅允许 http/https) 与 DevTools 控制"
-msgstr "Protocol allowlist (http/https) and DevTools"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "主进程"
-msgstr "Main process"
-
-#. placeholder {0}: timing.mainMs
-#: src/features/ping/components/PingCard/index.tsx
-msgid "主进程: {0}ms"
-msgstr "Main process: {0}ms"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "主进程堆内存占用"
-msgstr "Heap usage"
-
-#: src/features/architecture/hooks/useArchitecture.ts
-msgid "代码已复制"
-msgstr "Code copied"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "代码耦合 & 契约混乱"
-msgstr "Coupled and messy"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "代码保护还原失败"
+msgstr "Code protection restore failed"
 
 #: src/components/layout/Header/index.tsx
 msgid "企业级端到端类型安全桌面客户端脚手架"
 msgstr "Type-safe desktop starter"
 
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "传统散装 / 进程穿透方式"
-msgstr "Legacy ad-hoc approach"
-
 #: src/features/updater/components/ProgressCard/index.tsx
 msgid "传输速率"
 msgstr "Transfer speed"
 
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "使用 contextBridge.exposeInMainWorld('api', apiBridge) 暴露受限安全 API 与 webUtils，杜绝渲染端渗透。"
-msgstr "Expose restricted APIs and webUtils via contextBridge to keep the renderer sandboxed."
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "例句暂缺"
+msgstr "Example missing"
 
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "使用 Zod Schema 定义入参校验规则，派生跨端统一 TypeScript 类型与标准 Result<T> 响应契约。"
-msgstr "Define Zod schemas to derive shared TypeScript types and Result<T> contracts."
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "保留原文"
+msgstr "Kept source text"
 
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "保存失败: {detail}"
-msgstr "Save failed: {detail}"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "保存路径已选定: {filePath}"
-msgstr "Save path selected: {filePath}"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "停止"
+msgstr "Stop"
 
 #: src/features/updater/index.tsx
 msgid "关闭"
@@ -185,10 +51,6 @@ msgstr "The app stays in the tray; click its icon to reopen."
 msgid "关闭窗口还是退出应用？"
 msgstr "Close the window or quit the app?"
 
-#: src/features/usb/components/UsbCard/index.tsx
-msgid "刷新"
-msgstr "Refresh"
-
 #: src/components/layout/ErrorBoundary/index.tsx
 msgid "刷新重试"
 msgstr "Reload and retry"
@@ -197,149 +59,73 @@ msgstr "Reload and retry"
 msgid "包含常规稳定性改进与性能优化。"
 msgstr "Includes stability and performance fixes."
 
-#: src/features/native-dialogs/components/DialogCard/index.tsx
-msgid "原生对话框与文件定位 (Native Dialogs)"
-msgstr "Native dialogs"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "单词自动走词典模式，长句走翻译管线"
+msgstr "Words use dictionary mode; sentences use translation pipeline"
+
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "单词词典"
+msgstr "Dictionary"
 
 #: src/features/updater/index.tsx
 msgid "发现新版本"
 msgstr "Update available"
 
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "发送 ERROR"
-msgstr "Send ERROR"
-
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "发送 INFO"
-msgstr "Send INFO"
-
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "发送 WARN"
-msgstr "Send WARN"
-
 #: src/features/updater/index.tsx
 msgid "取消下载"
 msgstr "Cancel download"
 
-#: src/features/native-dialogs/components/DialogCard/index.tsx
-msgid "另存为"
-msgstr "Save as"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "句子翻译"
+msgstr "Sentence Translation"
 
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "另存为示例"
-msgstr "Save example"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "可选上下文语境 (Context)"
+msgstr "Optional Context"
 
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "可用内存 / 总内存"
-msgstr "Memory (free / total)"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "复制"
+msgstr "Copy"
 
-#: src/features/docs/components/DocsView/index.tsx
-msgid "在浏览器中打开"
-msgstr "Open in browser"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "复制失败"
+msgstr "Failed to copy"
 
-#: src/features/native-dialogs/components/DialogCard/index.tsx
-msgid "在资源管理器中定位"
-msgstr "Show in folder"
-
-#: src/features/usb/components/UsbCard/index.tsx
-msgid "基于 C++ 原生库 node-usb 探针"
-msgstr "Native node-usb probe"
-
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "基于主进程状态原子操作与响应式更新"
-msgstr "Atomic state in the main process"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "复制代码"
-msgstr "Copy code"
-
-#: src/features/architecture/hooks/useArchitecture.ts
-msgid "复制代码失败"
-msgstr "Couldn't copy code"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "复制译文"
+msgstr "Copy translation"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "外观主题 (Theme)"
 msgstr "Theme"
 
-#: src/features/devtools/hooks/useDevTools.ts
-msgid "安全拦截: {detail}"
-msgstr "Blocked: {detail}"
-
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "安全计算器 (IPC 错误处理)"
-msgstr "Safe calculator"
-
 #: src/features/updater/index.tsx
 msgid "安装包下载中，完成后即可进行安装升级。"
 msgstr "Downloading the update. Install when it finishes."
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "定位失败: {detail}"
-msgstr "Couldn't show in folder: {detail}"
 
 #: src/features/updater/components/ChangelogCard/index.tsx
 msgid "展开全部"
 msgstr "Expand all"
 
-#: src/features/devtools/hooks/useDevTools.ts
-msgid "已关闭 DevTools"
-msgstr "DevTools closed"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "已在资源管理器中定位: {selectedPath}"
-msgstr "Shown in folder: {selectedPath}"
-
-#: src/features/devtools/hooks/useDevTools.ts
-msgid "已在默认浏览器中打开外部页面: {openedUrl}"
-msgstr "Opened in browser: {openedUrl}"
-
-#: src/features/devtools/hooks/useDevTools.ts
-msgid "已开启 DevTools"
-msgstr "DevTools opened"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "已复制到剪贴板"
+msgstr "Copied to clipboard"
 
 #: src/features/updater/index.tsx
 msgid "已是最新版本"
 msgstr "Up to date"
 
-#: src/features/logging/hooks/useLogging.ts
-msgid "已触发测试异常，已写入 renderer-home.log"
-msgstr "Test error logged to renderer-home.log"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "已选择文件: {path}"
-msgstr "Selected file: {path}"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "已选择文件夹: {path}"
-msgstr "Selected folder: {path}"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "平台架构"
-msgstr "Platform"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "常用词典义项"
+msgstr "Common Dictionary Senses"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "应用偏好设置 (ConfigStore)"
 msgstr "Preferences"
 
-#: src/features/ping/components/PingCard/index.tsx
-msgid "延迟稍高"
-msgstr "High latency"
-
-#: src/features/devtools/components/DevToolsCard/index.tsx
-msgid "开关 DevTools"
-msgstr "Toggle DevTools"
-
 #: src/features/updater/index.tsx
 msgid "当前安装的应用已包含所有最新功能与安全更新。"
 msgstr "You're on the latest version."
-
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "当前持久化数值"
-msgstr "Persisted value"
-
-#: src/components/layout/Header/index.tsx
-msgid "总览看板"
-msgstr "Dashboard"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "恢复默认值"
@@ -353,73 +139,17 @@ msgstr "Couldn't restore defaults: {detail}"
 msgid "您的应用已保持在最新版本，无需更新。"
 msgstr "You're up to date; no update needed."
 
-#: src/features/devtools/components/DevToolsCard/index.tsx
-msgid "打开 GitHub 页面"
-msgstr "Open GitHub"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "打开失败: {detail}"
-msgstr "Open failed: {detail}"
-
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "打开日志目录"
-msgstr "Open log folder"
-
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "打开更新窗口失败"
 msgstr "Couldn't open the update window"
-
-#: src/features/devtools/components/DevToolsCard/index.tsx
-msgid "打开项目文档站"
-msgstr "Open project docs"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "排队等待"
-msgstr "Queueing"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "探针机制：结合主进程 libuv 原生探针与高精度打点，精准解耦排队与通信耗时"
-msgstr "Probe mechanism: decoupling queuing lag from IPC transit via main libuv probe and high-res timers"
 
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "提交关闭选择失败"
 msgstr "Couldn't save the close choice"
 
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "提示：尝试输入 B = 0 并选择除法 (÷) 触发服务端异常拦截"
-msgstr "Tip: set B = 0 and divide to trigger a main process error"
-
-#: src/features/devtools/hooks/useDevTools.ts
-msgid "操作失败: {detail}"
-msgstr "Action failed: {detail}"
-
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "操作数 A"
-msgstr "Operand A"
-
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "操作数 B"
-msgstr "Operand B"
-
 #: src/features/updater/components/ChangelogCard/index.tsx
 msgid "收起"
 msgstr "Collapse"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "文件或目录不存在: {selectedPath}"
-msgstr "File or folder not found: {selectedPath}"
-
-#: src/components/layout/Header/index.tsx
-msgid "文档站"
-msgstr "Docs"
-
-#: src/features/docs/components/DocsView/index.tsx
-msgid "文档站加载中…"
-msgstr "Loading documentation…"
-
-#: src/features/docs/components/DocsView/index.tsx
-msgid "文档站加载超时"
-msgstr "Documentation loading timed out"
 
 #: src/features/updater/index.tsx
 msgid "新版本已完成下载，重启应用后即可完成升级。"
@@ -429,17 +159,17 @@ msgstr "Update downloaded. Restart to install."
 msgid "新版本已经准备就绪，包含最新的功能与改进。"
 msgstr "A new version is ready with the latest features."
 
-#: src/features/usb/hooks/useUsbDevices.ts
-msgid "无法读取部分 USB 设备描述符，请检查设备连接或系统权限"
-msgstr "Couldn't read some USB devices. Check the connection or permissions."
-
-#: src/features/logging/hooks/useLogging.ts
-msgid "日志操作失败: {detail}"
-msgstr "Log action failed: {detail}"
+#: src/features/translation/index.tsx
+msgid "日日新 SenseNova LLM 驱动"
+msgstr "Powered by SenseNova LLM"
 
 #: src/features/updater/index.tsx
 msgid "暂无可用更新信息。"
 msgstr "No update info yet."
+
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "暂无翻译结果，请在上方输入后点击翻译"
+msgstr "No translation result yet. Enter text above and click Translate."
 
 #: src/features/settings/hooks/useAppConfig.ts
 msgid "更新偏好设置失败: {detail}"
@@ -469,21 +199,9 @@ msgstr "Update service is not configured."
 msgid "更新过程中出现未知错误，请稍后重试。"
 msgstr "Something went wrong during the update. Try again."
 
-#: src/features/usb/components/UsbCard/index.tsx
-msgid "未检测到连接的 USB 设备"
-msgstr "No USB devices connected"
-
-#: src/features/usb/components/UsbCard/index.tsx
-msgid "未知 USB 设备"
-msgstr "Unknown USB device"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "极速"
-msgstr "Fast"
-
-#: src/components/layout/Header/index.tsx
-msgid "架构全貌"
-msgstr "Architecture"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "未结合语境"
+msgstr "Context unapplied"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "检查最新版本与下载安装"
@@ -501,6 +219,10 @@ msgstr "Check for updates"
 msgid "检查更新中"
 msgstr "Checking for updates"
 
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "模式"
+msgstr "Mode"
+
 #: src/features/updater/index.tsx
 msgid "正在下载更新"
 msgstr "Downloading update"
@@ -508,10 +230,6 @@ msgstr "Downloading update"
 #: src/features/updater/index.tsx
 msgid "正在与更新服务器建立连接，请稍候..."
 msgstr "Connecting to the update server…"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "正在探测系统运行环境..."
-msgstr "Probing runtime…"
 
 #: src/features/updater/index.tsx
 msgid "正在检查更新..."
@@ -521,54 +239,25 @@ msgstr "Checking for updates…"
 msgid "正在读取偏好设置..."
 msgstr "Loading preferences…"
 
-#: src/features/ping/components/PingCard/index.tsx
-msgid "正常"
-msgstr "Normal"
-
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "步长:"
-msgstr "Step:"
-
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "浅色模式 (Light)"
 msgstr "Light"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "测速 Ping"
-msgstr "Ping"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "深色模式 (Dark)"
 msgstr "Dark"
 
-#: src/features/ping/components/PingCard/index.tsx
-msgid "渲染调度"
-msgstr "Renderer"
-
-#. placeholder {0}: timing.renderMs
-#: src/features/ping/components/PingCard/index.tsx
-msgid "渲染调度: {0}ms"
-msgstr "Renderer: {0}ms"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "清空"
+msgstr "Clear"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "点击托盘图标可重新打开"
 msgstr "Click the tray icon to reopen."
 
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "物理隔离 & Result 契约"
-msgstr "Isolated and typed"
-
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "生产分级日志 (LogManager)"
-msgstr "Production logging"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "用户取消了保存"
-msgstr "Save cancelled"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "用户取消了选择"
-msgstr "Selection cancelled"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "生成中..."
+msgstr "Generating..."
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "界面语言 (Language)"
@@ -590,77 +279,62 @@ msgstr "Remind me later"
 msgid "立即更新"
 msgstr "Update now"
 
-#: src/features/ping/components/PingCard/index.tsx
-msgid "端到端链路耗时分解"
-msgstr "End-to-end timing breakdown"
-
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "类型安全主进程本地持久化存储与动态生效"
 msgstr "Type-safe local config, applied at runtime"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "系统与运行环境"
-msgstr "Runtime environment"
-
-#: src/features/system-info/components/SystemInfoCard/index.tsx
-msgid "系统运行时间"
-msgstr "Uptime"
-
-#: src/features/native-dialogs/components/DialogCard/index.tsx
-msgid "经由安全 Controller & Preload 调起系统文件管理器与访达"
-msgstr "Open the system file manager via Controller and Preload"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "结合 libuv 原生探针与 ContextBridge，精确解耦全链路延迟"
-msgstr "Decouple end-to-end latency with libuv native probe & ContextBridge"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "统一通过 window.api 消费 Result 契约，享受完备 IDE 智能提示，与主进程实现 100% 物理代码隔离。"
-msgstr "Consume Result contracts via window.api with full IDE types and no direct main process imports."
 
 #: src/features/updater/index.tsx
 msgid "网络连接失败或超时，请检查网络后重试。"
 msgstr "Network failed or timed out. Check your connection."
 
-#: src/features/usb/hooks/useUsbDevices.ts
-msgid "获取 USB 设备列表失败: {detail}"
-msgstr "Couldn't list USB devices: {detail}"
+#: src/components/layout/Header/index.tsx
+msgid "翻译"
+msgstr "Translate"
 
-#: src/features/system-info/hooks/useSystemInfo.ts
-msgid "获取系统信息失败: {detail}"
-msgstr "Couldn't get system info: {detail}"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "翻译 (Ctrl+Enter)"
+msgstr "Translate (Ctrl+Enter)"
 
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "触发 ErrorBoundary 崩溃"
-msgstr "Trigger ErrorBoundary crash"
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "翻译出错"
+msgstr "Translation error"
 
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "触发 Sentry 异常"
-msgstr "Trigger Sentry error"
+#: src/features/translation/hooks/useTranslation.ts
+msgid "翻译已中止"
+msgstr "Translation aborted"
 
-#: src/features/counter/hooks/useCounter.ts
-msgid "计数器操作失败: {detail}"
-msgstr "Counter action failed: {detail}"
+#: src/features/translation/hooks/useTranslation.ts
+msgid "翻译接口未初始化"
+msgstr "Translation API not initialized"
 
-#: src/features/calculator/hooks/useCalculator.ts
-msgid "计算失败: {detail}"
-msgstr "Calculation failed: {detail}"
+#. placeholder {0}: effectiveMode === 'word' ? '词典' : '句子'
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "自动识别 ({0})"
+msgstr "Auto ({0})"
 
-#: src/features/calculator/components/CalculatorCard/index.tsx
-msgid "计算结果:"
-msgstr "Result:"
+#: src/components/layout/Header/index.tsx
+msgid "设置"
+msgstr "Settings"
+
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "译文结果"
+msgstr "Translation Result"
+
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "语境释义"
+msgstr "Contextual Sense"
+
+#: src/features/translation/hooks/useTranslation.ts
+msgid "请输入待翻译内容"
+msgstr "Please enter text to translate"
+
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "请输入英文单词或句子，按 Ctrl+Enter 快速翻译..."
+msgstr "Enter English words or sentences, press Ctrl+Enter to translate..."
 
 #: src/features/settings/hooks/useAppConfig.ts
 msgid "读取偏好设置失败: {detail}"
 msgstr "Couldn't read preferences: {detail}"
-
-#: src/features/counter/hooks/useCounter.ts
-msgid "读取计数器失败: {detail}"
-msgstr "Couldn't read counter: {detail}"
-
-#: src/features/devtools/components/DevToolsCard/index.tsx
-msgid "调试与系统外链 (Security Filter)"
-msgstr "Diagnostics and links"
 
 #: src/features/settings/components/SettingsCard/index.tsx
 msgid "跟随系统 (System)"
@@ -674,75 +348,30 @@ msgstr "Software update"
 msgid "软件更新 (Updater)"
 msgstr "Updates"
 
-#: src/features/ping/components/PingCard/index.tsx
-msgid "进程间通信 (IPC Ping)"
-msgstr "IPC ping"
-
-#: src/features/logging/components/LoggingCard/index.tsx
-msgid "进程隔离落盘 (main.log / renderer-home.log) 与 5MB 自动轮转"
-msgstr "Process-isolated logging, 5MB rotation"
+#: src/features/translation/components/TranslationInput/index.tsx
+msgid "输入词句所在的上下文段落（帮助词典模式精准匹配语境义，≤2000字）"
+msgstr "Enter context paragraph (helps dictionary mode match contextual sense, ≤2000 chars)"
 
 #: src/components/close-behavior/CloseBehaviorDialog/index.tsx
 msgid "退出应用"
 msgstr "Quit app"
 
-#: src/features/native-dialogs/components/DialogCard/index.tsx
-msgid "选择文件"
-msgstr "Select file"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "选择测试文件"
-msgstr "Select test file"
-
-#: src/features/native-dialogs/hooks/useNativeDialogs.ts
-msgid "选择测试文件夹"
-msgstr "Select test folder"
-
-#: src/features/native-dialogs/components/DialogCard/index.tsx
-msgid "选择目录"
-msgstr "Select folder"
-
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "递减 (-1)"
-msgstr "Decrement"
-
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "递增 (+1)"
-msgstr "Increment"
-
-#: src/features/architecture/components/ArchitectureView/index.tsx
-msgid "遵循 specs-electron-fullstack 规范：Controller -> Service -> Result 契约"
-msgstr "Follows the Controller → Service → Result contract"
-
 #: src/features/updater/index.tsx
 msgid "重启并安装"
 msgstr "Restart and install"
 
-#: src/features/counter/components/CounterCard/index.tsx
-msgid "重置为 0"
-msgstr "Reset"
-
-#: src/features/docs/components/DocsView/index.tsx
 #: src/features/updater/index.tsx
 msgid "重试"
 msgstr "Retry"
+
+#: src/features/translation/components/TranslationResult/index.tsx
+msgid "长度比例异常"
+msgstr "Length anomaly"
 
 #: src/features/updater/index.tsx
 msgid "隐藏到后台"
 msgstr "Hide to background"
 
-#: src/features/devtools/components/DevToolsCard/index.tsx
-msgid "非白名单外链 (example.com)"
-msgstr "Blocked external link (example.com)"
-
 #: src/components/layout/ErrorBoundary/index.tsx
 msgid "页面出错啦~"
 msgstr "Something went wrong~"
-
-#: src/features/ping/components/PingCard/index.tsx
-msgid "页面首屏正忙于挂载各功能组件与渲染，测速回调在任务队列排队；再次测速即恢复极速"
-msgstr "The page is busy mounting feature components during initial load, queuing the ping callback; test again for instant speed"
-
-#: src/features/docs/components/DocsView/index.tsx
-msgid "项目文档站"
-msgstr "Project documentation"

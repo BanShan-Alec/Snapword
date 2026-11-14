@@ -8,6 +8,8 @@ dist-electron/
 dist-ssr/
 release/
 out/
+target/
+**/target/
 
 # Caches & Tooling Output
 .vite/
@@ -20,6 +22,8 @@ out/
 packages/pr-review/reviews/
 
 # Environment & Local Configuration
+.env
+.env.*
 .env.local
 .env.*.local
 *.local

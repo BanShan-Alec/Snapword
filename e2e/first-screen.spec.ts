@@ -71,6 +71,10 @@ test.describe('首屏渐进式加载 (First Screen Loading) E2E 验证', () => {
     const existing = electronApp.windows().find((w) => w.url().includes('updater'));
     let updaterPage = existing;
     if (!updaterPage) {
+      const checkBtn = page.getByRole('button', { name: /检查更新|Check for updates/ });
+      if ((await checkBtn.count()) === 0) {
+        await page.getByRole('tab', { name: /设置|Settings/ }).click();
+      }
       const [win] = await Promise.all([
         electronApp.waitForEvent('window'),
         page.getByRole('button', { name: /检查更新|Check for updates/ }).click(),

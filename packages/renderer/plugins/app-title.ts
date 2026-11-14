@@ -44,6 +44,7 @@ export function appTitlePlugin(options: AppTitlePluginOptions): Plugin {
   const entryFiles = [
     path.resolve(root, 'src/entries/home/index.html'),
     path.resolve(root, 'src/entries/updater/index.html'),
+    path.resolve(root, 'src/entries/card/index.html'),
   ].map((file) => normalizePath(file).toLowerCase());
 
   return {

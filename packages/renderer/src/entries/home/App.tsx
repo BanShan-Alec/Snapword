@@ -1,7 +1,10 @@
 import { memo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Header } from '@/components/layout/Header';
+import { HistoryFeature } from '@/features/history';
 import { SettingsFeature } from '@/features/settings';
+import { TranslationFeature } from '@/features/translation';
+import { VocabularyFeature } from '@/features/vocabulary';
 
 /**
  * 路由切换叙事：每次路径变化落一行 info（首次渲染即初始路由）。
@@ -19,6 +22,21 @@ function NavigationLogger() {
  * 应用主界面壳层。业务路由由 Snapword 功能域接入时填充。
  */
 const _App = () => {
+  const [location] = useLocation();
+
+  const renderContent = () => {
+    switch (location) {
+      case '/settings':
+        return <SettingsFeature />;
+      case '/vocabulary':
+        return <VocabularyFeature />;
+      case '/history':
+        return <HistoryFeature />;
+      default:
+        return <TranslationFeature />;
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-background text-foreground selection:bg-primary/20">
       {/* App Header & Navigation */}
@@ -28,10 +46,7 @@ const _App = () => {
       {/* Main Content Area */}
       <main className="relative flex-1 min-h-0 w-full overflow-hidden">
         <div className="h-full w-full overflow-y-auto stable-scrollbar">
-          <div className="max-w-7xl mx-auto p-6">
-            {/* 验收期：主题/语言切换入口（P5 主链路接入后再迁移到设置路由） */}
-            <SettingsFeature />
-          </div>
+          <div className="max-w-7xl mx-auto p-6">{renderContent()}</div>
         </div>
       </main>
     </div>

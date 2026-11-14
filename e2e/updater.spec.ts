@@ -25,6 +25,10 @@ test.describe
       if (existing) {
         return existing;
       }
+      const checkBtn = mainPage.getByRole('button', { name: /检查更新|Check for updates/ });
+      if ((await checkBtn.count()) === 0) {
+        await mainPage.getByRole('tab', { name: /设置|Settings/ }).click();
+      }
       const [win] = await Promise.all([
         electronApp.waitForEvent('window'),
         mainPage.getByRole('button', { name: /检查更新|Check for updates/ }).click(),
