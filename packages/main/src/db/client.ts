@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -36,10 +37,13 @@ let currentClient: DatabaseSync | null = null;
 export function getDefaultDbPath(): string {
   try {
     // Safe Electron app detection without static import failure in pure Node/tsx
-    const electron = (globalThis as Record<string, unknown>).electron;
+    const req = createRequire(import.meta.url);
+    const electron = req('electron');
     if (electron && typeof electron === 'object' && 'app' in electron) {
       const app = (electron as { app: { getPath: (n: string) => string } }).app;
-      return path.join(app.getPath('userData'), 'vocab.db');
+      if (typeof app?.getPath === 'function') {
+        return path.join(app.getPath('userData'), 'vocab.db');
+      }
     }
   } catch {
     // Not running inside Electron renderer / isolated environment
@@ -66,7 +70,17 @@ export function getDefaultMigrationsFolder(): string {
       ? import.meta.dirname
       : path.dirname(fileURLToPath(import.meta.url));
 
-  return path.resolve(currentDir, '../../drizzle');
+  const sourcePath = path.resolve(currentDir, '../../drizzle');
+  if (fs.existsSync(sourcePath)) {
+    return sourcePath;
+  }
+
+  const distPath = path.resolve(currentDir, '../drizzle');
+  if (fs.existsSync(distPath)) {
+    return distPath;
+  }
+
+  return sourcePath;
 }
 
 export function localMigrationNames(migrationsFolder: string): string[] {

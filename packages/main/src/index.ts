@@ -8,6 +8,7 @@ import { createModuleRunner } from './ModuleRunner';
 import { terminateAppOnLastWindowClose } from './modules/auto-terminate.module';
 import { createCaptureSupervisorModule } from './modules/capture-supervisor.module';
 import { createConfigModule, getAppConfigStore } from './modules/config.module';
+import { createDatabaseModule } from './modules/db.module';
 import { createIPCModule } from './modules/ipc.module';
 import { createLogModule } from './modules/log.module';
 import { createNativeThemeModule } from './modules/native-theme.module';
@@ -36,6 +37,7 @@ export async function initApp(initConfig: AppInitConfig) {
     .init(createLogModule())
     .init(createSentryModule())
     .init(createConfigModule())
+    .init(createDatabaseModule())
     .init(createNativeThemeModule())
     .init(createIPCModule())
     .init(createHomeWindowModule({ initConfig }))

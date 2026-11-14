@@ -43,6 +43,9 @@ test.describe('TitleBarOverlay (WCO) E2E 验证', () => {
   test('主题切换触发主进程 overlay 同步且页面可正常交互', async ({ page }) => {
     const html = page.locator('html');
     const themeSelect = page.locator('#theme-select');
+    if ((await themeSelect.count()) === 0) {
+      await page.getByRole('tab', { name: /设置|Settings/ }).click();
+    }
 
     // 前序用例可能已把语言切到 en-US，选项文案按中英文同时匹配
     await themeSelect.click();
