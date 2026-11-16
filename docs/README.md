@@ -25,11 +25,11 @@ flowchart TD
         D1["D-1/Q-6 UIA 技术验证<br/>30/30 通过 / P95 16.2ms"] --> Base["工程底座就绪 (P4)<br/>Clean Monorepo / Paseo双主题 / 安全Fuses"]
     end
 
-    subgraph S4 ["阶段四: 业务主链路落地 (P5 - 当前阶段)"]
+    subgraph S4 ["阶段四: 业务主链路落地 (P5 - 已完成)"]
         B02 & B03 & B04 & Base ==> Code["主链路编码与装配<br/>取词 Addon → Capture 服务 → DB 接线 → 翻译管线 → 三窗口交互"]
     end
 
-    subgraph S5 ["阶段五: 验收闭环"]
+    subgraph S5 ["阶段五: 验收与发版闭环 (P6 - 当前阶段)"]
         Code --> IA["IA-01 ~ IA-44 连续唯一验收矩阵<br/>Given-When-Then 全量跑通"]
     end
 
