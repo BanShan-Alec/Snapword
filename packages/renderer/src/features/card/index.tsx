@@ -68,57 +68,59 @@ export const CardFeature: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="flex w-[420px] max-w-[420px] flex-col overflow-hidden rounded-2xl border border-border bg-background-container text-foreground shadow-xl transition-all duration-150"
+      className="box-border w-[436px] max-w-[436px] p-2 bg-transparent select-none overflow-hidden"
     >
-      <CardHeader
-        mode={mode}
-        isPinned={isPinned}
-        onTogglePin={togglePin}
-        onClose={hideCard}
-        onOpenInHome={openInHome}
-      />
+      <div className="flex w-[420px] max-w-[420px] flex-col overflow-hidden rounded-2xl border border-border bg-background-container text-foreground shadow-2xl transition-all duration-150">
+        <CardHeader
+          mode={mode}
+          isPinned={isPinned}
+          onTogglePin={togglePin}
+          onClose={hideCard}
+          onOpenInHome={openInHome}
+        />
 
-      <div className="flex max-h-[70vh] flex-col overflow-y-auto">
-        {/* 原文卡（仅在有输入文本且非纯空状态展示） */}
-        {text && !isNoticeOrError && <CardSourceText text={text} />}
+        <div className="flex max-h-[70vh] flex-col overflow-y-auto">
+          {/* 原文卡（仅在有输入文本且非纯空状态展示） */}
+          {text && !isNoticeOrError && <CardSourceText text={text} />}
 
-        {/* 状态展示与结果区 */}
-        {isNoticeOrError ? (
-          <CardNotice
-            notice={notice}
-            error={error}
-            text={text}
-            onRetry={retry}
-            onClose={hideCard}
-          />
-        ) : showSkeleton ? (
-          <CardSkeleton mode={mode} isSlow={isSlow} />
-        ) : mode === 'word' && wordResult ? (
-          <CardWordResult data={wordResult} />
-        ) : (
-          <CardSentenceResult
-            streamingText={streamingText}
-            result={sentenceResult}
+          {/* 状态展示与结果区 */}
+          {isNoticeOrError ? (
+            <CardNotice
+              notice={notice}
+              error={error}
+              text={text}
+              onRetry={retry}
+              onClose={hideCard}
+            />
+          ) : showSkeleton ? (
+            <CardSkeleton mode={mode} isSlow={isSlow} />
+          ) : mode === 'word' && wordResult ? (
+            <CardWordResult data={wordResult} />
+          ) : (
+            <CardSentenceResult
+              streamingText={streamingText}
+              result={sentenceResult}
+              isLoading={isLoading}
+              isStopped={isStopped}
+            />
+          )}
+        </div>
+
+        {/* 底部固定操作栏（仅在正常翻译状态展示） */}
+        {!isNoticeOrError && (
+          <CardBottomBar
+            mode={mode}
+            contentToCopy={getContentToCopy()}
             isLoading={isLoading}
             isStopped={isStopped}
+            isFavorite={isFavorite}
+            onStop={stopTranslation}
+            onRetry={retry}
+            onToggleFavorite={toggleFavorite}
+            onUpdateFavorite={saveFavorite}
           />
         )}
       </div>
-
-      {/* 底部固定操作栏（仅在正常翻译状态展示） */}
-      {!isNoticeOrError && (
-        <CardBottomBar
-          mode={mode}
-          contentToCopy={getContentToCopy()}
-          isLoading={isLoading}
-          isStopped={isStopped}
-          isFavorite={isFavorite}
-          onStop={stopTranslation}
-          onRetry={retry}
-          onToggleFavorite={toggleFavorite}
-          onUpdateFavorite={saveFavorite}
-        />
-      )}
     </div>
   );
 };

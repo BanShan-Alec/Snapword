@@ -99,8 +99,8 @@ describe('Card Window Subsystem (Slice-04)', () => {
         workArea: mockWorkArea,
       });
 
-      // 居中于选区 (1600 + 50 - 210 = 1440)
-      expect(bounds.x).toBe(1440);
+      // 居中于选区 (1600 + 50 - 218 = 1432)
+      expect(bounds.x).toBe(1432);
       expect(bounds.y).toBe(200 + 24 + 8);
     });
 
@@ -113,7 +113,7 @@ describe('Card Window Subsystem (Slice-04)', () => {
         workArea: mockWorkArea,
       });
 
-      expect(bounds.x).toBe(1440);
+      expect(bounds.x).toBe(1432);
       expect(bounds.y).toBe(950 - 8 - 260); // 682
     });
 
@@ -126,8 +126,8 @@ describe('Card Window Subsystem (Slice-04)', () => {
         workArea: mockWorkArea,
       });
 
-      // 屏幕右侧固定 16px: 1920 - 420 - 16 = 1484
-      expect(bounds.x).toBe(1484);
+      // 屏幕右侧固定 16px: 1920 - 436 - 16 = 1468
+      expect(bounds.x).toBe(1468);
     });
 
     it('卡片高度受控于 70% 工作区高度约束', () => {

@@ -31,7 +31,6 @@ import {
 import { calculateCardBounds, calculateCardRebound } from './card-geometry';
 import { resolveSelectionDispatch } from './card-shortcut';
 import { getHomeWindowModule } from './home-window.module';
-import { getWindowBackgroundColor } from './titlebar-overlay';
 import {
   forgetWindow,
   getWindow,
@@ -153,9 +152,9 @@ export class CardWindowModule implements AppModule {
       alwaysOnTop: true,
       skipTaskbar: true,
       resizable: false,
-      transparent: false,
-      hasShadow: true,
-      backgroundColor: getWindowBackgroundColor(),
+      transparent: true,
+      hasShadow: false,
+      backgroundColor: '#00000000',
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -269,12 +268,24 @@ export class CardWindowModule implements AppModule {
       processId: action.selection?.processId,
     });
 
-    // RC-01: 必须不夺取焦点展示，避免破坏前台应用选区
-    win.showInactive();
-
     if (win.webContents.isLoading()) {
       this.pendingAction = action;
+      // 首次加载等待首帧渲染就绪后再展示，彻底杜绝白屏/黑屏闪烁 (RC-01)
+      win.once('ready-to-show', () => {
+        if (!win.isDestroyed()) {
+          win.showInactive();
+        }
+      });
+      win.webContents.once('did-finish-load', () => {
+        setTimeout(() => {
+          if (!win.isDestroyed() && !win.isVisible()) {
+            win.showInactive();
+          }
+        }, 50);
+      });
     } else {
+      // 已经就绪的常驻复用窗口，直接无焦点展示并下发动作 (RC-01)
+      win.showInactive();
       sendToWindow(WINDOW_IDS.CARD, IPC_CHANNELS.CARD_EVENT_ACTION, action);
     }
   }
