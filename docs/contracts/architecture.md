@@ -143,14 +143,15 @@ native/
 
 ### 4.3 Addon 对外 API（napi 导出）
 
-| 导出                                                  | 用途                                               |
-| ----------------------------------------------------- | -------------------------------------------------- |
-| `probeSelection(timeoutMs?)`                          | 产品接口：`text / rects / errorCode / processName` |
-| `probeSelectionDetailed(timeoutMs?, windowTitle?)`    | 审计接口                                           |
-| `probeExpandUnits(timeoutMs?, windowTitle?)`          | Q-1 审计                                           |
-| `probeRangeFromPoint(x, y, timeoutMs?, windowTitle?)` | Q-6 审计/兜底                                      |
-| `startDot(callback)` / `stopDot()`                    | 原生圆点线程                                       |
-| `diagnose()`                                          | 钩子/COM/圆点状态                                  |
+| 导出                                                  | 用途                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `probeSelection(timeoutMs?)`                          | 产品接口：`text / rects / errorCode / processName`                                          |
+| `probeSelectionDetailed(timeoutMs?, windowTitle?)`    | 审计接口                                                                                    |
+| `probeExpandUnits(timeoutMs?, windowTitle?)`          | Q-1 审计                                                                                    |
+| `probeRangeFromPoint(x, y, timeoutMs?, windowTitle?)` | Q-6 审计/兜底                                                                               |
+| `startDot(callback)` / `stopDot()`                    | 原生圆点线程（`ThreadsafeFunction` 阻塞调用；`callback(err, event)` / direct payload 兼容） |
+| `setDotTheme(isDark: boolean)`                        | 原生圆点 Win32 主题色同步                                                                   |
+| `diagnose()`                                          | 钩子/COM/圆点状态                                                                           |
 
 `capture-service.js` 只负责把这些 API 包装成 B-02 消息；不把 addon 对象透传给主进程。
 
@@ -338,6 +339,8 @@ sequenceDiagram
 
 卡片窗口**按需创建**：首次打开时创建，记录 `card.createMs` 与 `card.firstPaintMs` 到诊断日志；关闭只隐藏并复用同一实例。**不预创建**，首次创建允许超过 200ms，后续再优化预热/预创建。
 
+卡片动作通信采用 **Preload 粘性事件重放模式（Sticky Event Replay）**（详见 [ADR-0005](../adr/0005-preload-sticky-action-replay.md)）：废弃 `card:get-action` 双向拉取 IPC 通道，主进程只单向向卡片派发 `card:event-action`，由 Preload 在执行时暂存并在 React 挂载注册 `onAction` 时即刻通过微任务重放，彻底消除窗口初次创建、页面加载与 React 水合的时序竞态。
+
 ### 10.2 主窗口（Electron BrowserWindow）
 
 | 属性     | 值                                                    |
@@ -350,14 +353,14 @@ sequenceDiagram
 
 ### 10.3 圆点（Native Addon 的 Win32 窗口）
 
-| 属性     | 值                                                     |
-| -------- | ------------------------------------------------------ |
-| 视觉     | 10 × 10 px 正圆；1px 白描边；轻微阴影                  |
-| 热区     | ≥24 × 24 px                                            |
-| 样式     | `WS_EX_LAYERED                                         | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE` |
-| 生命周期 | utilityProcess 启动时创建并隐藏；复用；不重复创建/销毁 |
-| 交互     | 点击打开卡片；悬停只做微弱提示；不拖拽、不缩放         |
-| 全屏     | 不显示；热键仍可用                                     |
+| 属性     | 值                                                                                     |
+| -------- | -------------------------------------------------------------------------------------- |
+| 视觉     | 18 × 18 px 正圆（外圈 1px 白描边，居中绘制于 48 × 48 px 分层窗口内部）                 |
+| 热区     | 48 × 48 px（分层窗口实际尺寸，消除高 DPI 缩放下的边缘漏点，满足 ≥24 × 24 px 规格红线） |
+| 样式     | `WS_EX_LAYERED \| WS_EX_TOOLWINDOW \| WS_EX_TOPMOST \| WS_EX_NOACTIVATE`               |
+| 生命周期 | utilityProcess 启动时创建并隐藏；复用；不重复创建/销毁                                 |
+| 交互     | 点击打开卡片；悬停只做微弱提示；不拖拽、不缩放                                         |
+| 全屏     | 不显示（`is_fullscreen` 全屏检测主动抑制）；热键仍可用                                 |
 
 ---
 
