@@ -68,9 +68,9 @@ export const CardFeature: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="box-border w-[436px] max-w-[436px] p-2 bg-transparent select-none overflow-hidden"
+      className="box-border w-[452px] max-w-[452px] p-4 bg-transparent select-none"
     >
-      <div className="flex w-[420px] max-w-[420px] flex-col overflow-hidden rounded-2xl border border-border bg-background-container text-foreground shadow-2xl transition-all duration-150">
+      <div className="flex w-[420px] max-w-[420px] flex-col overflow-hidden rounded-2xl border border-border bg-background-container text-foreground floating-card-shadow transition-colors duration-150">
         <CardHeader
           mode={mode}
           isPinned={isPinned}

@@ -80,8 +80,8 @@ describe('card-geometry 翻译卡片几何与定位算法', () => {
         workArea: standardWorkArea,
       });
 
-      // 选区下方居中 (centerX - w/2): 1650 - 218 = 1432
-      expect(res.x).toBe(1432);
+      // 选区下方居中 (centerX - w/2): 1650 - 226 = 1424
+      expect(res.x).toBe(1424);
       expect(res.y).toBe(200 + 30 + 8); // 238
     });
 
@@ -95,7 +95,7 @@ describe('card-geometry 翻译卡片几何与定位算法', () => {
       });
 
       // 选区上方居中: y = 950 - 8 - 260 = 682
-      expect(res.x).toBe(1432);
+      expect(res.x).toBe(1424);
       expect(res.y).toBe(682);
     });
 

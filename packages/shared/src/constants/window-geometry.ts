@@ -29,8 +29,8 @@ export const UPDATER_WINDOW_HEIGHT = 460;
 /** 翻译卡片内容主体宽度（DIPs） */
 export const CARD_WINDOW_CONTENT_WIDTH = 420;
 /** 翻译卡片阴影呼吸外边距（DIPs） */
-export const CARD_WINDOW_SHADOW_PADDING = 8;
-/** 翻译卡片宿主窗口固定宽度（DIPs，含阴影呼吸区 420 + 8*2 = 436） */
+export const CARD_WINDOW_SHADOW_PADDING = 16;
+/** 翻译卡片宿主窗口固定宽度（DIPs，含阴影呼吸区 420 + 16*2 = 452） */
 export const CARD_WINDOW_WIDTH = CARD_WINDOW_CONTENT_WIDTH + CARD_WINDOW_SHADOW_PADDING * 2;
 /** 翻译卡片默认与最小高度 */
 export const CARD_WINDOW_MIN_HEIGHT = 160;
