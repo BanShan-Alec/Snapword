@@ -9,6 +9,7 @@ import type {
   TranslationFinishEvent,
 } from '@app/shared/types/translate';
 import { AppError } from '../errors/AppError';
+import { getLogManager } from '../modules/log.module';
 import { translationHistoryService } from '../services/history.service';
 import { translationService } from '../services/translation.service';
 import { handleTraced } from '../telemetry/ipc-tracer';
@@ -56,18 +57,34 @@ export function registerTranslationControllers(): void {
 
       const sender = event.sender;
 
-      // 异步执行流式翻译并在完成/错误时通知前端
+      // 异步执行流式翻译并在完成/错误时通知前端与统计耗时
       (async () => {
+        const startTime = performance.now();
+        let firstChunkTime: number | null = null;
+
         try {
           const result = await translationService.translate(input, {
             signal: abortController.signal,
             onChunk: (chunk: string) => {
-              if (!sender.isDestroyed()) {
+              if (firstChunkTime === null) {
+                firstChunkTime = performance.now() - startTime;
+              }
+              // 句子模式流式推送到前端；单词模式在完成时一次性渲染结构化结果
+              if (input.mode === 'sentence' && !sender.isDestroyed()) {
                 const chunkEvent: TranslationChunkEvent = { requestId, chunk };
                 sender.send(IPC_CHANNELS.TRANSLATION_EVENT_CHUNK, chunkEvent);
               }
             },
           });
+
+          const totalTime = performance.now() - startTime;
+          const ttfbStr =
+            firstChunkTime !== null ? (firstChunkTime as number).toFixed(0) : totalTime.toFixed(0);
+          getLogManager()
+            .scoped('TranslationController')
+            .info(
+              `Translation completed: id=${requestId}, mode=${result.mode}, total=${totalTime.toFixed(0)}ms, ttfb=${ttfbStr}ms`,
+            );
 
           // 记录至内存共享最近 20 条翻译历史 (RM-04 / IA-14/15/26/27)
           translationHistoryService.addRecord({
@@ -85,8 +102,15 @@ export function registerTranslationControllers(): void {
             sender.send(IPC_CHANNELS.TRANSLATION_EVENT_FINISH, finishEvent);
           }
         } catch (err: unknown) {
+          const totalTime = performance.now() - startTime;
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          getLogManager()
+            .scoped('TranslationController')
+            .warn(
+              `Translation failed: id=${requestId}, mode=${input.mode}, elapsed=${totalTime.toFixed(0)}ms, error=${errorMsg}`,
+            );
+
           if (!sender.isDestroyed()) {
-            const errorMsg = err instanceof Error ? err.message : String(err);
             const errorCode = err instanceof AppError ? err.code : ErrorCode.INTERNAL_ERROR;
             const errorEvent: TranslationErrorEvent = {
               requestId,

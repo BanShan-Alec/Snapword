@@ -28,6 +28,13 @@ export function copyNativeAddon(): boolean {
     return false;
   }
 
+  const targetNode = path.join(path.dirname(srcFile), 'uia-probe.node');
+  try {
+    fs.copyFileSync(srcFile, targetNode);
+  } catch {
+    // ignore
+  }
+
   if (!fs.existsSync(DEST_DIR)) {
     fs.mkdirSync(DEST_DIR, { recursive: true });
   }

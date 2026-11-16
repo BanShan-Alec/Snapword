@@ -1,7 +1,7 @@
 mod types;
 
 use napi::bindgen_prelude::*;
-use napi::threadsafe_function::ThreadsafeFunctionCallMode;
+use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use napi_derive::napi;
 use std::sync::Arc;
 pub use types::*;
@@ -81,7 +81,7 @@ fn empty_probe_error(code: &str, message: &str) -> ProbeResult {
 pub fn probe_selection(timeout_ms: Option<u32>) -> ProbeResult {
     let timeout = timeout_ms.unwrap_or(500) as u64;
     let mgr = uia_probe::get_probe_manager();
-    let whitelist = vec!["chrome.exe".to_string(), "msedge.exe".to_string()];
+    let whitelist: Vec<String> = vec!["chrome.exe".to_string(), "msedge.exe".to_string()];
 
     match mgr.probe_selection(timeout, whitelist) {
         Ok(data) => map_selection_to_probe_result(data),
@@ -133,14 +133,10 @@ pub fn probe_range_from_point(
     res
 }
 
-#[napi(ts_args_type = "callback: (event: DotEventJs) => void")]
-pub fn start_dot(callback: Function<DotEventJs, ()>) -> Result<()> {
-    let tsfn = callback
-        .build_threadsafe_function()
-        .build_callback(|ctx| Ok((ctx.value,)))?;
-
+#[napi]
+pub fn start_dot(callback: ThreadsafeFunction<DotEventJs>) -> Result<()> {
     let dot_mgr = dot_window::get_dot_manager();
-    let tsfn_arc = Arc::new(tsfn);
+    let tsfn_arc = Arc::new(callback);
 
     dot_mgr.set_callback(Box::new(move |event| {
         let js_event = match event {
@@ -177,7 +173,7 @@ pub fn start_dot(callback: Function<DotEventJs, ()>) -> Result<()> {
             },
         };
 
-        let _ = tsfn_arc.call(js_event, ThreadsafeFunctionCallMode::NonBlocking);
+        let _ = tsfn_arc.call(Ok(js_event), ThreadsafeFunctionCallMode::Blocking);
     }));
 
     dot_mgr
@@ -194,6 +190,12 @@ pub fn stop_dot() -> Result<()> {
 #[napi]
 pub fn hide_dot() -> Result<()> {
     dot_window::get_dot_manager().hide("hide_dot");
+    Ok(())
+}
+
+#[napi]
+pub fn set_dot_theme(is_dark: bool) -> Result<()> {
+    dot_window::get_dot_manager().set_theme(is_dark);
     Ok(())
 }
 

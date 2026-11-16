@@ -3,6 +3,7 @@ import type { AppConfig } from '@app/shared/schemas/config';
 import { nativeTheme } from 'electron';
 import type { AppModule } from '../AppModule';
 import type { ModuleContext } from '../ModuleContext';
+import { getCaptureSupervisorModule } from './capture-supervisor.module';
 import { getLogManager } from './log.module';
 import { canUpdateTitleBarOverlay, getTitleBarOverlayOptions } from './window/titlebar-overlay';
 import { getWindow } from './window/window-registry';
@@ -25,6 +26,11 @@ export function applyNativeThemeSource(theme: AppConfig['theme']): void {
   try {
     nativeTheme.themeSource = theme;
     logger.info(`themeSource synced -> ${theme}`);
+    try {
+      getCaptureSupervisorModule().setDotTheme(nativeTheme.shouldUseDarkColors);
+    } catch {
+      // 启动早期可能尚未初始化
+    }
   } catch (err) {
     logger.error('Failed to sync themeSource:', err);
   }
@@ -70,6 +76,11 @@ export class NativeThemeModule implements AppModule {
       nativeTheme.on('updated', () => {
         logger.info(`Updated, shouldUseDarkColors=${nativeTheme.shouldUseDarkColors}`);
         applyTitleBarOverlay();
+        try {
+          getCaptureSupervisorModule().setDotTheme(nativeTheme.shouldUseDarkColors);
+        } catch {
+          // ignore
+        }
       });
     });
   }

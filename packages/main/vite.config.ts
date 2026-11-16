@@ -17,6 +17,9 @@ const ALLOWED_ENV_KEYS = [
   'SYSTEM_CODE',
   'DISTRIBUTION_CHANNEL',
   'SENTRY_DSN',
+  'SNAPWORD_API_KEY',
+  'SNAPWORD_API_BASE_URL',
+  'SNAPWORD_API_MODEL',
 ] as const;
 
 const envDefaults = ALLOWED_ENV_KEYS.reduce(

@@ -18,6 +18,7 @@ export interface TranslationServiceOptions {
   model?: string;
   temperature?: number;
   timeoutMs?: number;
+  disableThinking?: boolean;
 }
 
 export interface StreamCallbacks {
@@ -25,13 +26,26 @@ export interface StreamCallbacks {
   signal?: AbortSignal;
 }
 
-const DEFAULT_BASE_URL = process.env.SNAPWORD_API_BASE_URL ?? 'https://token.sensenova.cn/v1';
-const DEFAULT_API_KEY = process.env.SNAPWORD_API_KEY ?? process.env.OPENAI_API_KEY ?? '';
-const DEFAULT_MODEL = process.env.SNAPWORD_API_MODEL ?? 'sensenova-6.8-flash-lite';
+const DEFAULT_BASE_URL =
+  process.env.SNAPWORD_API_BASE_URL ||
+  (typeof __ENV_DEFAULTS__ !== 'undefined' && __ENV_DEFAULTS__.SNAPWORD_API_BASE_URL) ||
+  'https://token.sensenova.cn/v1';
+const DEFAULT_API_KEY =
+  process.env.SNAPWORD_API_KEY ||
+  process.env.OPENAI_API_KEY ||
+  (typeof __ENV_DEFAULTS__ !== 'undefined' && __ENV_DEFAULTS__.SNAPWORD_API_KEY) ||
+  '';
+const DEFAULT_MODEL =
+  process.env.SNAPWORD_API_MODEL ||
+  (typeof __ENV_DEFAULTS__ !== 'undefined' && __ENV_DEFAULTS__.SNAPWORD_API_MODEL) ||
+  'sensenova-6.8-flash-lite';
 const DEFAULT_TIMEOUT_MS = 30000;
 
 export function normalizeBaseUrl(rawUrl: string): string {
-  const trimmed = rawUrl.trim().replace(/\/+$/, '');
+  const trimmed = (rawUrl || '').trim().replace(/\/+$/, '');
+  if (!trimmed) {
+    return 'https://token.sensenova.cn/v1/chat/completions';
+  }
   if (trimmed.endsWith('/chat/completions')) {
     return trimmed;
   }
@@ -302,7 +316,9 @@ export class TranslationService {
   private readonly model: string;
   private readonly temperature: number;
   private readonly timeoutMs: number;
+  private readonly disableThinking: boolean;
   private supportsJsonSchema = true;
+  private supportsThinking = true;
 
   constructor(options: TranslationServiceOptions = {}) {
     // 若注入了 fetchFn 则使用注入；若环境支持 electron.net.fetch 则使用 Chromium 网络栈；否则降级全局 fetch
@@ -314,11 +330,12 @@ export class TranslationService {
       this.fetchFn = (input, init) => globalThis.fetch(input, init);
     }
 
-    this.apiKey = options.apiKey ?? DEFAULT_API_KEY;
-    this.baseURL = options.baseURL ?? DEFAULT_BASE_URL;
-    this.model = options.model ?? DEFAULT_MODEL;
+    this.apiKey = options.apiKey ?? (DEFAULT_API_KEY || (options.fetchFn ? 'mock-test-key' : ''));
+    this.baseURL = options.baseURL || DEFAULT_BASE_URL;
+    this.model = options.model || DEFAULT_MODEL;
     this.temperature = options.temperature ?? 0;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.disableThinking = options.disableThinking ?? true;
   }
 
   async translate(
@@ -627,6 +644,10 @@ export class TranslationService {
     },
     onDelta?: (delta: string) => void,
   ): Promise<string> {
+    if (!this.apiKey) {
+      throw new AppError('还没有配置翻译接口', ErrorCode.TRANSLATION_AUTH_FAILED);
+    }
+
     const url = normalizeBaseUrl(this.baseURL);
 
     const payload: Record<string, unknown> = {
@@ -635,6 +656,11 @@ export class TranslationService {
       temperature: this.temperature,
       stream: true,
     };
+
+    // 翻译场景默认关闭思考链参数，压缩首包响应时间
+    if (this.supportsThinking && this.disableThinking) {
+      payload.thinking = { type: 'disabled' };
+    }
 
     if (options.useSchema && this.supportsJsonSchema) {
       payload.response_format = {
@@ -681,14 +707,19 @@ export class TranslationService {
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
 
-        // 400 且不支持 json_schema 自动降级重试一次
+        // 400 且不支持 thinking 或 json_schema 自动降级重试一次
         if (
           response.status === 400 &&
-          options.useSchema &&
           /unsupported|unknown (parameter|field)|not supported|unrecognized/i.test(errorText)
         ) {
-          this.supportsJsonSchema = false;
-          return this.requestCompletions(messages, { ...options, useSchema: false }, onDelta);
+          if (/thinking/i.test(errorText) && payload.thinking && this.supportsThinking) {
+            this.supportsThinking = false;
+            return this.requestCompletions(messages, options, onDelta);
+          }
+          if (options.useSchema && this.supportsJsonSchema) {
+            this.supportsJsonSchema = false;
+            return this.requestCompletions(messages, { ...options, useSchema: false }, onDelta);
+          }
         }
 
         if (response.status === 401 || response.status === 403) {

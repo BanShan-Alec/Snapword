@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util';
 import electronPath from 'electron';
 import { build, createServer, type Plugin, type ViteDevServer } from 'vite';
 import { applyRepoEnv, loadRepoEnv } from '../build/lib/env.ts';
+import { copyNativeAddon } from './copy-native.ts';
 import { ensureNoAppInstanceRunning } from './instance-guard.ts';
 import { ensurePortsAvailable, killProcessTree } from './port-guard.ts';
 
@@ -115,6 +116,9 @@ function createElectronLauncherPlugin(): Plugin {
   return {
     name: '[dev]main-electron-launcher',
     async writeBundle() {
+      // 保证构建产物目录中存在原生 Addon (uia-probe.node)
+      copyNativeAddon();
+
       /** Kill electron if a process already exists */
       if (electronApp !== null) {
         electronApp.removeListener('exit', process.exit);

@@ -9,6 +9,7 @@ import type {
   TranslationErrorEvent,
   TranslationFinishEvent,
 } from '@app/shared/types/translate';
+import { t } from '@lingui/core/macro';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useCardTranslation() {
@@ -42,7 +43,7 @@ export function useCardTranslation() {
       const trimmed = targetText.trim();
       if (!trimmed) {
         setAction('notice');
-        setNotice('未获取到选中文本');
+        setNotice(t`未获取到选中文本`);
         setIsLoading(false);
         return;
       }
@@ -51,7 +52,7 @@ export function useCardTranslation() {
 
       const translationApi = window.api?.translation;
       if (!translationApi) {
-        setError('翻译接口未初始化');
+        setError(t`翻译接口未初始化`);
         return;
       }
 
@@ -220,7 +221,7 @@ export function useCardTranslation() {
     const cardApi = window.api?.card;
     const translationApi = window.api?.translation;
 
-    const unbindCardAction = cardApi?.onAction((payload: CardActionPayload) => {
+    const handleAction = (payload: CardActionPayload) => {
       if (payload.action === 'notice') {
         clearSlowTimer();
         setAction('notice');
@@ -233,7 +234,9 @@ export function useCardTranslation() {
       } else if (payload.action === 'translate') {
         triggerTranslate(payload.text ?? '', payload.context ?? '', payload.mode);
       }
-    });
+    };
+
+    const unbindCardAction = cardApi?.onAction(handleAction);
 
     const unbindChunk = translationApi?.onChunk((event: TranslationChunkEvent) => {
       if (event.requestId === activeRequestIdRef.current) {

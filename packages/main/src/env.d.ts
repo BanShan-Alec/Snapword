@@ -18,7 +18,14 @@ interface ImportMeta {
 /**
  * 主进程业务与运行时所使用的环境配置键名
  */
-export type EnvKey = 'API_BASE_URL' | 'SYSTEM_CODE' | 'DISTRIBUTION_CHANNEL' | 'SENTRY_DSN';
+export type EnvKey =
+  | 'API_BASE_URL'
+  | 'SYSTEM_CODE'
+  | 'DISTRIBUTION_CHANNEL'
+  | 'SENTRY_DSN'
+  | 'SNAPWORD_API_KEY'
+  | 'SNAPWORD_API_BASE_URL'
+  | 'SNAPWORD_API_MODEL';
 
 declare global {
   const __APP_VERSION__: string;

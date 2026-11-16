@@ -62,7 +62,7 @@ export const CardFeature: React.FC = () => {
     return sentenceResult?.text || streamingText;
   };
 
-  const showSkeleton = isLoading && !streamingText && !wordResult;
+  const showSkeleton = (isLoading || action === 'idle') && !streamingText && !wordResult;
   const isNoticeOrError = (action === 'notice' && !wordResult && !streamingText) || Boolean(error);
 
   return (

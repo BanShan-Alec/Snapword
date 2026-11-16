@@ -41,6 +41,15 @@ if (metaArg) {
 }
 contextBridge.exposeInMainWorld('__APP_ENV__', Object.freeze(runtimeEnv ?? {}));
 
+// 粘性事件缓存：捕获主进程可能先于卡片 React 挂载到达的 action，新注册监听即刻回放
+let latestCardAction: CardActionPayload | null = null;
+ipcRenderer.on(
+  IPC_CHANNELS.CARD_EVENT_ACTION,
+  (_event: Electron.IpcRendererEvent, data: CardActionPayload) => {
+    latestCardAction = data;
+  },
+);
+
 export const apiBridge: ElectronApi = {
   system: {
     ping: (_payload, options) => invokeTraced(IPC_CHANNELS.SYSTEM_PING, undefined, options),
@@ -151,7 +160,15 @@ export const apiBridge: ElectronApi = {
       invokeTraced(IPC_CHANNELS.CARD_COPY_TEXT, { text }, options),
     openInHome: (data, options) => invokeTraced(IPC_CHANNELS.CARD_OPEN_IN_HOME, data, options),
     onAction: (cb: (payload: CardActionPayload) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, data: CardActionPayload) => cb(data);
+      // 粘性回放：微任务推入执行，确保调用方同步注册完成
+      if (latestCardAction) {
+        const cached = latestCardAction;
+        queueMicrotask(() => cb(cached));
+      }
+      const listener = (_event: Electron.IpcRendererEvent, data: CardActionPayload) => {
+        latestCardAction = data;
+        cb(data);
+      };
       ipcRenderer.on(IPC_CHANNELS.CARD_EVENT_ACTION, listener);
       return () => {
         ipcRenderer.removeListener(IPC_CHANNELS.CARD_EVENT_ACTION, listener);

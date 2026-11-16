@@ -54,6 +54,7 @@ export class CardWindowModule implements AppModule {
   private lastDraggedPosition: { x: number; y: number } | null = null;
   private currentHeight: number = CARD_WINDOW_DEFAULT_HEIGHT;
   private pendingAction: CardActionPayload | null = null;
+  private currentAction: CardActionPayload | null = null;
   private readonly stateMachine = new CardAntiCloseStateMachine();
 
   constructor({ initConfig, openDevTools = false }: CardWindowModuleOptions) {
@@ -222,9 +223,20 @@ export class CardWindowModule implements AppModule {
   }
 
   /**
+   * 获取当前展示动作（供卡片渲染进程挂载时拉取，消除 IPC 竞态）
+   */
+  getCurrentAction(): CardActionPayload | null {
+    return this.currentAction;
+  }
+
+  /**
    * 展示卡片并派发翻译动作或内联提示 (RC-01: 不夺取键盘焦点)
    */
   async showCard(action: CardActionPayload): Promise<void> {
+    this.logger.info(
+      `showCard: action=${action.action}, text="${action.text}", mode=${action.mode}`,
+    );
+    this.currentAction = action;
     const win = await this.createWindow();
 
     const selectionRect = action.selection?.rects?.[0] ?? null;
@@ -271,6 +283,8 @@ export class CardWindowModule implements AppModule {
    * 隐藏卡片窗口并可选择性中止进行中的请求 (RC-14)
    */
   hideCard(abort = true): void {
+    this.logger.info(`hideCard: abort=${abort}`);
+    this.currentAction = null;
     const win = getWindow(WINDOW_IDS.CARD);
     if (win && !win.isDestroyed()) {
       win.hide();
@@ -302,7 +316,9 @@ export class CardWindowModule implements AppModule {
    */
   setPin(pin: boolean): void {
     this.stateMachine.setPin(pin);
-    this.logger.info('Card pin status toggled:', { isPinned: this.stateMachine.getPin() });
+    this.logger.info('Card pin status toggled:', {
+      isPinned: this.stateMachine.getPin(),
+    });
   }
 
   getPinStatus(): boolean {
@@ -335,6 +351,9 @@ export class CardWindowModule implements AppModule {
    */
   handleOutsideClick(): void {
     const action = this.stateMachine.onOutsideClick();
+    this.logger.info(
+      `handleOutsideClick: shouldClose=${action.shouldClose}, reason=${action.reason}`,
+    );
     if (action.shouldClose) {
       this.hideCard(action.shouldAbortRequest);
     }
@@ -415,6 +434,9 @@ export class CardWindowModule implements AppModule {
    * 处理圆点点击唤起
    */
   async handleDotClicked(payload: SelectionPayload): Promise<void> {
+    this.logger.info(
+      `handleDotClicked: text="${payload.text}", pid=${payload.processId}, proc=${payload.processName}`,
+    );
     const text = payload.text ?? '';
     const dispatch = resolveSelectionDispatch(text);
 
