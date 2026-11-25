@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-export const cardResizeInputSchema = z.object({
-  height: z.number().int().positive(),
-});
-export type CardResizeInput = z.infer<typeof cardResizeInputSchema>;
-
 export const cardPinInputSchema = z.object({
   pin: z.boolean(),
 });

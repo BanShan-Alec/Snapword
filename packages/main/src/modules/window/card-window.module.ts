@@ -1,11 +1,4 @@
 import { IPC_CHANNELS } from '@app/shared/constants/ipc-channels';
-import {
-  CARD_WINDOW_DEFAULT_HEIGHT,
-  CARD_WINDOW_MAX_WORK_AREA_RATIO,
-  CARD_WINDOW_MIN_HEIGHT,
-  CARD_WINDOW_SNAP_MARGIN,
-  CARD_WINDOW_WIDTH,
-} from '@app/shared/constants/window-geometry';
 import { STARTUP_THEME_QUERY_KEY, WINDOW_IDS } from '@app/shared/constants/windows';
 import type {
   DotHiddenMessage,
@@ -28,9 +21,10 @@ import {
   CardAntiCloseStateMachine,
   type ForegroundProcessInfo,
 } from './card-anti-close';
-import { calculateCardBounds, calculateCardRebound } from './card-geometry';
+import { calculateCardBounds } from './card-geometry';
 import { resolveSelectionDispatch } from './card-shortcut';
 import { getHomeWindowModule } from './home-window.module';
+import { getWindowBackgroundColor } from './titlebar-overlay';
 import {
   forgetWindow,
   getWindow,
@@ -38,6 +32,7 @@ import {
   registerWindow,
   sendToWindow,
 } from './window-registry';
+import { attachWindowsWindowRepaint } from './window-repaint';
 
 export interface CardWindowModuleOptions {
   initConfig: AppInitConfig;
@@ -51,7 +46,6 @@ export class CardWindowModule implements AppModule {
   private readonly logger = getLogManager().scoped('CardWindowModule');
 
   private lastDraggedPosition: { x: number; y: number } | null = null;
-  private currentHeight: number = CARD_WINDOW_DEFAULT_HEIGHT;
   private pendingAction: CardActionPayload | null = null;
   private currentAction: CardActionPayload | null = null;
   private readonly stateMachine = new CardAntiCloseStateMachine();
@@ -119,7 +113,7 @@ export class CardWindowModule implements AppModule {
   }
 
   /**
-   * 创建或复用独立的 420px 置顶 Card BrowserWindow (RC-01 / RC-03)
+   * 创建或复用独立的 400×280 固定视口置顶原生无边框 Card BrowserWindow (RC-01 / RC-03)
    */
   async createWindow(): Promise<BrowserWindow> {
     const existing = getWindow(WINDOW_IDS.CARD);
@@ -127,12 +121,11 @@ export class CardWindowModule implements AppModule {
       return existing;
     }
 
-    this.logger.info('Creating Card browser window (420px alwaysOnTop non-focusable)');
+    this.logger.info('Creating Card browser window (400x280 native frameless alwaysOnTop)');
 
     const primaryDisplay = screen.getPrimaryDisplay();
     const initialBounds = calculateCardBounds({
       selectionRect: null,
-      cardSize: { width: CARD_WINDOW_WIDTH, height: this.currentHeight },
       workArea: primaryDisplay.workArea,
       lastDraggedPosition: this.lastDraggedPosition,
     });
@@ -146,15 +139,16 @@ export class CardWindowModule implements AppModule {
       height: initialBounds.height,
       x: initialBounds.x,
       y: initialBounds.y,
-      minWidth: CARD_WINDOW_WIDTH,
-      maxWidth: CARD_WINDOW_WIDTH,
       frame: false,
       alwaysOnTop: true,
       skipTaskbar: true,
       resizable: false,
-      transparent: true,
-      hasShadow: false,
-      backgroundColor: '#00000000',
+      maximizable: false,
+      minimizable: false,
+      fullscreenable: false,
+      transparent: false,
+      hasShadow: true,
+      backgroundColor: getWindowBackgroundColor(),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -177,26 +171,14 @@ export class CardWindowModule implements AppModule {
       this.handleWindowBlur('raw_blur');
     });
 
-    // 拖拽松手吸附回弹算法 (RC-13)
+    // 仅记录用户手动拖拽坐标，废除松手强行吸附回弹 (RC-13)
     browserWindow.on('moved', () => {
       if (browserWindow.isDestroyed()) return;
       const currentBounds = browserWindow.getBounds();
-      const display = screen.getDisplayMatching(currentBounds);
-      const rebound = calculateCardRebound(
-        currentBounds,
-        display.workArea,
-        CARD_WINDOW_SNAP_MARGIN,
-      );
-      if (rebound.rebounded) {
-        browserWindow.setBounds({
-          x: rebound.x,
-          y: rebound.y,
-          width: currentBounds.width,
-          height: currentBounds.height,
-        });
-      }
-      this.lastDraggedPosition = { x: rebound.x, y: rebound.y };
+      this.lastDraggedPosition = { x: currentBounds.x, y: currentBounds.y };
     });
+
+    attachWindowsWindowRepaint(browserWindow);
 
     browserWindow.webContents.on('did-finish-load', () => {
       if (this.pendingAction && !browserWindow.isDestroyed()) {
@@ -255,7 +237,6 @@ export class CardWindowModule implements AppModule {
 
     const bounds = calculateCardBounds({
       selectionRect,
-      cardSize: { width: CARD_WINDOW_WIDTH, height: this.currentHeight },
       workArea: targetDisplay.workArea,
       lastDraggedPosition: this.lastDraggedPosition,
     });
@@ -304,22 +285,6 @@ export class CardWindowModule implements AppModule {
     if (abort) {
       abortTranslationsBySource('card');
     }
-  }
-
-  /**
-   * 内容自适应重算高度 (RC-03: 最大占工作区 70%)
-   */
-  resizeCard(height: number): void {
-    const win = getWindow(WINDOW_IDS.CARD);
-    if (!win || win.isDestroyed()) return;
-
-    const currentBounds = win.getBounds();
-    const display = screen.getDisplayMatching(currentBounds);
-    const maxAllowed = Math.floor(display.workArea.height * CARD_WINDOW_MAX_WORK_AREA_RATIO);
-    const clampedHeight = Math.min(Math.max(height, CARD_WINDOW_MIN_HEIGHT), maxAllowed);
-
-    this.currentHeight = clampedHeight;
-    win.setSize(CARD_WINDOW_WIDTH, clampedHeight);
   }
 
   /**

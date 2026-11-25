@@ -1,9 +1,8 @@
 import {
-  CARD_WINDOW_DEFAULT_HEIGHT,
+  CARD_WINDOW_HEIGHT,
+  CARD_WINDOW_HORIZONTAL_CLAMP_PADDING,
   CARD_WINDOW_MAX_WORK_AREA_RATIO,
-  CARD_WINDOW_MIN_HEIGHT,
   CARD_WINDOW_MIN_MARGIN,
-  CARD_WINDOW_SNAP_MARGIN,
   CARD_WINDOW_WIDTH,
 } from '@app/shared/constants/window-geometry';
 import type { DipPoint, DipRect } from '@app/shared/schemas/capture';
@@ -24,52 +23,50 @@ export interface CardBoundsResult {
 
 export interface CalculateCardBoundsOptions {
   selectionRect?: DipRect | RectangleLike | null;
-  cardSize?: { width?: number; height?: number };
   workArea: RectangleLike;
   lastDraggedPosition?: DipPoint | { x: number; y: number } | null;
 }
 
-export interface CardReboundResult {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rebounded: boolean;
+function clampToWorkArea(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  workArea: RectangleLike,
+  safeMargin: number,
+): { x: number; y: number } {
+  const minX = workArea.x + safeMargin;
+  const maxX = Math.max(minX, workArea.x + workArea.width - width - safeMargin);
+  const minY = workArea.y + safeMargin;
+  const maxY = Math.max(minY, workArea.y + workArea.height - height - safeMargin);
+
+  return {
+    x: Math.min(Math.max(x, minX), maxX),
+    y: Math.min(Math.max(y, minY), maxY),
+  };
 }
 
 /**
- * 依据工作区与选区 DIP 坐标计算卡片初始位置与几何边界 (RC-02 / RC-03)
+ * 依据工作区与选区 DIP 坐标计算固定视口卡片（400×280）初始位置与几何边界 (RC-02 / RC-03)
  */
 export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBoundsResult {
-  const { selectionRect, cardSize, workArea, lastDraggedPosition } = options;
+  const { selectionRect, workArea, lastDraggedPosition } = options;
 
-  // 1. 宽度与高度自适应与限制
+  // 1. 固定物理视口尺寸与小屏工作区上限夹限
   const targetWidth = Math.min(
     CARD_WINDOW_WIDTH,
-    Math.max(100, Math.floor(workArea.width - CARD_WINDOW_SNAP_MARGIN * 2)),
+    Math.max(100, Math.floor(workArea.width - CARD_WINDOW_HORIZONTAL_CLAMP_PADDING)),
   );
-  const maxAllowedHeight = Math.floor(workArea.height * CARD_WINDOW_MAX_WORK_AREA_RATIO);
-  const requestedHeight = cardSize?.height ?? CARD_WINDOW_DEFAULT_HEIGHT;
   const targetHeight = Math.min(
-    Math.max(requestedHeight, CARD_WINDOW_MIN_HEIGHT),
-    maxAllowedHeight,
+    CARD_WINDOW_HEIGHT,
+    Math.floor(workArea.height * CARD_WINDOW_MAX_WORK_AREA_RATIO),
   );
 
-  // 2. 若本次运行内有用户手动拖拽记忆，优先沿用拖拽位置并吸附回弹 (RC-13)
+  // 2. 若本次运行内有用户手动拖拽记忆，1:1 沿用拖拽坐标，不做多余吸附回弹 (RC-13)
   if (lastDraggedPosition) {
-    const rebound = calculateCardRebound(
-      {
-        x: lastDraggedPosition.x,
-        y: lastDraggedPosition.y,
-        width: targetWidth,
-        height: targetHeight,
-      },
-      workArea,
-      CARD_WINDOW_SNAP_MARGIN,
-    );
     return {
-      x: rebound.x,
-      y: rebound.y,
+      x: lastDraggedPosition.x,
+      y: lastDraggedPosition.y,
       width: targetWidth,
       height: targetHeight,
     };
@@ -79,14 +76,17 @@ export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBo
   if (!selectionRect) {
     const fallbackX = Math.round(workArea.x + (workArea.width - targetWidth) / 2);
     const fallbackY = Math.round(workArea.y + workArea.height - targetHeight - 24);
-    const rebound = calculateCardRebound(
-      { x: fallbackX, y: fallbackY, width: targetWidth, height: targetHeight },
+    const clamped = clampToWorkArea(
+      fallbackX,
+      fallbackY,
+      targetWidth,
+      targetHeight,
       workArea,
       CARD_WINDOW_MIN_MARGIN,
     );
     return {
-      x: rebound.x,
-      y: rebound.y,
+      x: clamped.x,
+      y: clamped.y,
       width: targetWidth,
       height: targetHeight,
     };
@@ -97,7 +97,6 @@ export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBo
   const selectionCenterY = selectionRect.y + selectionRect.height / 2;
 
   const isPositionValid = (x: number, y: number): boolean => {
-    // 必须完整位于可用区域内，四周留有安全边距
     if (
       x < workArea.x + CARD_WINDOW_MIN_MARGIN ||
       x + targetWidth > workArea.x + workArea.width - CARD_WINDOW_MIN_MARGIN ||
@@ -107,7 +106,6 @@ export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBo
       return false;
     }
 
-    // 严禁遮挡选区中心
     const coversCenter =
       selectionCenterX >= x &&
       selectionCenterX <= x + targetWidth &&
@@ -167,13 +165,11 @@ export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBo
     x: Math.round(workArea.x + (workArea.width - targetWidth) / 2),
     y: workArea.y + workArea.height - targetHeight - 24,
   };
-  const clamped = calculateCardRebound(
-    {
-      x: screenBottomCenterPos.x,
-      y: screenBottomCenterPos.y,
-      width: targetWidth,
-      height: targetHeight,
-    },
+  const clamped = clampToWorkArea(
+    screenBottomCenterPos.x,
+    screenBottomCenterPos.y,
+    targetWidth,
+    targetHeight,
     workArea,
     CARD_WINDOW_MIN_MARGIN,
   );
@@ -182,32 +178,5 @@ export function calculateCardBounds(options: CalculateCardBoundsOptions): CardBo
     y: clamped.y,
     width: targetWidth,
     height: targetHeight,
-  };
-}
-
-/**
- * 拖拽边缘 16px 视口吸附回弹算法 (RC-13)
- */
-export function calculateCardRebound(
-  currentBounds: RectangleLike,
-  workArea: RectangleLike,
-  safeMargin = CARD_WINDOW_SNAP_MARGIN,
-): CardReboundResult {
-  const minX = workArea.x + safeMargin;
-  const maxX = Math.max(minX, workArea.x + workArea.width - currentBounds.width - safeMargin);
-  const minY = workArea.y + safeMargin;
-  const maxY = Math.max(minY, workArea.y + workArea.height - currentBounds.height - safeMargin);
-
-  const clampedX = Math.min(Math.max(currentBounds.x, minX), maxX);
-  const clampedY = Math.min(Math.max(currentBounds.y, minY), maxY);
-
-  const rebounded = clampedX !== currentBounds.x || clampedY !== currentBounds.y;
-
-  return {
-    x: clampedX,
-    y: clampedY,
-    width: currentBounds.width,
-    height: currentBounds.height,
-    rebounded,
   };
 }

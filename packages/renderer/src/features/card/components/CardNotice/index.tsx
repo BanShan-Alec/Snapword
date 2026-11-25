@@ -41,7 +41,7 @@ export const CardNotice: React.FC<CardNoticeProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-6 text-center select-none">
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-4 text-center select-none">
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background-sunken">
         {isError ? (
           <CloseCircleOutlined className="text-xl text-danger" />

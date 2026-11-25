@@ -40,8 +40,20 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
     },
   ];
 
+  const handleHeaderDoubleClick = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, [role="button"], .no-drag')) {
+      return;
+    }
+    onOpenInHome();
+  };
+
   return (
-    <header className="flex h-12 w-full items-center justify-between border-b border-border px-3 select-none [app-region:drag] [-webkit-app-region:drag]">
+    // biome-ignore lint/a11y/noStaticElementInteractions: header double-click opens translation in home window without nesting buttons
+    <header
+      onDoubleClick={handleHeaderDoubleClick}
+      className="flex h-12 shrink-0 w-full items-center justify-between border-b border-border px-3 select-none [app-region:drag] [-webkit-app-region:drag]"
+    >
       {/* 左侧可拖拽区域与模式徽标 */}
       <div className="flex items-center gap-2 cursor-move">
         <HolderOutlined className="text-sm text-foreground-muted" />
@@ -51,7 +63,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
       </div>
 
       {/* 右侧交互控件（严禁响应拖拽） */}
-      <div className="flex items-center gap-1 [-webkit-app-region:no-drag] [app-region:no-drag]">
+      <div className="no-drag flex items-center gap-1 [-webkit-app-region:no-drag] [app-region:no-drag]">
         <Tooltip
           title={isPinned ? '取消防误关' : '只防止点击外部关闭；切换应用仍会关闭，新划词会替换内容'}
         >

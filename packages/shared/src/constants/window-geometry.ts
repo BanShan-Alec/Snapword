@@ -26,18 +26,13 @@ export const POSITION_TOLERANCE_Y_BOTTOM = 50;
 export const UPDATER_WINDOW_WIDTH = 480;
 export const UPDATER_WINDOW_HEIGHT = 460;
 
-/** 翻译卡片内容主体宽度（DIPs） */
-export const CARD_WINDOW_CONTENT_WIDTH = 420;
-/** 翻译卡片阴影呼吸外边距（DIPs） */
-export const CARD_WINDOW_SHADOW_PADDING = 16;
-/** 翻译卡片宿主窗口固定宽度（DIPs，含阴影呼吸区 420 + 16*2 = 452） */
-export const CARD_WINDOW_WIDTH = CARD_WINDOW_CONTENT_WIDTH + CARD_WINDOW_SHADOW_PADDING * 2;
-/** 翻译卡片默认与最小高度 */
-export const CARD_WINDOW_MIN_HEIGHT = 160;
-export const CARD_WINDOW_DEFAULT_HEIGHT = 240;
-/** 翻译卡片最大占用工作区高度比例（70%） */
-export const CARD_WINDOW_MAX_WORK_AREA_RATIO = 0.7;
-/** 翻译卡片视口最小安全边距 */
+/** 翻译卡片固定视口宽度（DIPs） */
+export const CARD_WINDOW_WIDTH = 400;
+/** 翻译卡片固定视口高度（DIPs） */
+export const CARD_WINDOW_HEIGHT = 280;
+/** 翻译卡片最大占用工作区高度比例（45%） */
+export const CARD_WINDOW_MAX_WORK_AREA_RATIO = 0.45;
+/** 翻译卡片水平夹限预留总边距（左右各 16px，共 32px） */
+export const CARD_WINDOW_HORIZONTAL_CLAMP_PADDING = 32;
+/** 翻译卡片初始弹出视口最小安全边距 */
 export const CARD_WINDOW_MIN_MARGIN = 8;
-/** 翻译卡片拖拽吸附/回弹安全边距（RC-13: 16px） */
-export const CARD_WINDOW_SNAP_MARGIN = 16;

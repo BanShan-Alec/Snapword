@@ -153,8 +153,6 @@ export const apiBridge: ElectronApi = {
   },
   card: {
     hide: (_payload, options) => invokeTraced(IPC_CHANNELS.CARD_HIDE, undefined, options),
-    resize: (height: number, options) =>
-      invokeTraced(IPC_CHANNELS.CARD_RESIZE, { height }, options),
     setPin: (pin: boolean, options) => invokeTraced(IPC_CHANNELS.CARD_PIN_TOGGLE, { pin }, options),
     copyText: (text: string, options) =>
       invokeTraced(IPC_CHANNELS.CARD_COPY_TEXT, { text }, options),
