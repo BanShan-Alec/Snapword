@@ -8,21 +8,45 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const electronMocks = vi.hoisted(() => {
   const registeredIpcHandlers = new Map<string, (...args: unknown[]) => unknown>();
+  const mockNativeTheme = {
+    _themeSource: 'light' as 'light' | 'dark' | 'system',
+    get themeSource() {
+      return this._themeSource;
+    },
+    set themeSource(val: 'light' | 'dark' | 'system') {
+      this._themeSource = val;
+      if (val === 'dark') this.shouldUseDarkColors = true;
+      if (val === 'light') this.shouldUseDarkColors = false;
+    },
+    shouldUseDarkColors: false,
+    on: vi.fn(),
+  };
   const browserWindowInstances: Array<{
     options: Record<string, unknown>;
     listeners: Map<string, Array<(...args: unknown[]) => void>>;
+    webContentsListeners: Map<string, Array<(...args: unknown[]) => void>>;
+    webContents: {
+      send: ReturnType<typeof vi.fn>;
+    };
     bounds: { x: number; y: number; width: number; height: number };
     setBounds: ReturnType<typeof vi.fn>;
     setSize: ReturnType<typeof vi.fn>;
     setPosition: ReturnType<typeof vi.fn>;
+    setBackgroundColor: ReturnType<typeof vi.fn>;
+    loadURL: ReturnType<typeof vi.fn>;
   }> = [];
 
   class MockBrowserWindow {
     options: Record<string, unknown>;
     listeners = new Map<string, Array<(...args: unknown[]) => void>>();
+    webContentsListeners = new Map<string, Array<(...args: unknown[]) => void>>();
     bounds: { x: number; y: number; width: number; height: number };
     webContents = {
-      on: vi.fn(),
+      on: vi.fn((event: string, listener: (...args: unknown[]) => void) => {
+        const list = this.webContentsListeners.get(event) ?? [];
+        list.push(listener);
+        this.webContentsListeners.set(event, list);
+      }),
       once: vi.fn(),
       isLoading: vi.fn(() => false),
       isDestroyed: vi.fn(() => false),
@@ -42,6 +66,8 @@ const electronMocks = vi.hoisted(() => {
     setPosition = vi.fn((x: number, y: number) => {
       this.bounds = { ...this.bounds, x, y };
     });
+
+    setBackgroundColor = vi.fn();
 
     constructor(options: Record<string, unknown>) {
       this.options = options;
@@ -101,6 +127,7 @@ const electronMocks = vi.hoisted(() => {
 
   return {
     registeredIpcHandlers,
+    mockNativeTheme,
     browserWindowInstances,
     MockBrowserWindow,
   };
@@ -130,11 +157,7 @@ vi.mock('electron', () => ({
   net: {
     fetch: vi.fn(),
   },
-  nativeTheme: {
-    themeSource: 'light',
-    shouldUseDarkColors: false,
-    on: vi.fn(),
-  },
+  nativeTheme: electronMocks.mockNativeTheme,
   screen: {
     getPrimaryDisplay: vi.fn(() => ({
       workArea: { x: 0, y: 0, width: 1920, height: 1040 },
@@ -164,6 +187,7 @@ vi.mock('../src/env', async (importOriginal) => {
 });
 
 import { registerCardControllers } from '../src/controllers/card.controller';
+import { applyNativeThemeSource } from '../src/modules/native-theme.module';
 import { calculateCardBounds, type RectangleLike } from '../src/modules/window/card-geometry';
 import { isEnglishText, resolveSelectionDispatch } from '../src/modules/window/card-shortcut';
 import { CardWindowModule } from '../src/modules/window/card-window.module';
@@ -245,7 +269,7 @@ describe('Card Window Subsystem (Slice-04 / ADR-0006)', () => {
       expect(instance.setPosition).toHaveBeenCalledWith(0, 760);
     });
 
-    it('不再声明或注册 card:resize IPC 通道，且模块不存在 resizeCard 调度', () => {
+    it('不再声明或注册 card:resize IPC 通道，且模块不存在 resizeCard 或 getCurrentAction', () => {
       expect('CARD_RESIZE' in IPC_CHANNELS).toBe(false);
       expect(Object.values(IPC_CHANNELS)).not.toContain('card:resize');
 
@@ -254,6 +278,77 @@ describe('Card Window Subsystem (Slice-04 / ADR-0006)', () => {
       expect(electronMocks.registeredIpcHandlers.has(IPC_CHANNELS.CARD_HIDE)).toBe(true);
       expect(electronMocks.registeredIpcHandlers.has(IPC_CHANNELS.CARD_OPEN_IN_HOME)).toBe(true);
       expect('resizeCard' in CardWindowModule.prototype).toBe(false);
+      expect('getCurrentAction' in CardWindowModule.prototype).toBe(false);
+    });
+
+    it('冷启动 loadURL 期间触发 did-finish-load 时仅派发一次动作，复用窗口时同样只派发一次', async () => {
+      const module = new CardWindowModule({
+        initConfig: {
+          preload: { path: '/fake/preload.cjs' },
+          windows: {
+            home: new URL('http://localhost:3000/home'),
+            updater: new URL('http://localhost:3000/updater'),
+            card: new URL('http://localhost:3000/card'),
+          },
+        },
+      });
+
+      const originalCreate = module.createWindow.bind(module);
+      vi.spyOn(module, 'createWindow').mockImplementation(async () => {
+        const win = await originalCreate();
+        const instance = electronMocks.browserWindowInstances[0];
+        for (const fn of instance.webContentsListeners.get('did-finish-load') ?? []) {
+          fn();
+        }
+        return win;
+      });
+
+      await module.showCard({
+        action: 'translate',
+        mode: 'word',
+        text: 'electron',
+      });
+
+      const instance = electronMocks.browserWindowInstances[0];
+      expect(instance.webContents.send).toHaveBeenCalledTimes(1);
+      expect(instance.webContents.send).toHaveBeenCalledWith(
+        IPC_CHANNELS.CARD_EVENT_ACTION,
+        expect.objectContaining({ action: 'translate', text: 'electron' }),
+      );
+
+      // 模拟复用已存在窗口再次唤起
+      await module.showCard({
+        action: 'notice',
+        notice: '未获取到选中文本',
+        text: '',
+      });
+      expect(instance.webContents.send).toHaveBeenCalledTimes(2);
+      expect(instance.webContents.send).toHaveBeenLastCalledWith(
+        IPC_CHANNELS.CARD_EVENT_ACTION,
+        expect.objectContaining({ action: 'notice', notice: '未获取到选中文本' }),
+      );
+    });
+
+    it('切换主题时同步更新已注册卡片窗口的原生 backgroundColor', async () => {
+      const module = new CardWindowModule({
+        initConfig: {
+          preload: { path: '/fake/preload.cjs' },
+          windows: {
+            home: new URL('http://localhost:3000/home'),
+            updater: new URL('http://localhost:3000/updater'),
+            card: new URL('http://localhost:3000/card'),
+          },
+        },
+      });
+
+      await module.createWindow();
+      const instance = electronMocks.browserWindowInstances[0];
+
+      applyNativeThemeSource('dark');
+      expect(instance.setBackgroundColor).toHaveBeenCalledWith('#181B1A');
+
+      applyNativeThemeSource('light');
+      expect(instance.setBackgroundColor).toHaveBeenCalledWith('#F0EDE2');
     });
   });
 

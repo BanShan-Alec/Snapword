@@ -223,11 +223,21 @@ export function useCardTranslation() {
 
     const handleAction = (payload: CardActionPayload) => {
       if (payload.action === 'notice') {
+        if (activeRequestIdRef.current) {
+          const reqId = activeRequestIdRef.current;
+          activeRequestIdRef.current = null;
+          if (translationApi) {
+            translationApi.abort({ requestId: reqId }).catch(() => {});
+          }
+        }
         clearSlowTimer();
         setAction('notice');
         setNotice(payload.notice ?? '未获取到选中文本');
+        setError(null);
         setText(payload.text ?? '');
         setIsLoading(false);
+        setIsSlow(false);
+        setIsStopped(false);
         setWordResult(null);
         setSentenceResult(null);
         setStreamingText('');

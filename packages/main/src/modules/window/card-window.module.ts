@@ -47,7 +47,6 @@ export class CardWindowModule implements AppModule {
 
   private lastDraggedPosition: { x: number; y: number } | null = null;
   private pendingAction: CardActionPayload | null = null;
-  private currentAction: CardActionPayload | null = null;
   private readonly stateMachine = new CardAntiCloseStateMachine();
 
   constructor({ initConfig, openDevTools = false }: CardWindowModuleOptions) {
@@ -204,20 +203,14 @@ export class CardWindowModule implements AppModule {
   }
 
   /**
-   * 获取当前展示动作（供卡片渲染进程挂载时拉取，消除 IPC 竞态）
-   */
-  getCurrentAction(): CardActionPayload | null {
-    return this.currentAction;
-  }
-
-  /**
    * 展示卡片并派发翻译动作或内联提示 (RC-01: 不夺取键盘焦点)
    */
   async showCard(action: CardActionPayload): Promise<void> {
     this.logger.info(
       `showCard: action=${action.action}, text="${action.text}", mode=${action.mode}`,
     );
-    this.currentAction = action;
+    // 先写入 pendingAction，防止 createWindow() 内部 loadURL 完成触发 did-finish-load 时尚未赋值
+    this.pendingAction = action;
     const win = await this.createWindow();
 
     const selectionRect = action.selection?.rects?.[0] ?? null;
@@ -250,24 +243,20 @@ export class CardWindowModule implements AppModule {
     });
 
     if (win.webContents.isLoading()) {
-      this.pendingAction = action;
-      // 首次加载等待首帧渲染就绪后再展示，彻底杜绝白屏/黑屏闪烁 (RC-01)
+      // 首次加载尚未完成，等待首帧渲染就绪后展示，动作由 did-finish-load 统一消费 pendingAction 派发
       win.once('ready-to-show', () => {
         if (!win.isDestroyed()) {
           win.showInactive();
         }
       });
-      win.webContents.once('did-finish-load', () => {
-        setTimeout(() => {
-          if (!win.isDestroyed() && !win.isVisible()) {
-            win.showInactive();
-          }
-        }, 50);
-      });
-    } else {
-      // 已经就绪的常驻复用窗口，直接无焦点展示并下发动作 (RC-01)
-      win.showInactive();
-      sendToWindow(WINDOW_IDS.CARD, IPC_CHANNELS.CARD_EVENT_ACTION, action);
+      return;
+    }
+
+    win.showInactive();
+    if (this.pendingAction) {
+      const nextAction = this.pendingAction;
+      this.pendingAction = null;
+      sendToWindow(WINDOW_IDS.CARD, IPC_CHANNELS.CARD_EVENT_ACTION, nextAction);
     }
   }
 
@@ -276,7 +265,7 @@ export class CardWindowModule implements AppModule {
    */
   hideCard(abort = true): void {
     this.logger.info(`hideCard: abort=${abort}`);
-    this.currentAction = null;
+    this.pendingAction = null;
     const win = getWindow(WINDOW_IDS.CARD);
     if (win && !win.isDestroyed()) {
       win.hide();

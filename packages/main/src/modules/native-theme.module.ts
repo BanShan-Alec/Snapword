@@ -5,7 +5,11 @@ import type { AppModule } from '../AppModule';
 import type { ModuleContext } from '../ModuleContext';
 import { getCaptureSupervisorModule } from './capture-supervisor.module';
 import { getLogManager } from './log.module';
-import { canUpdateTitleBarOverlay, getTitleBarOverlayOptions } from './window/titlebar-overlay';
+import {
+  canUpdateTitleBarOverlay,
+  getTitleBarOverlayOptions,
+  getWindowBackgroundColor,
+} from './window/titlebar-overlay';
 import { getWindow } from './window/window-registry';
 
 /**
@@ -22,10 +26,25 @@ import { getWindow } from './window/window-registry';
 // 可抽离的逻辑处理函数/组件
 const logger = getLogManager().scoped('NativeTheme');
 
+export function applyWindowBackgroundColors(): void {
+  const bgColor = getWindowBackgroundColor();
+  for (const windowId of [WINDOW_IDS.CARD, WINDOW_IDS.HOME, WINDOW_IDS.UPDATER]) {
+    const win = getWindow(windowId);
+    if (win && !win.isDestroyed()) {
+      try {
+        win.setBackgroundColor(bgColor);
+      } catch (err) {
+        logger.error(`Failed to sync backgroundColor for ${windowId}:`, err);
+      }
+    }
+  }
+}
+
 export function applyNativeThemeSource(theme: AppConfig['theme']): void {
   try {
     nativeTheme.themeSource = theme;
     logger.info(`themeSource synced -> ${theme}`);
+    applyWindowBackgroundColors();
     try {
       getCaptureSupervisorModule().setDotTheme(nativeTheme.shouldUseDarkColors);
     } catch {
@@ -76,6 +95,7 @@ export class NativeThemeModule implements AppModule {
       nativeTheme.on('updated', () => {
         logger.info(`Updated, shouldUseDarkColors=${nativeTheme.shouldUseDarkColors}`);
         applyTitleBarOverlay();
+        applyWindowBackgroundColors();
         try {
           getCaptureSupervisorModule().setDotTheme(nativeTheme.shouldUseDarkColors);
         } catch {
