@@ -14,6 +14,7 @@ import {
   type INativeAddon,
   loadNativeAddon,
   type NativeDotEvent,
+  type NativeForegroundInfo,
   type NativeProbeResult,
 } from './native-addon';
 
@@ -202,17 +203,35 @@ export class CaptureService {
   /**
    * 处理原生圆点回调事件
    */
-  private handleDotEvent(evt: NativeDotEvent): void {
-    switch (evt.eventType) {
+  // biome-ignore lint/suspicious/noExplicitAny: robust parsing of native event arguments
+  private handleDotEvent(...args: any[]): void {
+    // 兼容单对象参数与 (err, data) 两种回调规约
+    const raw = (args.length > 1 && args[0] == null ? args[1] : (args[0] ?? {})) as Record<
+      string,
+      unknown
+    >;
+    const eventType = (raw.eventType || raw.event_type) as
+      | 'clicked'
+      | 'hidden'
+      | 'foreground_changed'
+      | undefined;
+    const seq = typeof raw.seq === 'number' ? raw.seq : 0;
+    const payload = raw.payload as NativeProbeResult | undefined;
+    const reason = raw.reason as string | undefined;
+    const foreground = raw.foreground as NativeForegroundInfo | undefined;
+
+    if (!eventType) return;
+
+    switch (eventType) {
       case 'clicked': {
-        if (!evt.payload) return;
-        const payload = this.formatSelectionPayload(evt.payload, 'dot');
+        if (!payload) return;
+        const formatted = this.formatSelectionPayload(payload, 'dot');
         this.postMessage({
           type: 'dot_clicked',
           protocolVersion: CAPTURE_PROTOCOL_VERSION,
           sentAt: new Date().toISOString(),
-          seq: evt.seq,
-          payload,
+          seq,
+          payload: formatted,
         });
         break;
       }
@@ -222,22 +241,22 @@ export class CaptureService {
           type: 'dot_hidden',
           protocolVersion: CAPTURE_PROTOCOL_VERSION,
           sentAt: new Date().toISOString(),
-          seq: evt.seq,
-          reason: (evt.reason as DotHiddenReason) || 'outside_click',
+          seq,
+          reason: (reason as DotHiddenReason) || 'outside_click',
         });
         break;
       }
 
       case 'foreground_changed': {
-        if (!evt.foreground) return;
+        if (!foreground) return;
         this.postMessage({
           type: 'foreground_changed',
           protocolVersion: CAPTURE_PROTOCOL_VERSION,
           sentAt: new Date().toISOString(),
-          processName: evt.foreground.processName,
-          processId: evt.foreground.processId,
-          windowTitle: evt.foreground.windowTitle,
-          isFullscreen: evt.foreground.isFullscreen,
+          processName: foreground.processName,
+          processId: foreground.processId,
+          windowTitle: foreground.windowTitle,
+          isFullscreen: foreground.isFullscreen,
           at: new Date().toISOString(),
         });
         break;
@@ -393,6 +412,11 @@ export class CaptureService {
       case 'hide_dot': {
         // 隐藏圆点命令 (B-02 §5.9)
         this.addon.hideDot();
+        break;
+      }
+
+      case 'set_dot_theme': {
+        this.addon.setDotTheme(msg.isDark);
         break;
       }
 

@@ -102,7 +102,6 @@ export interface ElectronApi {
   };
   card: {
     hide: (_payload?: void, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
-    resize: (height: number, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     setPin: (pin: boolean, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     copyText: (text: string, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;
     openInHome: (data?: unknown, options?: IpcCallOptions) => Promise<Result<{ success: boolean }>>;

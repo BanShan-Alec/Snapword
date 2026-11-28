@@ -73,6 +73,7 @@ export interface INativeAddon {
   startDot(callback: (event: NativeDotEvent) => void): void;
   stopDot(): void;
   hideDot(): void;
+  setDotTheme(isDark: boolean): void;
   diagnose(): NativeDiagnoseResult;
 }
 
@@ -114,7 +115,11 @@ export class RealNativeAdapter implements INativeAddon {
   }
 
   public startDot(callback: (event: NativeDotEvent) => void): void {
-    this.raw.startDot(callback);
+    // biome-ignore lint/suspicious/noExplicitAny: N-API threadsafe callback unpacking (err, data) vs (data)
+    this.raw.startDot((...args: any[]) => {
+      const evt = args.length > 1 && args[0] == null ? args[1] : (args[0] ?? {});
+      callback(evt);
+    });
   }
 
   public stopDot(): void {
@@ -123,6 +128,12 @@ export class RealNativeAdapter implements INativeAddon {
 
   public hideDot(): void {
     this.raw.hideDot();
+  }
+
+  public setDotTheme(isDark: boolean): void {
+    if (typeof this.raw.setDotTheme === 'function') {
+      this.raw.setDotTheme(isDark);
+    }
   }
 
   public diagnose(): NativeDiagnoseResult {
@@ -219,6 +230,10 @@ export class MockNativeAdapter implements INativeAddon {
     }
   }
 
+  public setDotTheme(_isDark: boolean): void {
+    // mock no-op
+  }
+
   public diagnose(): NativeDiagnoseResult {
     return {
       uiaAvailable: true,
@@ -309,40 +324,24 @@ export function resolveNativeAddonCandidates(): string[] {
     );
   }
 
-  // 2. 本地构建产物 main/dist/native/uia-probe.node
-  candidates.push(path.join(__dirname, 'native', 'uia-probe.node'));
-  candidates.push(path.join(__dirname, '..', 'native', 'uia-probe.node'));
-  candidates.push(path.resolve(__dirname, '..', '..', 'dist', 'native', 'uia-probe.node'));
+  // 2. 向上回溯 0~4 级目录搜索 native/dist 产物及 Cargo 输出目录
+  const searchRoots = [
+    __dirname,
+    path.resolve(__dirname, '..'),
+    path.resolve(__dirname, '..', '..'),
+    path.resolve(__dirname, '..', '..', '..'),
+    path.resolve(__dirname, '..', '..', '..', '..'),
+  ];
 
-  // 3. Cargo 编译输出目录
-  candidates.push(
-    path.resolve(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      'native',
-      'target',
-      'release',
-      'uia_probe_addon.dll',
-    ),
-  );
-  candidates.push(
-    path.resolve(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      'native',
-      'target',
-      'debug',
-      'uia_probe_addon.dll',
-    ),
-  );
+  for (const root of searchRoots) {
+    candidates.push(path.join(root, 'native', 'uia-probe.node'));
+    candidates.push(path.join(root, 'dist', 'native', 'uia-probe.node'));
+    candidates.push(path.join(root, 'packages', 'main', 'dist', 'native', 'uia-probe.node'));
+    candidates.push(path.join(root, 'native', 'target', 'release', 'uia-probe.node'));
+    candidates.push(path.join(root, 'native', 'target', 'debug', 'uia-probe.node'));
+  }
 
-  return candidates;
+  return Array.from(new Set(candidates));
 }
 
 export interface LoadNativeAddonOptions {
@@ -367,6 +366,18 @@ export function loadNativeAddon(options?: LoadNativeAddonOptions): INativeAddon 
 
   const candidates = resolveNativeAddonCandidates();
   for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) {
+      const siblingDll = path.join(path.dirname(candidate), 'uia_probe_addon.dll');
+      if (fs.existsSync(siblingDll)) {
+        try {
+          fs.mkdirSync(path.dirname(candidate), { recursive: true });
+          fs.copyFileSync(siblingDll, candidate);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     if (fs.existsSync(candidate)) {
       try {
         const dynamicRequire = createRequire(import.meta.url);

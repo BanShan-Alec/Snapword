@@ -53,7 +53,6 @@ export const IPC_CHANNELS = {
   // 翻译卡片通道 (Card Window IPC Channels)
   CARD_SHOW: 'card:show',
   CARD_HIDE: 'card:hide',
-  CARD_RESIZE: 'card:resize',
   CARD_PIN_TOGGLE: 'card:pin-toggle',
   CARD_COPY_TEXT: 'card:copy-text',
   CARD_OPEN_IN_HOME: 'card:open-in-home',

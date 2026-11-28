@@ -48,7 +48,7 @@ export const CardSourceText: React.FC<CardSourceTextProps> = ({ text }) => {
     <div className="mx-3 mt-2.5 rounded-lg border border-border bg-background-sunken p-2.5 text-xs text-foreground">
       <div
         className={`whitespace-pre-wrap font-sans leading-relaxed select-text ${
-          !isExpanded && needsExpand ? 'line-clamp-3' : 'max-h-[300px] overflow-y-auto'
+          !isExpanded && needsExpand ? 'line-clamp-3' : ''
         }`}
       >
         {text}

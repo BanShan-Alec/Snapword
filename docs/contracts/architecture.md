@@ -37,7 +37,7 @@
 flowchart LR
   subgraph ElectronApp["snapword.exe（单实例）"]
     MAIN["主进程<br/>生命周期 / 托盘 / 热键<br/>配置 / DB / 翻译 / 历史"]
-    CARD["渲染进程：翻译卡片<br/>420px 固定宽度"]
+    CARD["渲染进程：翻译卡片<br/>400×280 固定视口"]
     WIN["渲染进程：主窗口<br/>翻译 / 历史 / 生词本 / 术语表 / 设置 / 帮助"]
     UTIL["utilityProcess：取词服务<br/>Node 事件循环 + 消息路由"]
     ADDON["uia-probe.node<br/>Rust napi-rs<br/>UIA / 钩子 / 圆点"]
@@ -143,14 +143,15 @@ native/
 
 ### 4.3 Addon 对外 API（napi 导出）
 
-| 导出                                                  | 用途                                               |
-| ----------------------------------------------------- | -------------------------------------------------- |
-| `probeSelection(timeoutMs?)`                          | 产品接口：`text / rects / errorCode / processName` |
-| `probeSelectionDetailed(timeoutMs?, windowTitle?)`    | 审计接口                                           |
-| `probeExpandUnits(timeoutMs?, windowTitle?)`          | Q-1 审计                                           |
-| `probeRangeFromPoint(x, y, timeoutMs?, windowTitle?)` | Q-6 审计/兜底                                      |
-| `startDot(callback)` / `stopDot()`                    | 原生圆点线程                                       |
-| `diagnose()`                                          | 钩子/COM/圆点状态                                  |
+| 导出                                                  | 用途                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `probeSelection(timeoutMs?)`                          | 产品接口：`text / rects / errorCode / processName`                                          |
+| `probeSelectionDetailed(timeoutMs?, windowTitle?)`    | 审计接口                                                                                    |
+| `probeExpandUnits(timeoutMs?, windowTitle?)`          | Q-1 审计                                                                                    |
+| `probeRangeFromPoint(x, y, timeoutMs?, windowTitle?)` | Q-6 审计/兜底                                                                               |
+| `startDot(callback)` / `stopDot()`                    | 原生圆点线程（`ThreadsafeFunction` 阻塞调用；`callback(err, event)` / direct payload 兼容） |
+| `setDotTheme(isDark: boolean)`                        | 原生圆点 Win32 主题色同步                                                                   |
+| `diagnose()`                                          | 钩子/COM/圆点状态                                                                           |
 
 `capture-service.js` 只负责把这些 API 包装成 B-02 消息；不把 addon 对象透传给主进程。
 
@@ -325,18 +326,21 @@ sequenceDiagram
 
 ### 10.1 翻译卡片（Electron BrowserWindow）
 
-| 属性 | 值                                                   |
-| ---- | ---------------------------------------------------- |
-| 尺寸 | 固定 420px 宽；高度随内容，最大 70% 工作区；不可缩放 |
-| 框架 | `frame: false`；自绘头部                             |
-| 显示 | `showInactive()`；不抢键盘焦点                       |
-| 层级 | `alwaysOnTop: true`；`skipTaskbar: true`             |
-| 焦点 | 点击后获焦；未获焦时鼠标操作仍可用                   |
-| 位置 | 屏幕 DIP 坐标；默认选区右下，越界回退；仅主显示器    |
-| 全屏 | 不保证显示；失败托盘提示 + 主窗口（Q-2 暂不支持）    |
-| 关闭 | 关闭按钮 / 外部点击 / 切换应用；防误关只阻止外部点击 |
+| 属性 | 值                                                                                                               |
+| ---- | ---------------------------------------------------------------------------------------------------------------- |
+| 尺寸 | 固定视口 400×280 DIPs（极小屏按工作区宽度减 32px、高度不超过工作区 45% 夹限）；不可缩放；内容超出视口内滚动      |
+| 框架 | `frame: false`；自绘头部                                                                                         |
+| 透明 | `transparent: false`；`hasShadow: true`；原生无边框窗口依托系统 DWM 投影与 Win11 原生 8px 圆角，底色继承主题色板 |
+| 显示 | `showInactive()`；首次加载等待首帧渲染就绪（`ready-to-show`）后再展示，彻底杜绝白屏/黑屏闪烁；不抢键盘焦点       |
+| 层级 | `alwaysOnTop: true`；`skipTaskbar: true`                                                                         |
+| 焦点 | 点击后获焦；未获焦时鼠标操作仍可用                                                                               |
+| 位置 | 屏幕 DIP 坐标；默认选区右下，越界回退；仅主显示器                                                                |
+| 全屏 | 不保证显示；失败托盘提示 + 主窗口（Q-2 暂不支持）                                                                |
+| 关闭 | 关闭按钮 / 外部点击 / 切换应用；防误关只阻止外部点击                                                             |
 
 卡片窗口**按需创建**：首次打开时创建，记录 `card.createMs` 与 `card.firstPaintMs` 到诊断日志；关闭只隐藏并复用同一实例。**不预创建**，首次创建允许超过 200ms，后续再优化预热/预创建。
+
+卡片动作通信采用 **Preload 粘性事件重放模式（Sticky Event Replay）**（详见 [ADR-0005](../adr/0005-preload-sticky-action-replay.md)）：废弃 `card:get-action` 双向拉取 IPC 通道，主进程只单向向卡片派发 `card:event-action`，由 Preload 在执行时暂存并在 React 挂载注册 `onAction` 时即刻通过微任务重放，彻底消除窗口初次创建、页面加载与 React 水合的时序竞态。
 
 ### 10.2 主窗口（Electron BrowserWindow）
 
@@ -350,14 +354,14 @@ sequenceDiagram
 
 ### 10.3 圆点（Native Addon 的 Win32 窗口）
 
-| 属性     | 值                                                     |
-| -------- | ------------------------------------------------------ |
-| 视觉     | 10 × 10 px 正圆；1px 白描边；轻微阴影                  |
-| 热区     | ≥24 × 24 px                                            |
-| 样式     | `WS_EX_LAYERED                                         | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE` |
-| 生命周期 | utilityProcess 启动时创建并隐藏；复用；不重复创建/销毁 |
-| 交互     | 点击打开卡片；悬停只做微弱提示；不拖拽、不缩放         |
-| 全屏     | 不显示；热键仍可用                                     |
+| 属性     | 值                                                                                     |
+| -------- | -------------------------------------------------------------------------------------- |
+| 视觉     | 18 × 18 px 正圆（外圈 1px 白描边，居中绘制于 48 × 48 px 分层窗口内部）                 |
+| 热区     | 48 × 48 px（分层窗口实际尺寸，消除高 DPI 缩放下的边缘漏点，满足 ≥24 × 24 px 规格红线） |
+| 样式     | `WS_EX_LAYERED \| WS_EX_TOOLWINDOW \| WS_EX_TOPMOST \| WS_EX_NOACTIVATE`               |
+| 生命周期 | utilityProcess 启动时创建并隐藏；复用；不重复创建/销毁                                 |
+| 交互     | 点击打开卡片；悬停只做微弱提示；不拖拽、不缩放                                         |
+| 全屏     | 不显示（`is_fullscreen` 全屏检测主动抑制）；热键仍可用                                 |
 
 ---
 

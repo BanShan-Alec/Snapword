@@ -1,6 +1,7 @@
 import {
   CheckOutlined,
   CopyOutlined,
+  ExpandOutlined,
   PauseCircleOutlined,
   RedoOutlined,
   SoundOutlined,
@@ -17,10 +18,12 @@ export interface CardBottomBarProps {
   isLoading: boolean;
   isStopped: boolean;
   isFavorite: boolean;
+  isOverflowing?: boolean;
   onStop: () => void;
   onRetry: () => void;
   onToggleFavorite: () => void;
   onUpdateFavorite?: () => void;
+  onOpenInHome: () => void;
 }
 
 export const CardBottomBar: React.FC<CardBottomBarProps> = ({
@@ -29,10 +32,12 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
   isLoading,
   isStopped,
   isFavorite,
+  isOverflowing = false,
   onStop,
   onRetry,
   onToggleFavorite,
   onUpdateFavorite,
+  onOpenInHome,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -76,7 +81,7 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
   };
 
   return (
-    <footer className="sticky bottom-0 flex h-11 w-full items-center justify-between border-t border-border bg-background-elevated/90 px-3 backdrop-blur-xs select-none">
+    <footer className="flex h-11 shrink-0 w-full items-center justify-between border-t border-border bg-background-elevated/90 px-3 backdrop-blur-xs select-none">
       {/* 左侧控制按钮：流式中显示停止，已停止显示重试 */}
       <div className="flex items-center">
         {isLoading && (
@@ -104,8 +109,8 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
         )}
       </div>
 
-      {/* 右侧常规操作：复制、朗读、收藏（仅单词） */}
-      <div className="flex items-center gap-1.5 ml-auto">
+      {/* 右侧常规操作：复制、朗读、收藏（仅单词）、在主窗口展开 */}
+      <div className="flex items-center gap-1 ml-auto">
         <Tooltip title={copied ? '已复制' : mode === 'word' ? '点击复制' : '点击复制译文'}>
           <Button
             type="text"
@@ -114,7 +119,7 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
             onClick={handleCopy}
             className="h-7 px-2 text-xs"
           >
-            {copied ? '已复制' : mode === 'word' ? '点击复制' : '复制译文'}
+            {copied ? '已复制' : '复制'}
           </Button>
         </Tooltip>
 
@@ -182,6 +187,21 @@ export const CardBottomBar: React.FC<CardBottomBarProps> = ({
               />
             </Tooltip>
           ))}
+
+        <Tooltip title="在主窗口展开完整阅读">
+          <Button
+            type={isOverflowing ? 'primary' : 'text'}
+            ghost={isOverflowing}
+            size="small"
+            icon={<ExpandOutlined />}
+            onClick={onOpenInHome}
+            className={`h-7 px-2 text-xs font-medium ${
+              isOverflowing ? '' : 'text-primary hover:bg-primary-light'
+            }`}
+          >
+            在主窗口展开
+          </Button>
+        </Tooltip>
       </div>
     </footer>
   );

@@ -68,7 +68,7 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
           }}
           locale={getAntdLocale(language)}
         >
-          <AntdApp>
+          <AntdApp className="h-full w-full flex flex-col">
             <ErrorBoundary>{children}</ErrorBoundary>
           </AntdApp>
         </PaseoThemeProvider>

@@ -299,6 +299,13 @@ export const captureServiceToMainMessageSchema = z.discriminatedUnion('type', [
 ]);
 export type CaptureServiceToMainMessage = z.infer<typeof captureServiceToMainMessageSchema>;
 
+// 19. set_dot_theme (主 -> 服务)
+export const setDotThemeMessageSchema = captureEnvelopeBaseSchema.extend({
+  type: z.literal('set_dot_theme'),
+  isDark: z.boolean(),
+});
+export type SetDotThemeMessage = z.infer<typeof setDotThemeMessageSchema>;
+
 /**
  * 主进程发往服务进程的消息模型联合 (Main -> Service)
  */
@@ -307,6 +314,7 @@ export const mainToCaptureServiceMessageSchema = z.discriminatedUnion('type', [
   configUpdateMessageSchema,
   captureCurrentMessageSchema,
   hideDotMessageSchema,
+  setDotThemeMessageSchema,
   shutdownMessageSchema,
   diagnoseMessageSchema,
   mockEmitSelectionMessageSchema,

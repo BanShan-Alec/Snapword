@@ -12,7 +12,7 @@ import {
   type SelectionPayload,
   type ServiceStatusMessage,
 } from '@app/shared/schemas/capture';
-import { app, type ForkOptions, utilityProcess } from 'electron';
+import { app, type ForkOptions, nativeTheme, utilityProcess } from 'electron';
 import type { AppModule } from '../AppModule';
 import { appLifecycle } from '../lifecycle';
 import type { ModuleContext } from '../ModuleContext';
@@ -289,6 +289,18 @@ export class CaptureSupervisorModule implements AppModule {
   }
 
   /**
+   * 同步小圆点主题
+   */
+  public setDotTheme(isDark: boolean): void {
+    this.postToChild({
+      type: 'set_dot_theme',
+      protocolVersion: CAPTURE_PROTOCOL_VERSION,
+      sentAt: new Date().toISOString(),
+      isDark,
+    });
+  }
+
+  /**
    * 重置重启退避计数（服务长期稳定后由主进程恢复健康状态）
    */
   public resetRestartCount(): void {
@@ -383,6 +395,9 @@ export class CaptureSupervisorModule implements AppModule {
         this.startHeartbeatMonitor();
         this.scheduleStableReset();
 
+        // 初始同步当前应用主题
+        this.setDotTheme(Boolean(nativeTheme?.shouldUseDarkColors));
+
         this.emitter.emit('ready');
         this.logger.info('Capture service handshake completed and ready');
         break;
@@ -420,6 +435,7 @@ export class CaptureSupervisorModule implements AppModule {
       }
 
       case 'dot_clicked': {
+        this.logger.info(`Received dot_clicked: text="${msg.payload.text}", seq=${msg.seq}`);
         this.emitter.emit('dot_clicked', msg.payload);
         // 主进程收到 dot_clicked 后立即发 hide_dot (B-02 §7)
         this.postToChild({
@@ -432,6 +448,7 @@ export class CaptureSupervisorModule implements AppModule {
       }
 
       case 'dot_hidden': {
+        this.logger.info(`Received dot_hidden: reason=${msg.reason}, seq=${msg.seq}`);
         this.emitter.emit('dot_hidden', msg);
         break;
       }
